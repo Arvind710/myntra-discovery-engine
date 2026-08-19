@@ -245,6 +245,56 @@ with the uncertainty stated rather than resolved by assertion.
 
 ---
 
+## Tier rejection for classification TESTED and overturned (2026-08-19)
+
+`DECISIONS.md` rejected a cheaper model tier for bulk classification on this
+reasoning: *"Fine boundary distinctions (C1 fit-uncertainty vs C8 size-unavailable
+— opposite solves) are exactly where smaller models fail."*
+
+That was a **prediction written before anything was built.** It was never measured.
+It has now been measured against 47 hand-labelled cases across the codebook's seven
+adjacent-code pairs (`evals/fixtures/code_boundary.jsonl`, S2-MET-7 / EC-CLS-12).
+
+| | gpt-5 (minimal) | gpt-5-mini (minimal) |
+|---|---|---|
+| Correct code assigned | 97.9% | **97.9%** |
+| Correct blocking code | 93.6% | 91.5% |
+| **C1 vs C8 — the danger pair** | **16/16** | **16/16** |
+| C4 vs C14 | 8/8 | 8/8 |
+| C6 vs D1 | 6/6 | 6/6 |
+| B2.1 vs C8 | 4/4 | 4/4 |
+| C3 vs C10 | 4/4 | 4/4 |
+| C9 vs C12 | 5/5 | **4/5** |
+| A1.1 vs C13 | 3/4 | 4/4 |
+| Cost per 1,000 records | $6.37 | **$1.39** |
+
+**The specific claim the rejection rested on is false.** Both models scored 16/16 on
+C1 vs C8 — the pair whose confusion would mean "building the wrong thing while the
+data appears to agree". Neither confused a solvable Confidence barrier with a
+supply-side Eliminator, on any of sixteen constructed cases.
+
+### Where they genuinely differ, and why it matters
+
+`gpt-5-mini`'s single distinguishing miss is **C9** — "just window shopping honestly,
+my saved list has 300 things" was coded to Stage A saving behaviour instead of
+intent-never-live. C9 is a **denominator control**: per AC-12 and EC-INS-3 it must be
+sized and then EXCLUDED from the addressable opportunity, and missing it inflates the
+opportunity — the exact error that "survives casual review". Partial mitigation: the
+`segment` field captures the same population as S3 independently, so C9 misses are
+not the only guard.
+
+`gpt-5`'s own miss (A1.1 coded as A1.2) is arguably a fixture-label problem, not a
+model error — "nothing ever reminds me that I saved anything" is a defensible A1.2.
+
+### Standing correction to how this log is used
+
+A line in this file is not evidence. Two cost-driven design choices have now been
+tested and both were wrong in the same direction — the prefilter (dropped 23% of the
+relevant corpus, kept for a $2.49 saving) and this tier rejection. **Prefer the
+measurement to the prediction, including when the prediction is mine.**
+
+---
+
 ## Explicitly rejected
 
 Recorded so they don't quietly reappear as "optimisations":

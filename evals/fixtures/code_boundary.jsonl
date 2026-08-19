@@ -1,0 +1,47 @@
+{"pair": "C1_vs_C8", "text_raw": "Every brand here has different sizing. I wear M in one and L in another, so I never know what to order and usually just don't.", "expect_code": "C1", "why": "doubt about WHICH size; item purchasable", "record_id": "fx-code-001"}
+{"pair": "C1_vs_C8", "text_raw": "The size chart says 38 but reviews say it runs small. I've had it saved for weeks because I can't decide.", "expect_code": "C1", "why": "conflicting size information, not availability", "record_id": "fx-code-002"}
+{"pair": "C1_vs_C8", "text_raw": "I want it badly but it's been out of stock in my size for two months.", "expect_code": "C8", "why": "size not purchasable", "record_id": "fx-code-003"}
+{"pair": "C1_vs_C8", "text_raw": "My size is never available. Everything is S and XXL by the time I look.", "expect_code": "C8", "why": "supply-side, not a decision doubt", "record_id": "fx-code-004"}
+{"pair": "C1_vs_C8", "text_raw": "Not sure whether to size up for an oversized fit or stick to my usual. Still haven't ordered.", "expect_code": "C1", "why": "styling-of-fit doubt, item available", "record_id": "fx-code-005"}
+{"pair": "C1_vs_C8", "text_raw": "Added to bag, went back next day and my size was gone.", "expect_code": "C8", "why": "availability at decision time", "record_id": "fx-code-006"}
+{"pair": "C1_vs_C8", "text_raw": "I ordered two sizes because I couldn't tell which would fit, returned one.", "expect_code": "C1", "why": "classic C1 workaround", "record_id": "fx-code-007"}
+{"pair": "C1_vs_C8", "text_raw": "They only stock up to L. I'm an XXL so it's not even an option for me.", "expect_code": "C8", "why": "size not carried at all", "record_id": "fx-code-008"}
+{"pair": "C1_vs_C8", "text_raw": "Their size guide is useless. Measurements don't match what arrives, so I hesitate every time.", "expect_code": "C1", "why": "size information unreliable", "record_id": "fx-code-009"}
+{"pair": "C1_vs_C8", "text_raw": "Sold out in 32 waist. Been waiting for a restock since Diwali.", "expect_code": "C8", "why": "waiting for restock", "record_id": "fx-code-010"}
+{"pair": "C1_vs_C8", "text_raw": "I'm between sizes and the brand doesn't do half sizes, so I keep putting off the decision.", "expect_code": "C1", "why": "user cannot resolve which size", "record_id": "fx-code-011"}
+{"pair": "C1_vs_C8", "text_raw": "Everything I like is available only in sizes nobody wears.", "expect_code": "C8", "why": "supply-side availability", "record_id": "fx-code-012"}
+{"pair": "C1_vs_C8", "text_raw": "Is this true to size? Nobody in the reviews mentions it and I don't want to guess.", "expect_code": "C1", "why": "unresolved size question", "record_id": "fx-code-013"}
+{"pair": "C1_vs_C8", "text_raw": "It came back in stock but by then I'd lost interest.", "expect_code": "C12", "why": "availability resolved; desire decayed - neither C1 nor C8", "record_id": "fx-code-014"}
+{"pair": "C1_vs_C8", "text_raw": "I know my size in this brand, I just think 2000 is too much for a plain top.", "expect_code": "C6", "why": "no size doubt at all; value doubt", "record_id": "fx-code-015"}
+{"pair": "C1_vs_C8", "text_raw": "Size ka confusion rehta hai har brand mein, isliye order karne se pehle 10 baar sochti hoon.", "expect_code": "C1", "why": "Hinglish: which-size doubt", "record_id": "fx-code-016"}
+{"pair": "C4_vs_C14", "text_raw": "The reviews here have almost no photos, so I can't tell what it actually looks like on a real person.", "expect_code": "C4", "why": "on-platform evidence thin - a CONTENT problem", "record_id": "fx-code-017"}
+{"pair": "C4_vs_C14", "text_raw": "I always go watch a YouTube haul of the brand before ordering. Usually I forget to come back.", "expect_code": "C14", "why": "leaves platform, session dies", "record_id": "fx-code-018"}
+{"pair": "C4_vs_C14", "text_raw": "Only three reviews and all of them say nice product. That tells me nothing.", "expect_code": "C4", "why": "review quality insufficient", "record_id": "fx-code-019"}
+{"pair": "C4_vs_C14", "text_raw": "Ended up searching the product on Reddit to see if anyone had actually bought it.", "expect_code": "C14", "why": "off-platform verification", "record_id": "fx-code-020"}
+{"pair": "C4_vs_C14", "text_raw": "Wish there were more customer photos instead of just model shots.", "expect_code": "C4", "why": "wants better on-platform evidence", "record_id": "fx-code-021"}
+{"pair": "C4_vs_C14", "text_raw": "I check the brand on Instagram first to see real people wearing it.", "expect_code": "C14", "why": "external verification behaviour", "record_id": "fx-code-022"}
+{"pair": "C4_vs_C14", "text_raw": "Reviews are all from 2022, no idea if the quality is still the same.", "expect_code": "C4", "why": "stale on-platform evidence", "record_id": "fx-code-023"}
+{"pair": "C4_vs_C14", "text_raw": "Compared the price on Ajio and Amazon before deciding, then bought there.", "expect_code": "C11", "why": "left AND completed elsewhere - need extinguished", "record_id": "fx-code-024"}
+{"pair": "C6_vs_D1", "text_raw": "2400 for a cotton kurta feels steep. I keep waiting for it to drop.", "expect_code": "C6", "why": "doubt about the ITEM's price", "record_id": "fx-code-025"}
+{"pair": "C6_vs_D1", "text_raw": "Got to checkout and there was a shipping charge and a convenience fee. Closed the app.", "expect_code": "D1", "why": "cost revealed LATE - a disclosure problem", "record_id": "fx-code-026"}
+{"pair": "C6_vs_D1", "text_raw": "Is it worth this much? I can't tell if the quality justifies it.", "expect_code": "C6", "why": "value uncertainty", "record_id": "fx-code-027"}
+{"pair": "C6_vs_D1", "text_raw": "Cart said 1299, final page said 1450 with fees. Felt cheated.", "expect_code": "D1", "why": "late cost surprise", "record_id": "fx-code-028"}
+{"pair": "C6_vs_D1", "text_raw": "Waiting for EOSS before I buy anything from my saved list.", "expect_code": "C6", "why": "timing/sale waiting", "record_id": "fx-code-029"}
+{"pair": "C6_vs_D1", "text_raw": "COD charge of 50 rupees appeared only at the last step.", "expect_code": "D1", "why": "late fee disclosure", "record_id": "fx-code-030"}
+{"pair": "C9_vs_C12", "text_raw": "My wishlist is basically a mood board. I never intended to buy any of it.", "expect_code": "C9", "why": "intent NEVER existed - denominator control", "record_id": "fx-code-031"}
+{"pair": "C9_vs_C12", "text_raw": "I really wanted that jacket in November. Looked at it last week and felt nothing.", "expect_code": "C12", "why": "intent existed and faded", "record_id": "fx-code-032"}
+{"pair": "C9_vs_C12", "text_raw": "I save things I could never afford, just to look at them.", "expect_code": "C9", "why": "aspirational collecting", "record_id": "fx-code-033"}
+{"pair": "C9_vs_C12", "text_raw": "By the time I'd decided, I didn't want it anymore.", "expect_code": "C12", "why": "desire decay", "record_id": "fx-code-034"}
+{"pair": "C9_vs_C12", "text_raw": "Just window shopping honestly, my saved list has 300 things.", "expect_code": "C9", "why": "bookmarker behaviour", "record_id": "fx-code-035"}
+{"pair": "B2.1_vs_C8", "text_raw": "Half my wishlist is sold out. Scrolling past dead items every time is exhausting.", "expect_code": "B2.1", "why": "OOS items degrading the LIST as a surface", "record_id": "fx-code-036"}
+{"pair": "B2.1_vs_C8", "text_raw": "The one dress I actually wanted is out of stock in my size.", "expect_code": "C8", "why": "specific item, decision blocked", "record_id": "fx-code-037"}
+{"pair": "B2.1_vs_C8", "text_raw": "My saved list is a graveyard, most of it isn't buyable anymore.", "expect_code": "B2.1", "why": "list hygiene problem", "record_id": "fx-code-038"}
+{"pair": "B2.1_vs_C8", "text_raw": "Went to buy the shoes I saved and they'd been delisted entirely.", "expect_code": "B2.2", "why": "product removed, not merely OOS", "record_id": "fx-code-039"}
+{"pair": "C3_vs_C10", "text_raw": "Not sure it suits my body type. I look at the model and can't picture myself.", "expect_code": "C3", "why": "self-image / fit-to-person", "record_id": "fx-code-040"}
+{"pair": "C3_vs_C10", "text_raw": "Sent the link to my husband, waiting to hear what he thinks before ordering.", "expect_code": "C10", "why": "external approval dependency", "record_id": "fx-code-041"}
+{"pair": "C3_vs_C10", "text_raw": "If I cannot make four outfits with things I already own, it's not worth buying.", "expect_code": "C3", "why": "stated wardrobe DECISION RULE - v1.2 boundary", "record_id": "fx-code-042"}
+{"pair": "C3_vs_C10", "text_raw": "Put it in a group chat poll before deciding.", "expect_code": "C10", "why": "social validation required", "record_id": "fx-code-043"}
+{"pair": "A1.1_vs_C13", "text_raw": "Honestly I forgot the wishlist feature even existed until this thread.", "expect_code": "A1.1", "why": "never returned to the list at all", "record_id": "fx-code-044"}
+{"pair": "A1.1_vs_C13", "text_raw": "I know exactly what I want and it's sitting there. Just never feels like the day to buy it.", "expect_code": "C13", "why": "resolved intent, no trigger", "record_id": "fx-code-045"}
+{"pair": "A1.1_vs_C13", "text_raw": "Nothing ever reminds me that I saved anything.", "expect_code": "A1.1", "why": "no outbound trigger to return", "record_id": "fx-code-046"}
+{"pair": "A1.1_vs_C13", "text_raw": "No doubts left, I just haven't got round to pressing order.", "expect_code": "C13", "why": "no reason to act now", "record_id": "fx-code-047"}
