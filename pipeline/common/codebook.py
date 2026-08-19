@@ -28,6 +28,7 @@ PHASES = {"eliminator", "confidence", "trigger", "na"}
 OUTCOMES = {"exit", "defer", "na"}
 STAGES = {"A", "B", "C", "D", "Z"}
 SOLVABLE = {True, False, "partly", "na"}
+TRANSFERABILITY = {"high", "medium", "low"}
 
 EXPECTED_N_CODES = 33          # excludes Z-99 (AC-10, T-8)
 EXPECTED_PER_STAGE = {"A": 7, "B": 8, "C": 14, "D": 4}
@@ -117,6 +118,7 @@ def _validate(codes: dict[str, dict[str, Any]], contradictions: dict[str, Any]) 
     required = (
         "stage", "name", "phase", "outcome_default", "outcome_allowed",
         "journey_rank", "solvable_without_money", "boundary_note",
+        "transferability",
     )
     for cid, d in codes.items():
         for field in required:
@@ -138,6 +140,9 @@ def _validate(codes: dict[str, dict[str, Any]], contradictions: dict[str, Any]) 
                 f"{cid}: solvable_without_money must be yes/no/partly/na, "
                 f"got {d['solvable_without_money']!r}"
             )
+        if d["transferability"] not in TRANSFERABILITY:
+            raise CodebookError(
+                f"{cid}: transferability must be high/medium/low, got {d['transferability']!r}")
         if len(str(d["boundary_note"]).strip()) < 40:
             raise CodebookError(f"{cid}: boundary_note too thin to do its job (P0-2)")
 

@@ -116,7 +116,7 @@ def test_p0_2_stage_counts(codebook):
 
 @pytest.mark.parametrize("field", [
     "stage", "name", "phase", "outcome_default", "outcome_allowed",
-    "journey_rank", "solvable_without_money", "boundary_note",
+    "journey_rank", "solvable_without_money", "boundary_note", "transferability",
 ])
 def test_p0_2_no_code_missing_a_required_field(codebook, field):
     # Careful with falsiness: journey_rank 0 (C9) and solvable_without_money
@@ -234,8 +234,11 @@ def test_p0_5_loader_rejects_a_mutated_codebook(tmp_path, monkeypatch):
 
 def test_p0_5_version_string_is_stamped_per_row(codebook):
     """EC-CLS-16 / S2-INV-5: what goes on every classification row."""
-    assert codebook.version_string.startswith("v1:")
-    assert len(codebook.version_string) == 11
+    # Format is <version>:<hash8> -- the length varies with the version
+    # string (v1 -> v1.1), so assert the SHAPE, not a magic length.
+    import re
+    assert re.fullmatch(r"v\d+(\.\d+)?:[0-9a-f]{8}", codebook.version_string), \
+        codebook.version_string
 
 
 # --- P0-6: segments -----------------------------------------------------
@@ -342,3 +345,32 @@ def test_p0_8_injection_fixture_covers_the_named_attacks(root):
     # Each payload must also carry real feedback, so a system that refuses
     # wholesale is caught as a false positive rather than praised.
     assert all(len(r["text_raw"]) > 40 for r in rows)
+
+
+# --- A-4 transferability (codebook v1.1) --------------------------------
+
+def test_platform_mechanical_codes_are_low_transferability(codebook):
+    """Only 35.9% of the relevant corpus is Myntra-specific (measured).
+    Generic online-fashion records are legitimate evidence per A-4, but a
+    complaint about Ajio's wishlist UI says nothing about Myntra's. Stage B
+    is entirely platform-mechanical and must never be ranked on pooled n."""
+    for cid, d in codebook.codes.items():
+        if d["stage"] == "B":
+            assert d["transferability"] == "low", f"{cid} is wishlist-UI specific"
+    for cid in ("C7", "C8", "D1", "D2", "D3"):
+        assert codebook.codes[cid]["transferability"] == "low", \
+            f"{cid} depends on Myntra's own policy/inventory/checkout"
+
+
+def test_category_rooted_codes_are_high_transferability(codebook):
+    """Brand sizing is inconsistent across the whole Indian market; photos
+    flatter fabric everywhere; wardrobe fit is about the wearer. Generic
+    records are near-full-strength evidence for these."""
+    for cid in ("C1", "C2", "C3", "C5", "C10", "C12"):
+        assert codebook.codes[cid]["transferability"] == "high", cid
+
+
+def test_min_myntra_specific_n_gate_present(codebook):
+    """A ranked claim on a low-transferability code is ranked on its
+    Myntra-specific n, not the pooled n."""
+    assert codebook.meta.get("min_myntra_specific_n_for_low", 0) >= 15

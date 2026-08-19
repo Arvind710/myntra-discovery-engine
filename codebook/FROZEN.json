@@ -1,8 +1,8 @@
 {
-  "version": "v1",
-  "content_hash": "718e9f3e69553b7126ebfb97381a967256cecad913bb33a859dfc098578d5737",
-  "version_string": "v1:718e9f3e",
-  "frozen_at": "2026-08-19T13:39:51+00:00",
+  "version": "v1.1",
+  "content_hash": "fa32f47e2f3289caa0d1e006b26ee24dd7ad7c30954821320bf2120be28ccddf",
+  "version_string": "v1.1:fa32f47e",
+  "frozen_at": "2026-08-19T17:34:07+00:00",
   "n_scored_codes": 33,
-  "note": "P0 gate \u2014 pre-registered before any scoring (FR-5.6)"
+  "note": "v1.1 \u2014 per-code transferability (A-4), re-frozen before any code scoring"
 }

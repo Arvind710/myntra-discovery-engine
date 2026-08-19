@@ -20,9 +20,26 @@
 #                             prompt carries in full for every candidate code
 # =====================================================================
 
-version: v1
+version: v1.1
 frozen_at: null          # set by pipeline/common/codebook.py freeze at P0 gate
 n_codes: 33              # excludes Z-99, which is the residual bucket
+# A-4 is load-bearing, not a footnote: only 35.9% of the relevant corpus is
+# Myntra-specific (measured 2026-08-19). Generic online-fashion records are
+# legitimate evidence -- problemstatement.md A-4 says so -- but NOT equally
+# for every code.
+#
+#   high   - rooted in the product category or the person. Brand sizing is
+#            inconsistent across the whole Indian market; photos flatter
+#            fabric everywhere; wardrobe fit is about the wearer. A generic
+#            record is near-full-strength evidence.
+#   medium - the behaviour is generic, the mechanism is partly Myntra's.
+#   low    - platform-mechanical. Myntra's wishlist UI, nav, fees, payment,
+#            return policy, inventory. A complaint about Ajio's wishlist says
+#            almost nothing about Myntra's.
+#
+# REPORTING RULE: any ranked claim on a `low` code must show its
+# Myntra-specific n separately, and is ranked on THAT n -- not the pooled one.
+min_myntra_specific_n_for_low: 15
 confidence_floor: 0.50   # below this a code is retained but excluded from ranked claims (EC-CLS-3)
 min_n_ranked_claim: 30   # AR-12 / arch §9.4
 min_n_visible: 15
@@ -45,6 +62,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer]
     journey_rank: 1
+    transferability: low          # evidence weight of a non-Myntra record
     solvable_without_money: yes
     question: "Was the save ever a decision at all?"
     barrier_in_users_words: "It was one tap while scrolling"
@@ -66,6 +84,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer]
     journey_rank: 2
+    transferability: low          # evidence weight of a non-Myntra record
     solvable_without_money: yes
     question: "What would bring the user back to the list?"
     barrier_in_users_words: "I forgot I even had a wishlist"
@@ -85,6 +104,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer]
     journey_rank: 3
+    transferability: low          # evidence weight of a non-Myntra record
     solvable_without_money: yes
     question: "Did anything tell the user something had changed?"
     barrier_in_users_words: "Nothing told me anything had changed"
@@ -105,6 +125,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer]
     journey_rank: 4
+    transferability: low          # evidence weight of a non-Myntra record
     solvable_without_money: yes
     question: "Can the user get to the list?"
     barrier_in_users_words: "I don't know where the wishlist lives"
@@ -123,6 +144,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer]
     journey_rank: 5
+    transferability: low          # evidence weight of a non-Myntra record
     solvable_without_money: yes
     question: "Is the list where the user is shopping?"
     barrier_in_users_words: "I saved on phone, I shop on laptop"
@@ -141,6 +163,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer]
     journey_rank: 6
+    transferability: low          # evidence weight of a non-Myntra record
     solvable_without_money: yes
     question: "Is there anything new to come back for?"
     barrier_in_users_words: "It's the same list as last time"
@@ -159,6 +182,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer]
     journey_rank: 7
+    transferability: low          # evidence weight of a non-Myntra record
     solvable_without_money: yes
     question: "Does the user use the list at all, or route around it?"
     barrier_in_users_words: "I just search for it again"
@@ -183,6 +207,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer]
     journey_rank: 1
+    transferability: low          # evidence weight of a non-Myntra record
     solvable_without_money: yes
     question: "Is the list navigable at all?"
     barrier_in_users_words: "It's one long undifferentiated grid"
@@ -201,6 +226,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer]
     journey_rank: 2
+    transferability: low          # evidence weight of a non-Myntra record
     solvable_without_money: yes
     question: "Can the user find a specific saved item?"
     barrier_in_users_words: "I can't find the kurta I saved last month"
@@ -219,6 +245,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer]
     journey_rank: 3
+    transferability: low          # evidence weight of a non-Myntra record
     solvable_without_money: yes
     question: "Does old intent stay reachable?"
     barrier_in_users_words: "Old stuff is at the bottom forever"
@@ -236,6 +263,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer]
     journey_rank: 4
+    transferability: low          # evidence weight of a non-Myntra record
     solvable_without_money: yes
     question: "Is the list still mostly alive?"
     barrier_in_users_words: "Half of it is sold out"
@@ -258,6 +286,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer]
     journey_rank: 5
+    transferability: low          # evidence weight of a non-Myntra record
     solvable_without_money: yes
     question: "Did the item survive at all?"
     barrier_in_users_words: "This one just vanished"
@@ -276,6 +305,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer]
     journey_rank: 6
+    transferability: low          # evidence weight of a non-Myntra record
     solvable_without_money: yes
     question: "Is the list self-consistent?"
     barrier_in_users_words: "I've saved the same thing three times"
@@ -294,6 +324,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer]
     journey_rank: 7
+    transferability: low          # evidence weight of a non-Myntra record
     solvable_without_money: yes
     question: "Does the user remember why this is here?"
     barrier_in_users_words: "I don't remember why I saved this"
@@ -313,6 +344,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer]
     journey_rank: 8
+    transferability: low          # evidence weight of a non-Myntra record
     solvable_without_money: yes
     question: "Which version did the user actually want?"
     barrier_in_users_words: "Which colour did I want?"
@@ -341,6 +373,7 @@ codes:
     outcome_default: na
     outcome_allowed: [na]
     journey_rank: 0
+    transferability: medium          # evidence weight of a non-Myntra record
     solvable_without_money: na
     question: null
     blueprint_refs: [H12, H14]
@@ -364,6 +397,7 @@ codes:
     outcome_default: exit
     outcome_allowed: [exit]
     journey_rank: 1
+    transferability: medium          # evidence weight of a non-Myntra record
     solvable_without_money: partly
     question: null
     barrier_in_users_words: "I already bought one somewhere else"
@@ -384,6 +418,7 @@ codes:
     outcome_default: exit
     outcome_allowed: [exit]
     journey_rank: 2
+    transferability: low          # evidence weight of a non-Myntra record
     solvable_without_money: no          # supply-side. FAILS the C-2 constraint
     question: "My size isn't there right now"
     blueprint_refs: [H11, DH1]
@@ -407,6 +442,7 @@ codes:
     outcome_default: exit
     outcome_allowed: [exit, defer]     # source doc records BOTH — see contradictions.notes
     journey_rank: 3
+    transferability: medium          # evidence weight of a non-Myntra record
     solvable_without_money: partly     # price-history transparency and loss-framing, NOT the price
     question: "Is this the right price, and is now the right time?"
     blueprint_refs: [H7, H9, H10, DH2]
@@ -431,6 +467,7 @@ codes:
     outcome_default: exit
     outcome_allowed: [exit]
     journey_rank: 4
+    transferability: low          # evidence weight of a non-Myntra record
     solvable_without_money: partly     # return-EFFORT disclosure, not the policy
     question: "If it's wrong, how painful is sending it back?"
     blueprint_refs: [H8, DH3]
@@ -451,6 +488,7 @@ codes:
     outcome_default: exit
     outcome_allowed: [exit, defer]
     journey_rank: 5
+    transferability: high          # evidence weight of a non-Myntra record
     solvable_without_money: partly
     question: "Do I still actually want this?"
     blueprint_refs: [H15, DH4]
@@ -469,6 +507,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer]
     journey_rank: 6
+    transferability: high          # evidence weight of a non-Myntra record
     solvable_without_money: yes
     question: "Which size, when every brand runs different?"
     blueprint_refs: [H6, H11, DH5]
@@ -490,6 +529,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer]
     journey_rank: 7
+    transferability: high          # evidence weight of a non-Myntra record
     solvable_without_money: yes
     question: "Will the fabric, colour and quality match the photos?"
     blueprint_refs: [H6, DH6]
@@ -509,6 +549,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer]
     journey_rank: 8
+    transferability: medium          # evidence weight of a non-Myntra record
     solvable_without_money: yes
     question: "What did people who actually received it say?"
     blueprint_refs: [H5, H13, DH7]
@@ -529,6 +570,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer, exit]
     journey_rank: 9
+    transferability: medium          # evidence weight of a non-Myntra record
     solvable_without_money: yes        # HIGHEST STRATEGIC VALUE
     question: "Let me go check this properly somewhere else"
     blueprint_refs: [H5, DH8]
@@ -549,6 +591,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer]
     journey_rank: 10
+    transferability: high          # evidence weight of a non-Myntra record
     solvable_without_money: yes
     question: "Will it look good on *me*, with what I own?"
     blueprint_refs: [H4, DH9]
@@ -568,6 +611,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer]
     journey_rank: 11
+    transferability: high          # evidence weight of a non-Myntra record
     solvable_without_money: yes
     question: "I need to check with my partner/parent"
     blueprint_refs: [new C4b, DH10]
@@ -586,6 +630,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer]
     journey_rank: 12
+    transferability: high          # evidence weight of a non-Myntra record
     solvable_without_money: yes
     question: "Which of these five do I actually pick?"
     blueprint_refs: [H2, H3, DH11]
@@ -604,6 +649,7 @@ codes:
     outcome_default: defer
     outcome_allowed: [defer]
     journey_rank: 13
+    transferability: medium          # evidence weight of a non-Myntra record
     solvable_without_money: yes
     question: "What makes today different from tomorrow?"
     blueprint_refs: [DH12]
@@ -632,6 +678,7 @@ codes:
     outcome_default: exit
     outcome_allowed: [exit]
     journey_rank: 1
+    transferability: low          # evidence weight of a non-Myntra record
     solvable_without_money: yes        # a DISCLOSURE fix, not a discount — survives C-2 cleanly
     question: "Why is the total higher than the price?"
     barrier_in_users_words: "Shipping and fees appeared at the last step"
@@ -650,6 +697,7 @@ codes:
     outcome_default: exit
     outcome_allowed: [exit]
     journey_rank: 2
+    transferability: low          # evidence weight of a non-Myntra record
     solvable_without_money: yes        # an information-timing problem
     question: "Will it arrive in time, and can I send it back?"
     barrier_in_users_words: "Delivery date was after the wedding"
@@ -667,6 +715,7 @@ codes:
     outcome_default: exit
     outcome_allowed: [exit]
     journey_rank: 3
+    transferability: low          # evidence weight of a non-Myntra record
     solvable_without_money: partly     # overlaps C6 — COUNT ONCE, AT D
     question: "Do I want all of this, at this total?"
     barrier_in_users_words: "Saw the basket total and backed out"
@@ -684,6 +733,7 @@ codes:
     outcome_default: exit
     outcome_allowed: [exit]
     journey_rank: 4
+    transferability: low          # evidence weight of a non-Myntra record
     solvable_without_money: yes        # cheapest win available anywhere in the funnel
     question: "Did the transaction physically complete?"
     barrier_in_users_words: "Payment failed three times"
@@ -705,6 +755,7 @@ codes:
     outcome_default: na
     outcome_allowed: [exit, defer, na]
     journey_rank: 99
+    transferability: medium          # evidence weight of a non-Myntra record
     solvable_without_money: na
     is_residual: true
     blueprint_refs: []
