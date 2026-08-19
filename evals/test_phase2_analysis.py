@@ -106,3 +106,38 @@ def test_s2_inv_10_segment_below_threshold_is_unknown(corpus, codebook):
         "SELECT count(*) FROM record_meta WHERE segment NOT IN ('unknown') AND segment_conf < ?",
         (thr,)).fetchone()[0]
     assert n == 0, f"{n} records carry a segment below the {thr} threshold"
+
+
+@pytest.mark.needs_corpus
+def test_dropped_prefilter_leaves_no_exclusion_marks(corpus):
+    """The prefilter was removed from the pipeline after S2-MET-6 measured
+    recall at 76.6% against a T-5 floor of 95%. Removing a stage from the
+    CODE does not remove the marks it already wrote: `exclusions` is a
+    marking table ([A.1]), and the `retained` view subtracts every mark.
+
+    The marks survived the drop once already, and the effect was silent —
+    the pipeline read `records` directly (relevance.py) so classification
+    was correct, while the app read `retained` and reported a corpus of
+    4,031 instead of 8,647, hiding exactly the 281 relevant records the
+    prefilter finding was about. A dropped stage must have its marks
+    reversed, not merely stop running.
+    """
+    n = corpus.execute(
+        "SELECT count(*) FROM exclusions WHERE stage='prefilter'").fetchone()[0]
+    assert n == 0, (
+        f"{n} prefilter exclusion marks remain; the prefilter is dropped, so "
+        "these silently shrink every denominator the app reads")
+
+
+@pytest.mark.needs_corpus
+def test_every_classified_record_is_visible_in_retained(corpus):
+    """The property, not a proxy for it: whatever the exclusion table says,
+    a record that was classified must be reachable through the view the app
+    renders from. Otherwise the charts describe a corpus the Data Bank
+    cannot show, and no error is raised anywhere."""
+    hidden = corpus.execute(
+        "SELECT count(DISTINCT record_id) FROM classifications "
+        "WHERE record_id NOT IN (SELECT record_id FROM retained)").fetchone()[0]
+    assert hidden == 0, (
+        f"{hidden} classified records are excluded from the `retained` view — "
+        "the analysis counts them, the app cannot display them")

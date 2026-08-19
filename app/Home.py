@@ -8,7 +8,8 @@ import streamlit as st
 from lib import db, framework as F
 
 ROOT = Path(__file__).resolve().parents[1]
-st.set_page_config(page_title="Myntra Discovery Engine", page_icon="🔎", layout="wide")
+st.set_page_config(page_title="Myntra Discovery Engine", page_icon="🔎", layout="wide",
+                   initial_sidebar_state="expanded")
 
 st.title("AI Discovery Engine — Myntra wishlist conversion")
 st.caption("Turning public user feedback into a quantified, source-cited ranking of the "
@@ -26,6 +27,26 @@ if pop:
     b.metric("Relevant to the decision", f"{int(m.relevant):,}")
     c.metric("Distinct authors", f"{int(m.authors):,}")
     d.metric("Classified", f"{int(m.classified):,}")
+
+# AC-1 / P5-6: the sections must be reachable without knowing that Streamlit
+# hides its nav in a sidebar that auto-collapses on a narrow window. A cold
+# evaluator does not go looking for a "»" arrow.
+st.subheader("Sections")
+n1, n2, n3, n4 = st.columns(4)
+with n1:
+    st.page_link("pages/1_Data_Bank.py", label="**Data Bank**", icon="🗄️")
+    st.caption("Every record, filterable, with its source link")
+with n2:
+    st.page_link("pages/2_Analysis.py", label="**Analysis**", icon="📊")
+    st.caption("Ranked barriers, segments, and the validation report")
+with n3:
+    st.page_link("Home.py", label="~~Insights~~", icon="💡", disabled=True)
+    st.caption("Ranked opportunities — P3, not yet built")
+with n4:
+    st.page_link("Home.py", label="~~Ask~~", icon="💬", disabled=True)
+    st.caption("Grounded Q&A over the corpus — P4, not yet built")
+
+st.divider()
 
 left, right = st.columns([3, 2])
 
@@ -99,12 +120,21 @@ with right:
     st.markdown("""
 | Phase | Ships | |
 |---|---|---|
-| P0 | Foundation & freeze | ✅ |
-| P1 | Data Bank | ✅ |
-| P2 | Analysis | ✅ |
+| P0 | Foundation & freeze | ✅ gate passed |
+| P1 | Data Bank | ✅ gate passed |
+| P2 | Analysis | ⚠️ page live, **gate open** |
 | P3 | Insights | ⬜ |
 | P4 | Ask | ⬜ |
 """)
+    st.warning(
+        "**The P2 numbers are not yet validated.** A tick here means the exit gate "
+        "passed, not that the page exists. P2 is open on three counts: the gold set "
+        "is unlabelled, so per-code agreement against a human (T-3/T-4, AC-9) is "
+        "unmeasured; unclassifiable records sit at 31.7% against a 15% ceiling "
+        "(AC-11 fails), so the codebook is formally incomplete; and Track B "
+        "clustering — the check against codebook blindness — is not built. "
+        "Read every figure on the Analysis page as provisional until this clears.",
+        icon="⚠️")
 
 st.divider()
 st.caption("Public data only · authors pseudonymised · no PII in outputs. "

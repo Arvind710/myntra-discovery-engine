@@ -341,3 +341,20 @@ CREATE TABLE IF NOT EXISTS hypotheses (
   falsifier         TEXT NOT NULL,   -- S3-INV-2 / AC-7: what would disprove it
   run_id            TEXT NOT NULL
 );
+
+-- ---------------------------------------------------------------------
+-- 8. GOLD SAMPLE FRAME (Appendix B, as amended 2026-08-20)
+-- ---------------------------------------------------------------------
+-- The frame is drawn ONCE and frozen, separately from the labels in `gold`.
+-- Separating frame from labels is what makes "how many are left to label"
+-- and "which stratum is under-labelled" answerable, and it stops the sample
+-- silently redrawing itself if the sampler is re-run.
+CREATE TABLE IF NOT EXISTS gold_sample (
+  record_id   TEXT NOT NULL REFERENCES records(record_id),
+  pass_no     INTEGER NOT NULL DEFAULT 1,  -- 2 = silent repeat (T-13, EC-VAL-1)
+  stratum     TEXT NOT NULL,
+  sitting_id  TEXT NOT NULL,               -- 'sitting-1' | 'sitting-2'
+  seq         INTEGER NOT NULL,            -- presentation order within the sitting
+  run_id      TEXT NOT NULL,
+  PRIMARY KEY (record_id, pass_no)
+);
