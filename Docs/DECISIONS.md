@@ -62,6 +62,44 @@ Three gaps between the design docs, found while sequencing them. All are correct
 
 ---
 
+## Source loss — Reddit unavailable (2026-08-19)
+
+**Reddit is out.** Arvind's API application was rejected. Verified: as of 2026 the
+self-serve "script" app path at `/prefs/apps` is closed to new developers (redirects
+to the policy page or silently fails), and the review form routinely rejects small
+personal projects. Retrying is not a fix.
+
+**We do not work around it.** No unauthenticated scraping, no robots.txt circumvention
+— NFR-7 commits the project to respecting platform ToS, and R-7/AR-1 already prescribe
+"degrade to smaller-but-cited over larger-but-fragile".
+
+**What this costs.** `architecture.md` §5.1 designated Reddit *"Best source for
+reasoning. Long-form 'why I didn't buy'"*. It was the only source built for
+deliberation rather than reaction. Two consequences that must be carried into every
+output:
+
+| Loss | Consequence | Handling |
+|---|---|---|
+| Long-form reasoning | Fewer records carrying a *chain* of reasoning; counterfactuals ("I'd have bought it if…") and multi-barrier records get scarcer | Target YouTube videos that provoke reasoning; expand curated research |
+| Source independence | Play + App Store are highly correlated (both app-store review skew). Effective independent source types drop from ~4 to ~3 | Triangulation rule (§8) weakens — state it; JS-divergence per source becomes more load-bearing, not less |
+
+**Revised source plan:**
+
+| Source | Status | Role |
+|---|---|---|
+| YouTube (`commentThreads`) | ✅ key verified | **Promoted to primary reasoning source.** Uniquely captures C14 |
+| Play Store | ✅ no auth needed | Volume, low yield (EC-COL-13) |
+| App Store | ✅ no auth needed | Volume, low yield, correlated with Play |
+| Curated research | ✅ agent-sourced | Expanded — now covers the Stage A blind spot *and* part of the community-reasoning gap |
+| Reddit | ⛔ unavailable | Gap recorded in corpus composition, per EC-COL-16 |
+
+**Eval amendment:** S1-MET-1 ("each configured source contributed > 0 records | All four")
+now reads *all **configured** sources*, with Reddit de-configured and the reason recorded.
+An unavailable source must not be silently dropped from the gate — it is de-configured
+explicitly, in writing, and shown in the corpus composition dashboard.
+
+---
+
 ## Explicitly rejected
 
 Recorded so they don't quietly reappear as "optimisations":
@@ -80,9 +118,9 @@ Recorded so they don't quietly reappear as "optimisations":
 
 | Item | Owner |
 |---|---|
-| Reddit app registration (PRAW credentials) | **Arvind** — needs their account |
-| YouTube Data API v3 key (Google Cloud project) | **Arvind** — needs their account |
-| OpenAI credits loaded + hard usage cap set at $30 | **Arvind** — before the first batch job |
+| ~~Reddit app registration~~ | ⛔ **Rejected by Reddit — de-configured, see above** |
+| YouTube Data API v3 key | ✅ **verified 2026-08-19** — search + commentThreads both working |
+| OpenAI credits + hard usage cap | ⚠️ key verified (gpt-5 reachable, live call logged). **$5 loaded — covers through P2C. Top-up to ~$25 needed before the full classification run (P2D).** Hard cap still to be set |
 | Gold-set labelling, 150–200 records, ~2–4h in-app | **Arvind** — after Stage 1 pilot |
 | Curated research sourcing | **Claude** — with live-URL verification per EC-COL-15 |
 

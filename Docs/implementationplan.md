@@ -66,6 +66,7 @@ Sixteen days to the deadline, but the engine is Part 1 of seven. **The engine mu
 | **P0 — Foundation & Freeze** | 1 | Aug 19–20 | Repo, schema, frozen codebook, creds, eval harness, blank app deployed | P0-1…P0-9 |
 | **P1 — Collection & Data Bank** | 3 | Aug 20–23 | Collectors, cleaning, pilot, full corpus, Data Bank page | S1-* + P1-* |
 | **P2 — Analysis** | 4 | Aug 23–27 | Relevance, classification, gold validation, clustering, cross-tabs, Analysis page | S2-* + T-1…T-8, T-12, T-13 |
+| | | | *⚠️ Sub-phase **2D** (full classification, ~$10 batched) is the first step the current $5 balance cannot fund. Top-up before submitting the batch.* | |
 | **P3 — Insights & Hypotheses** | 2 | Aug 27–28 | Ranked opportunities, segment recommendation, research artefacts | S3-* |
 | **P4 — Research Analyst (chatbot)** | 2.5 | Aug 28–30 | Grounded Q&A, verification layer, rate limits | S4-* + T-9, T-10, T-11 |
 | **P5 — Release & Handoff** | 0.5 | Aug 30 | Home/one-slide, Validation tab published, run pin, walkthrough | X-1…X-4 + AC sweep |
@@ -166,7 +167,7 @@ The deploy path is the single most common late-stage surprise in a Streamlit pro
 
 | # | Task | Notes |
 |---|---|---|
-| 1.1 | `collect/play_store.py`, `app_store.py`, `reddit.py`, `youtube.py` — all emitting the same `records` schema, all writing `collect_query` | Per-source checkpointing on `ingest_run_id`; resume by diffing `native_id` (EC-COL-3). Never overwrite a partial run |
+| 1.1 | `collect/play_store.py`, `app_store.py`, `youtube.py` — all emitting the same `records` schema, all writing `collect_query`. **`reddit.py` is written but de-configured** (API access rejected 2026-08-19, see `DECISIONS.md`); it activates if credentials ever arrive | Per-source checkpointing on `ingest_run_id`; resume by diffing `native_id` (EC-COL-3). Never overwrite a partial run |
 | 1.2 | Per-source and per-video yield logging | EC-COL-1, EC-COL-2 — a source or video contributing zero is **logged**, never skipped quietly |
 | 1.3 | `clean/dedupe.py` — exact hash dedupe **across** sources (safe); near-dupe MinHash Jaccard > 0.85 **within `(source, author_hash)` only** | **EC-CLEAN-1. The single most consequential line in the build.** Cross-author similarity is *computed and stored as a consensus metric*, never used to remove |
 | 1.4 | `clean/language.py` — fasttext langid; Latin script + Hindi lexicon markers → `hi-Latn`; **never drop on language** | EC-CLEAN-4/5. `lang` is metadata; `unknown` is valid |
@@ -193,7 +194,7 @@ The deploy path is the single most common late-stage surprise in a Streamlit pro
 | S1-INV-3 | INV | `record_id` unique; re-ingest idempotent | 100% **[EC-CLEAN-7]** |
 | S1-INV-4 | INV | No email/phone pattern survives in `text_clean` | 0 hits |
 | S1-INV-5 | INV | Every exclusion row carries a reason from the allowed enum | 100% |
-| S1-MET-1 | MET | Each of the four configured sources contributed > 0 records | 4/4 **[EC-COL-1]** |
+| S1-MET-1 | MET | Each **configured** source contributed > 0 records. De-configured sources are named, with the reason, in the gate report and the corpus composition dashboard — never silently dropped | 3/3 + curated **[EC-COL-1, EC-COL-16]** |
 | S1-MET-2 | MET | Curated citations resolve to a live URL | **100%** **[EC-COL-15]** |
 | S1-MET-3 | MET | Distinct-author count computed and displayed per source | Present |
 | **S1-PROBE-1** | PROBE | **Consensus-preservation.** Run cleaning over `dedupe_consensus.jsonl`: **all 40 distinct-author records survive**, and **4 of the 5 same-author repeats are removed** | Both directions **[EC-CLEAN-1]** |
@@ -203,6 +204,7 @@ The deploy path is the single most common late-stage surprise in a Streamlit pro
 | P1-3 | INV | Cross-author similarity stored as a consensus metric, not applied as a filter | Column populated |
 | P1-4 | OPS | App deployed; Data Bank loads from frozen artifacts; cold start recorded | < 30s |
 | P1-5 | INV | Every prefilter and relevance decision persisted with `run_id` (needed for Appendix B) | 100% |
+| **P1-6** | INV | **Source-independence caveat recorded.** Play and App Store are correlated (both app-store review skew), so with Reddit gone the corpus carries ~3 independent source types, not 4. The triangulation rule (`problemstatement.md` §8) and the evidence-strength `source_diversity` term must both be computed against *independent* types, not raw source count | Stated in composition dashboard |
 
 **Do not start P2 until:** all green, **and** P1-1 has an actual number. A-1 is the assumption that gates the project; leaving it unmeasured and proceeding is the single largest process risk in the plan.
 
