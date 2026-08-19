@@ -1,0 +1,101 @@
+# Crosswalk: engine codebook v1.2  ->  Arvind's updated framework
+# ("Grad project updated solution.pdf", 2026-08-20)
+#
+# WHY THIS FILE EXISTS. The updated framework RENUMBERS Stage C. Engine C9
+# means "intent never live"; framework C9 means "intent deferred by an
+# external condition". Engine C10 means "approval needed"; framework C10
+# means "intent never existed". Reporting an engine number under a framework
+# label would produce a figure that looks right and means something else --
+# the most dangerous class of error in this project.
+#
+# Everything the engine emits is translated through this file before it
+# reaches a chart, an answer or the deck. Nothing is hardcoded in a query.
+
+version: v2
+authority: "Grad project updated solution.pdf"
+translated_from: "codebook v1.2"
+
+# Stage A, B and D are unchanged between the two documents.
+stage_c:
+  C1:
+    to: C1
+    name: Fit & size uncertainty
+    subcodes:
+      C1.1: Sizing varies across brands, usual size unreliable
+      C1.2: Size chart in measurements the user cannot translate
+      C1.3: Proportions differ from standard grading
+      C1.4: Previous size-related return has made them unwilling to risk it
+  C2:
+    to: C2
+    name: Material & digital-physical gap
+    subcodes:
+      C2.1: Cannot judge fabric weight, drape, opacity, texture from photos
+      C2.2: Expects delivered colour to differ from screen
+      C2.3: Suspects photos are styled, pinned or retouched
+      C2.4: Doubts build quality at this price point
+      C2.5: Unsure whether listing or seller is authentic
+  C3:
+    to: C3
+    name: Styling & self-image
+    subcodes:
+      C3.1: Cannot picture it on their own body rather than the model
+      C3.2: Does not know what to pair it with
+      C3.3: Judges it too single-use, no repeat wear
+      C3.4: Suspects they already own something similar
+      C3.5: Unsure whether the style is current
+  C4:
+    to: C4
+    name: External validation & social proof
+    subcodes:
+      C4.1: Reviews too few, too old, or lack photos
+      C4.2: Reviews do not address the user's specific question
+      C4.3: Negative reviews present, cannot tell if they apply
+      C4.4: Leaves the app for external evidence, session ends
+      C4.5: Sends to a friend or partner, no reply arrives in time
+      C4.6: Receives negative feedback from their circle, drops it
+  C5: {to: C5, name: Comparison & decision load}
+  C6: {to: C6, name: Price, value & anchoring}
+  C7: {to: C7, name: Fulfilment, returns & trust}
+  C8: {to: C8, name: Availability at decision time}
+
+# --- the renumbering. Read carefully. ---
+engine_to_framework:
+  C1:  {to: C1,   note: direct}
+  C2:  {to: C2,   note: direct}
+  C3:  {to: C3,   note: direct}
+  C4:  {to: C4,   note: "engine C4 covers framework C4.1-C4.3 only"}
+  C5:  {to: C5,   note: direct}
+  C6:  {to: C6,   note: direct}
+  C7:  {to: C7,   note: direct}
+  C8:  {to: C8,   note: direct}
+  C14: {to: C4.4, note: "off-platform verification exit; framework folds it INTO C4"}
+  C10: {to: C4.5, note: "approval/social; framework splits across C4.5 and C9.5"}
+  C9:  {to: C10,  note: "COLLISION. engine C9 (intent never live) = framework C10"}
+  C11: {to: C11,  note: "need extinguished -> framework C11.2/C11.3"}
+  C12: {to: C11.1, note: "desire cooled -> framework C11.1 (framework merges C11+C12)"}
+  C13:
+    to: S14
+    note: >
+      NO FRAMEWORK C-CODE EXISTS. Engine C13 is "nothing makes today
+      different" -- deferral with NO external condition. Framework C9 is
+      deferral BY an external condition (dated event, sale, salary,
+      restock, approval), which is a different population. The framework
+      places this at S14 "Action trigger" in the decision journey instead.
+      Reported as a journey stage, not as a barrier code. Do not fold it
+      into C9 -- that would attribute a named trigger to users who have none.
+
+# Six segments, derived structurally rather than inferred from stated
+# motivation. This is why coverage is 100% and not 6.6%: the framework asks
+# three questions the corpus can actually answer.
+segments:
+  derivation:
+    q1_intent: "outcome='na' or code C9(engine) -> no intent; C11/C12 -> lapsed"
+    q2_horizon: "codes C6, C8, C13 present -> 'later'; else 'soon'"
+    q3_decided: "any Confidence-phase code present -> NOT decided"
+  map:
+    "1": {name: Collectors,        rule: "no intent"}
+    "2": {name: Lapsed Intenders,  rule: "intent lapsed"}
+    "3": {name: Ready Buyers,      rule: "intent + soon + decided"}
+    "4": {name: Stuck Deciders,    rule: "intent + soon + NOT decided", target: true}
+    "5": {name: Committed Waiters, rule: "intent + later + decided"}
+    "6": {name: Hesitant Waiters,  rule: "intent + later + NOT decided"}
