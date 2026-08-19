@@ -183,6 +183,68 @@ silent-failure risk into a number. Collecting more raw data does neither.
 
 ---
 
+## S2-MET-6 FAILS — the prefilter is dropped from the pipeline (2026-08-19)
+
+EC-PRE-1 was flagged in `edgecase.md` as one of the five worst cases: *"a record
+dropped before any LLM sees it is invisible to every downstream metric. There is
+no error, no log entry showing a wrong decision, and no way to notice it from the
+output."* It is now measured, and it was real.
+
+**Both pools scored — passed AND rejected — so prefilter recall is a fact, not an estimate.**
+
+| Source | Relevant | Prefilter kept | Prefilter dropped | **Recall** |
+|---|---|---|---|---|
+| YouTube | 573 | 481 | 92 | 83.9% |
+| Reddit | 490 | 344 | 146 | **70.2%** |
+| Play | 114 | 75 | 39 | **65.8%** |
+| App Store | 22 | 18 | 4 | 81.8% |
+| **Total** | **1,199** | **918** | **281** | **76.6%** |
+
+**T-5 threshold is ≥95%. Measured 76.6%. FAIL.**
+
+Nearly a quarter of the relevant corpus would have been invisible — and invisible
+in the specific way that leaves no trace: not in any denominator, not in any error
+log, not detectable from the output.
+
+### Why it failed
+
+Every dropped record had `lexicon_hit=0` and a below-cutoff cosine. They are
+relevant by *reasoning*, not by vocabulary — "Best is to get them stitched, it'll
+not come within 1k but it'll last many years" is a value-versus-durability purchase
+judgement (C6) that shares almost no vocabulary with any exemplar. The embedding
+gate was tuned to keep the top 45% by similarity; relevance simply is not that
+concentrated in embedding space.
+
+### The decision: drop the prefilter, score everything
+
+The prefilter existed for cost. `architecture.md` §6.1 costed it against
+**frontier-model** classification, where scoring 8,639 records would have been
+prohibitive. That premise no longer holds:
+
+| | Cost | Relevant recovered |
+|---|---|---|
+| Prefilter + score survivors | $2.52 | 918 (76.6%) |
+| Score everything | ~$5.01 | 1,199 (100%) |
+
+**The prefilter saved $2.49 and cost 281 relevant records.** At gpt-5-mini prices
+for a coarse binary task, its economics invert completely. It is removed from the
+pipeline; `prefilter.py` is retained only as a diagnostic, and the `prefilter`
+table is kept because it is what made this measurement possible.
+
+Corpus is now **1,199 relevant records with 100% coverage of the cleaned corpus** —
+no record is unscored, so EC-PRE-1 cannot apply to this run at all.
+
+### Caveat carried forward
+
+Some recovered records look marginal ("Lana Del Rey! so why second thoughts??? go
+for it"). The 281 may include relevance false positives, which would mean true
+recall is somewhat better than 76.6% and the corpus somewhat smaller than 1,199.
+**The gold set is the arbiter** (Appendix B already samples both prefilter-rejected
+and LLM-irrelevant strata for exactly this reason). Reported here as measured,
+with the uncertainty stated rather than resolved by assertion.
+
+---
+
 ## Explicitly rejected
 
 Recorded so they don't quietly reappear as "optimisations":

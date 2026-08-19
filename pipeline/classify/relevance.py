@@ -59,6 +59,11 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--sample", type=int, default=0,
                     help="stratified sample per source (0 = all prefilter survivors)")
+    ap.add_argument("--rejected", action="store_true",
+                    help="score the PREFILTER-REJECTED pool instead. This is what makes "
+                         "S2-MET-6 prefilter recall measurable: EC-PRE-1 records are "
+                         "invisible to every downstream metric precisely because nothing "
+                         "ever looked at them.")
     ap.add_argument("--workers", type=int, default=12)
     ap.add_argument("--model", default=None)
     args = ap.parse_args()
@@ -79,6 +84,19 @@ def main() -> int:
                 FROM retained r JOIN prefilter p ON p.record_id=r.record_id
                 WHERE p.passed=1 AND r.source=?
                 ORDER BY p.embed_score DESC LIMIT ?""", (src, args.sample))]
+    elif args.rejected:
+        # NOTE: must query `records`, NOT the `retained` view. Prefilter
+        # rejection writes an exclusion row, so rejected records drop out of
+        # `retained` by construction ([A.1]). Looking past exactly that
+        # exclusion is the whole point -- it is what Appendix B anticipated
+        # for the gold sampler. Records excluded for any OTHER reason
+        # (length, dedupe) stay excluded.
+        rows = [dict(r) for r in con.execute("""
+            SELECT r.record_id, r.source, r.text_raw, r.thread_context
+            FROM records r JOIN prefilter p ON p.record_id=r.record_id
+            WHERE p.passed=0
+              AND NOT EXISTS (SELECT 1 FROM exclusions e
+                              WHERE e.record_id=r.record_id AND e.stage<>'prefilter')""")]
     else:
         rows = [dict(r) for r in con.execute("""
             SELECT r.record_id, r.source, r.text_raw, r.thread_context
@@ -131,6 +149,23 @@ def main() -> int:
         FROM relevance v JOIN records r ON r.record_id=v.record_id
         GROUP BY r.source ORDER BY count(*) DESC"""):
         print(f"  {s:<10} {n:>8,} {rel:>9,} {rel / n:>6.1%}")
+
+    # S2-MET-6 / EC-PRE-1: prefilter recall, now measurable because BOTH
+    # pools have been scored. Of everything genuinely relevant, what share
+    # would the prefilter have let through?
+    row = con.execute("""
+        SELECT sum(CASE WHEN p.passed=1 AND v.is_relevant=1 THEN 1 ELSE 0 END) AS kept,
+               sum(v.is_relevant)                                             AS total,
+               sum(CASE WHEN p.passed=0 AND v.is_relevant=1 THEN 1 ELSE 0 END) AS missed
+        FROM relevance v JOIN prefilter p ON p.record_id=v.record_id""").fetchone()
+    if row and row["total"]:
+        recall = row["kept"] / row["total"]
+        print(f"\n  === S2-MET-6 PREFILTER RECALL ===")
+        print(f"  relevant records total       : {row['total']:,}")
+        print(f"  ...that the prefilter kept   : {row['kept']:,}")
+        print(f"  ...that the prefilter DROPPED: {row['missed']:,}   <- EC-PRE-1 misses")
+        print(f"  RECALL = {recall:.1%}   (T-5 threshold >= 95%)  "
+              f"{'PASS' if recall >= 0.95 else 'FAIL'}")
     return 0
 
 
