@@ -148,3 +148,68 @@ def test_s1_met_3_distinct_author_counts_available(corpus):
         "SELECT count(*) AS n, count(DISTINCT author_hash) AS a FROM retained").fetchone()
     assert row["a"] > 0
     assert row["a"] <= row["n"]
+
+
+# =====================================================================
+# S1-INV-4 -- PII scrubbing. Tested on synthetic input, because a corpus
+# that happens to contain no PII cannot distinguish "scrubber works" from
+# "scrubber is broken". The live corpus returned zero hits; this is what
+# proves that was a fact about the corpus, not about the code.
+# =====================================================================
+
+@pytest.mark.parametrize("text,expected", [
+    ("call me on 9876543210 please", "[PHONE]"),
+    ("mail me at arvind.c+test@example.co.in", "[EMAIL]"),
+    ("my order OD123456789 was wrong", "[ORDER_ID]"),
+    ("tracking AWB99887766554", "[ORDER_ID]"),
+    ("card 4111111111111111 declined", "[LONG_NUMBER]"),
+    ("+91 9123456789 is my number", "[PHONE]"),
+])
+def test_s1_inv_4_pii_is_replaced_with_typed_placeholders(text, expected):
+    from pipeline.clean import scrub
+    out, kinds = scrub.scrub(text)
+    assert expected in out, f"{expected} not produced for {text!r} -> {out!r}"
+    assert expected.strip("[]") in kinds
+
+
+def test_s1_inv_4_scrub_preserves_sentence_structure():
+    """EC-CLEAN-3: placeholders, never deletion. 'order 12345 came in the
+    wrong size and now I don't trust the sizing' is a C7 record -- deleting
+    the number mangles the sentence the classifier has to read."""
+    from pipeline.clean import scrub
+    out, _ = scrub.scrub("my order OD12345678 came in the wrong size and I'm wary now")
+    assert "came in the wrong size and I'm wary now" in out
+    assert "[ORDER_ID]" in out
+
+
+def test_normalisation_is_idempotent():
+    from pipeline.clean import dedupe
+    a = dedupe.normalise_for_hash("Sizes  run   SMALL!!!")
+    assert dedupe.normalise_for_hash(a) == a
+
+
+@pytest.mark.needs_corpus
+def test_s1_inv_4_no_pii_survives_in_corpus(corpus):
+    import re
+    bad = 0
+    for (t,) in corpus.execute("SELECT text_raw FROM records"):
+        if re.search(r"(?<!\d)[6-9]\d{9}(?!\d)", t) or re.search(r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b", t):
+            bad += 1
+    assert bad == 0, f"{bad} records still carry phone/email patterns"
+
+
+@pytest.mark.needs_corpus
+def test_language_is_never_a_drop_reason(corpus):
+    """EC-CLEAN-4: a large share of the relevant Indian corpus is Hinglish,
+    and short Hinglish is exactly where langid fails. Dropping on a failed
+    detection would silently remove the records we most need."""
+    n = corpus.execute(
+        "SELECT count(*) FROM exclusions WHERE reason='lang'").fetchone()[0]
+    assert n == 0, f"{n} records excluded for language -- lang is metadata only"
+
+
+@pytest.mark.needs_corpus
+def test_consensus_measured_for_corpus(corpus):
+    """P1-3: cross-author similarity stored as strength, not applied."""
+    n = corpus.execute("SELECT count(*) FROM consensus").fetchone()[0]
+    assert n > 0, "consensus table empty -- cross-author signal not measured"
