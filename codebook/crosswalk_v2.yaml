@@ -57,6 +57,9 @@ stage_c:
   C6: {to: C6, name: Price, value & anchoring}
   C7: {to: C7, name: Fulfilment, returns & trust}
   C8: {to: C8, name: Availability at decision time}
+  C9:  {to: C9,  name: Intent deferred by an external condition}
+  C10: {to: C10, name: Intent never existed}
+  C11: {to: C11, name: Intent extinguished after saving}
 
 # --- the renumbering. Read carefully. ---
 engine_to_framework:
