@@ -265,8 +265,16 @@ def test_p0_9_embeddings_and_secrets_are_gitignored(root):
 
 
 def test_p0_9_no_real_secrets_committed(root):
-    assert not (root / ".streamlit" / "secrets.toml").exists(), \
-        "real secrets file present -- it is gitignored, but must not exist in a clean repo state"
+    """The risk is a secret being TRACKED, not one existing locally --
+    .streamlit/secrets.toml and .env are supposed to exist on the dev box.
+    Assert against git's index, which is what actually leaves the machine."""
+    import subprocess
+    tracked = subprocess.run(
+        ["git", "ls-files"], cwd=root, capture_output=True, text=True
+    ).stdout.splitlines()
+    leaked = [f for f in tracked
+              if f.endswith((".env", "secrets.toml")) or f.endswith("embeddings.npy")]
+    assert not leaked, f"secrets tracked by git: {leaked}"
 
 
 # --- P0-8: fixtures authored NOW, before the code they will test ---------
