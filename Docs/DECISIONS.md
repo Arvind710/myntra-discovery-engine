@@ -100,6 +100,41 @@ explicitly, in writing, and shown in the corpus composition dashboard.
 
 ---
 
+## Source access — tested empirically 2026-08-19
+
+Every route was tested, not assumed. Results:
+
+| Route | Result | Evidence |
+|---|---|---|
+| **PRAW / Reddit API** | ⛔ dead | Credentials rejected; self-serve `/prefs/apps` closed to new developers in 2026 |
+| **Reddit RSS** (`/r/x/.rss`) | ⛔ dead | HTTP 200 but **zero `<item>` elements** — a block page, not a feed. `search.rss` → HTTP 429 on the first request |
+| **Reddit public JSON** | ⛔ dead | `www.reddit.com/…/.json` → **403**. `old.reddit.com/…/.json` → 200 but returns **HTML ("Welcome to Reddit"), not JSON** |
+| **Reddit robots.txt** | ⛔ blanket | `User-agent: *` / `Disallow: /` on **both** www and old, plus an explicit Public Content Policy link |
+| **Reddit for Researchers** | ⛔ too slow | Sanctioned route, but **months** to approval, academic-project eligibility, delivered via BigQuery. Deadline is 2026-09-04 |
+| **Apify / Scrapingdog / Octoparse** | ⛔ **declined** | These function by evading the blanket `Disallow: /`. See below |
+| **Myntra on-platform reviews** | ✅ **permitted** | robots.txt: `User-agent: *` / `Allow: /`. 729 disallow rules, **none covering product or review paths** (the only `/buy` rule is `*/buy1-get1-offer/*`). PDP embeds `window.__myx` with ratings + `topReviews` |
+| **Quora** | ⛔ disallowed | robots.txt `User-agent: *` → `Disallow: /` (allowlist is only `/`, `/about`, `/press`, `/login`, `/signup`), plus an explicit prohibition on content use for AI/ML systems |
+
+### Why the scraper services are declined
+
+Not a gray area: Reddit publishes `Disallow: /` for all agents, backs it with a stated Public Content Policy, and actively blocks every unauthenticated endpoint. Apify's Reddit Scraper Pro, Scrapingdog and Octoparse work by circumventing exactly that. **NFR-7 in this project's own spec commits it to respecting platform ToS**, and R-7/AR-1 prescribe degrading to smaller-but-cited rather than larger-but-fragile.
+
+There is also a non-ethical argument that matters more to the deliverable: **collection method is a slide in the deck.** "How did you collect this?" is a certain evaluator question in an assignment that grades methodology explicitly. A corpus assembled by paying a proxy service to defeat a site's stated access policy is a worse answer than a smaller corpus with a clean provenance chain and a documented gap.
+
+### Myntra reviews — what they add, and what they do not
+
+Added to the plan. But their analytical role differs from Reddit's, and conflating the two would be a mistake:
+
+- **They do not replace deliberation.** Myntra reviews are post-purchase; the relevance rubric largely excludes post-purchase content. They carry little of the "I've had this saved for two months and keep not buying it" shape Reddit supplied.
+- **They do something Reddit could not.** Myntra reviews *are the content* that code **C4** ("real-buyer evidence insufficient") is a complaint about. Collecting them lets C4 be measured **directly** rather than inferred from complaints — review counts, image-review share, and how many reviews the PDP actually surfaces. A sampled product showed `reviewsCount: 13,460`, `reviewsImageCount: 2,434` (18%), and **only 3 top reviews rendered on the page**. That is a quantified C4 finding no complaint corpus could produce.
+- **Volume shape:** ~3 visible reviews per product page, so breadth comes from product count (~300–500 products → ~1,000–1,500 reviews), not depth per product.
+
+### Residual gap, stated plainly
+
+Pre-decision deliberation remains under-represented. YouTube comments are the best remaining source for it and are promoted accordingly. **This gap does not fully close, and every output must say so** — it is a known blind spot alongside the Stage A silence already registered in `problemstatement.md` §8.
+
+---
+
 ## Explicitly rejected
 
 Recorded so they don't quietly reappear as "optimisations":
