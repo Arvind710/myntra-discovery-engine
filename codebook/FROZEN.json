@@ -1,8 +1,8 @@
 {
-  "version": "v1.1",
-  "content_hash": "fa32f47e2f3289caa0d1e006b26ee24dd7ad7c30954821320bf2120be28ccddf",
-  "version_string": "v1.1:fa32f47e",
-  "frozen_at": "2026-08-19T17:34:07+00:00",
+  "version": "v1.2",
+  "content_hash": "2698ba9f79bf4cf08b125104203f8dc95fc6cdd5ea9fc5b215272beb32db425c",
+  "version_string": "v1.2:2698ba9f",
+  "frozen_at": "2026-08-19T18:12:24+00:00",
   "n_scored_codes": 33,
-  "note": "v1.1 \u2014 per-code transferability (A-4), re-frozen before any code scoring"
+  "note": "v1.2 - C3 boundary widened for stated wardrobe-rule reasoning"
 }

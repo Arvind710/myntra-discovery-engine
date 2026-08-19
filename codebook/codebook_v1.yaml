@@ -20,7 +20,7 @@
 #                             prompt carries in full for every candidate code
 # =====================================================================
 
-version: v1.1
+version: v1.2
 frozen_at: null          # set by pipeline/common/codebook.py freeze at P0 gate
 n_codes: 33              # excludes Z-99, which is the residual bucket
 # A-4 is load-bearing, not a footnote: only 35.9% of the relevant corpus is
@@ -603,6 +603,14 @@ codes:
       C1/C2 are doubts about the GARMENT; C3 is a doubt about the MATCH
       between garment and self. If the user wants someone else's approval,
       that is C10.
+      ALSO C3: a stated DECISION RULE about wardrobe fit or versatility -
+      "if I cannot make four outfits from what I already own, it goes",
+      "only worth it if I can repeat it for work and going out", "does this
+      earn its place". These read as general shopping philosophy but they
+      are exactly the wardrobe-integration test being applied, and they are
+      the strongest C3 evidence in the corpus because the user is stating
+      the criterion rather than merely failing it. Do NOT send these to
+      Z-99.
 
   - id: C10
     stage: C

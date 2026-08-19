@@ -124,7 +124,13 @@ CREATE TABLE IF NOT EXISTS record_meta (
   record_id           TEXT NOT NULL REFERENCES records(record_id),
   stages              TEXT,             -- JSON array, e.g. ["C"] or ["B","C"]
   blocking_code       TEXT,
-  blocking_phase      TEXT CHECK (blocking_phase IN ('eliminator','confidence','trigger') OR blocking_phase IS NULL),
+  -- 'na' is a legitimate phase: the three-value enum (Eliminator/Confidence/
+  -- Trigger) is defined in problemstatement.md §5.2 as a STAGE C attribute.
+  -- It fits all of C and D and the Stage A trigger codes, but not Stage B
+  -- retrieval friction or the A access codes -- those are Defer-outcome
+  -- structural barriers, and labelling them 'eliminator' would break the
+  -- Eliminator => Exit invariant while 'trigger'/'confidence' would be false.
+  blocking_phase      TEXT CHECK (blocking_phase IN ('eliminator','confidence','trigger','na') OR blocking_phase IS NULL),
   outcome             TEXT CHECK (outcome IN ('exit','defer','na') OR outcome IS NULL),
   segment             TEXT CHECK (segment IN ('S1','S2','S3','unknown') OR segment IS NULL),
   segment_conf        REAL,             -- < 0.6 => segment must be 'unknown' (EC-CLS-10)
