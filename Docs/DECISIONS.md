@@ -135,6 +135,54 @@ Pre-decision deliberation remains under-represented. YouTube comments are the be
 
 ---
 
+## A-1 RESOLVED — measured relevance yield (2026-08-19)
+
+Assumption A-1 ("sufficient public feedback exists to support meaningful counts")
+was the unverified assumption gating the whole project. It is now measured.
+
+| Source | Cleaned | Prefilter pass | Scored | Relevant | **Yield** |
+|---|---|---|---|---|---|
+| Reddit | 4,389 | 1,183 (27%) | 1,183 | 344 | **29.1%** |
+| YouTube | 2,369 | 1,711 (72%) | 1,711 | 481 | **28.1%** |
+| Play | 1,452 | 896 (62%) | 896 | 75 | **8.4%** |
+| App Store | 429 | 233 (54%) | 233 | 18 | **7.7%** |
+| **Total** | **8,639** | **4,023** | **4,023** | **918** | **22.8%** |
+
+Cost: $2.52 (gpt-5-mini), 0 quarantined.
+
+**The app-store prediction was right.** `architecture.md` §5.1 predicted Play and
+App Store would show "low relevance yield — mostly delivery/refund", and EC-COL-13
+predicted the same. Measured at 8.4% and 7.7% against Reddit's 29.1%, that
+prediction holds — and it means the two correlated sources contribute 10% of the
+relevant corpus despite being 22% of the cleaned one.
+
+### Two findings that change how results must be reported
+
+**1. Only 35.9% of relevant records are Myntra-specific.** The remaining 64% are
+about competitors or online fashion generally. Assumption A-4 ("behaviour discussed
+generically transfers to Myntra") is therefore not a footnote — it is load-bearing
+for two-thirds of the corpus. Every claim must show its Myntra-specific share, and
+a claim resting mostly on non-Myntra records must say so.
+
+**2. 22% of the relevant corpus is Hinglish** (206 of 918 `hi-Latn`, plus 4 mixed).
+Keeping code-mixed text untranslated (EC-CLEAN-4, arch §5.3) was not a courtesy —
+it preserved a fifth of the evidence base.
+
+### The corpus is below target: 918 relevant vs 2,000
+
+This triggers **P1F**, the one pre-authorised loop-back in `implementationplan.md` §0.4.
+At 918 records across 33 codes the leading codes are usable but the tail is thin, and
+segment × code will fall below readable n almost everywhere — the fallback to
+segment × stage (arch §9.4, EC-INS-8) becomes the primary path rather than a
+contingency.
+
+**Preferred remedy is not more collection.** 4,616 records were rejected by the
+prefilter and never scored. Scoring them (~$2.60) would both recover relevant records
+*and* directly measure prefilter recall — converting EC-PRE-1 from an unmeasured
+silent-failure risk into a number. Collecting more raw data does neither.
+
+---
+
 ## Explicitly rejected
 
 Recorded so they don't quietly reappear as "optimisations":
