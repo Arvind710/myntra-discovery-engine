@@ -29,7 +29,7 @@ import hashlib
 import re
 import sqlite3
 from collections import defaultdict
-from typing import Iterable
+from typing import Any, Iterable
 
 NEAR_DUPE_THRESHOLD = 0.85          # Jaccard, same-author only (long text)
 NEAR_DUPE_THRESHOLD_SHORT = 0.60    # short text -- see near_dupe_threshold()
@@ -144,53 +144,91 @@ def find_author_near_duplicates(rows: list[dict]) -> list[tuple[str, str]]:
         if len(group) < 2:
             continue
         group.sort(key=lambda r: (r.get("created_at") or "9999", r["record_id"]))
-        kept: list[dict] = []
+        kept: list[tuple[dict, int]] = []
         for r in group:
+            nw_r = len(normalise_for_hash(r["text_raw"]).split())
             match = None
-            for k in kept:
+            for k, nw_k in kept:
                 sa, sb = _pair_shingles(r["text_raw"], k["text_raw"])
-                n_words = min(len(normalise_for_hash(r["text_raw"]).split()),
-                              len(normalise_for_hash(k["text_raw"]).split()))
-                if jaccard(sa, sb) > near_dupe_threshold(n_words):
+                if jaccard(sa, sb) > near_dupe_threshold(min(nw_r, nw_k)):
                     match = k
                     break
             if match is not None:
                 out.append((r["record_id"], match["record_id"]))
             else:
-                kept.append(r)
+                kept.append((r, nw_r))
     return out
 
 
-def measure_cross_author_consensus(rows: list[dict]) -> list[dict]:
+def _minhash(sh: set[str], num_perm: int = 64):
+    from datasketch import MinHash
+    m = MinHash(num_perm=num_perm)
+    for x in sh:
+        m.update(x.encode())
+    return m
+
+
+def measure_cross_author_consensus(rows: list[dict], *, threshold: float = CONSENSUS_SIMILARITY,
+                                   num_perm: int = 64) -> list[dict]:
     """Cross-author similarity as a SIGNAL, not a filter (P1-3, EC-CLEAN-1).
 
     A record that many *different* people echo is strong evidence. This is
     the mirror image of the dedupe rule: the same measurement, used to
-    weight the record up rather than to delete it.
+    weight a record up rather than to delete it.
+
+    Implemented with MinHash LSH rather than the obvious pairwise loop.
+    The naive version is O(n^2) *and* recomputes shingles inside the loop --
+    at 5,150 records that is ~13M comparisons with two shingle builds each,
+    which does not finish. LSH indexes once and only compares candidates.
     """
-    prepared = [r for r in rows if len(r["text_raw"]) > 30]
-    out: list[dict] = []
-    for r in prepared:
-        best, n_similar, seen = 0.0, 0, set()
-        for other in prepared:
-            if other["record_id"] == r["record_id"]:
+    from datasketch import MinHashLSH
+
+    # k=2 for candidate generation: this stage optimises RECALL, and exact
+    # Jaccard below makes the actual call. A wider shingle here silently
+    # under-counts consensus on short text, which is the failure mode that
+    # matters -- understated consensus reads as a weaker finding.
+    prepared = [(r, shingles(r["text_raw"], k=2)) for r in rows if len(r["text_raw"]) > 30]
+    if not prepared:
+        return [{"record_id": r["record_id"], "max_jaccard_xauthor": 0.0,
+                 "n_similar_xauthor": 0} for r in rows]
+
+    # Slightly below the reporting threshold, so LSH over-generates
+    # candidates and exact Jaccard makes the final call. Recall over
+    # precision here: a missed echo understates consensus.
+    lsh = MinHashLSH(threshold=max(threshold - 0.15, 0.15), num_perm=num_perm)
+    sigs: dict[str, Any] = {}
+    by_id: dict[str, tuple[dict, set[str]]] = {}
+
+    for r, sh in prepared:
+        m = _minhash(sh, num_perm)
+        sigs[r["record_id"]] = m
+        by_id[r["record_id"]] = (r, sh)
+        lsh.insert(r["record_id"], m)
+
+    scored: dict[str, dict] = {}
+    for rid, (r, sh) in by_id.items():
+        best, seen = 0.0, set()
+        for cand in lsh.query(sigs[rid]):
+            if cand == rid:
                 continue
+            other, osh = by_id[cand]
             oa = other.get("author_hash")
             if not oa or oa == r.get("author_hash"):
                 continue
             sa, sb = _pair_shingles(r["text_raw"], other["text_raw"])
-            j = jaccard(sa, sb)
+            j = jaccard(sa, sb)           # exact + adaptive, on candidates only
             if j > best:
                 best = j
-            if j > CONSENSUS_SIMILARITY and oa not in seen:
+            if j > threshold:
                 seen.add(oa)
-                n_similar += 1
-        out.append({
-            "record_id": r["record_id"],
-            "max_jaccard_xauthor": round(best, 4),
-            "n_similar_xauthor": n_similar,
-        })
-    return out
+        scored[rid] = {"record_id": rid, "max_jaccard_xauthor": round(best, 4),
+                       "n_similar_xauthor": len(seen)}
+
+    for r in rows:
+        scored.setdefault(r["record_id"], {"record_id": r["record_id"],
+                                           "max_jaccard_xauthor": 0.0,
+                                           "n_similar_xauthor": 0})
+    return [scored[r["record_id"]] for r in rows]
 
 
 def run(con: sqlite3.Connection, run_id: str) -> dict[str, int]:
