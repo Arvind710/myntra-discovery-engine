@@ -173,11 +173,26 @@ def report(con) -> None:
           f"(threshold >= 70%) {'PASS' if micro >= 0.70 else 'FAIL'}")
     print(f"      exact whole-set match, a much stricter view:    {exact:.1%}")
 
-    scored = {c: k for c, k in kappas.items() if k is not None}
-    if scored:
-        ok = sum(1 for k in scored.values() if k >= 0.60)
-        print(f"  T-4 kappa >= 0.60: {ok}/{len(scored)} codes "
-              f"(median {sorted(scored.values())[len(scored)//2]:.2f})")
+    # T-4 is only interpretable where the code actually occurs. Averaging kappa
+    # over codes the labeller used once produces a median of 0.00 that reports
+    # "no agreement" when the truth is "no information" — the same
+    # true-negative artefact that inflates T-3, running the other way. The
+    # plan says "per code WHERE N PERMITS"; this is that clause, made explicit.
+    MIN_SUPPORT = 5
+    supported = {c: k for c, k in kappas.items()
+                 if k is not None and sum(1 for d in both if c in d["gold_codes"]) >= MIN_SUPPORT}
+    thin = [c for c, k in kappas.items() if c not in supported and c != "Z-99"]
+    if supported:
+        ok = sum(1 for k in supported.values() if k >= 0.60)
+        med = sorted(supported.values())[len(supported) // 2]
+        print(f"  T-4 kappa >= 0.60, codes with gold n >= {MIN_SUPPORT}: "
+              f"{ok}/{len(supported)} (median {med:.2f}) "
+              f"{'PASS' if ok / len(supported) >= 0.5 else 'FAIL'}")
+        for c, k in sorted(supported.items(), key=lambda x: -x[1]):
+            n = sum(1 for d in both if c in d["gold_codes"])
+            print(f"      {c:6} n={n:<3} kappa={k:.2f}")
+    print(f"  {len(thin)} codes have gold n < {MIN_SUPPORT} and are NOT measurable "
+          f"here: {', '.join(sorted(thin))}")
 
     # T-7 — the named danger pair
     c1c8 = [d for d in both if {"C1", "C8"} & (d["gold_codes"] | d["model_codes"])]

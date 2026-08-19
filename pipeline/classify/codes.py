@@ -34,7 +34,7 @@ from pipeline.common import codebook as cbm, db as dbm, env as envm, runs as rmo
 
 ROOT = Path(__file__).resolve().parents[2]
 STAGE_PROMPT = (ROOT / "prompts" / "stage_v1.md").read_text()
-PROMPT_VERSION = "codes_v1"
+PROMPT_VERSION = "codes_v1.1"   # Z-99-only stage now falls back to the full codebook
 import os
 CODE_EFFORT = os.environ.get("CODE_EFFORT", "low")
 
@@ -51,12 +51,31 @@ STAGE_SCHEMA = {
 
 
 def build_code_prompt(cb: cbm.Codebook, stages: list[str]) -> tuple[str, list[str]]:
-    """Only the codes in the assigned stages, with full boundary notes."""
+    """Only the codes in the assigned stages, with full boundary notes.
+
+    EXCEPT when pass 1 returned Z-99 alone. arch §6.2 splits classification in
+    two so pass 2 sees <=14 candidates instead of 33, and the unstated cost is
+    that a pass-1 error is ABSORBING: with `stages=["Z-99"]` the only candidate
+    was Z-99, so pass 2 could not assign a real code however well the text fit
+    one. It then recorded "does not match any specific predefined barrier" —
+    blaming the codebook for a list it was never shown.
+
+    Measured: 285 of 380 Z-99 records (75%) were decided this way, and the gold
+    set says a human codes those records from the existing codebook without
+    difficulty. So the residual was mostly a routing artefact, and AC-11 was
+    failing on a pipeline bug rather than an incomplete framework (FR-5.4).
+
+    Falling back to the full codebook costs a longer prompt on ~24% of records
+    and makes Z-99 mean what it is supposed to mean: every one of the 33 codes
+    was considered and none fitted.
+    """
     cands: list[dict] = []
     for s in stages:
         if s == "Z-99":
             continue
         cands.extend(cb.by_stage(s))
+    if not cands:
+        cands = [cb.codes[c] for c in cb.scored_codes]
     cands.append(cb.codes["Z-99"])
 
     lines = [
@@ -360,6 +379,12 @@ def main() -> int:
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--model", default=None)
+    ap.add_argument("--redo-z99", action="store_true",
+                    help="Re-classify every record currently coded Z-99. This is the "
+                         "§4.3 remediation loop for the build_code_prompt fix: 75%% of "
+                         "the residual was records whose pass-1 stage was Z-99, which "
+                         "left pass 2 with a single candidate and no way to assign a "
+                         "real code. Deletes their existing rows so they re-run.")
     args = ap.parse_args()
 
     v = envm.load()
@@ -369,6 +394,15 @@ def main() -> int:
     cb = cbm.load()
 
     con = dbm.connect()
+    if args.redo_z99:
+        targets = [r[0] for r in con.execute(
+            "SELECT DISTINCT record_id FROM classifications WHERE code LIKE 'Z%'")]
+        print(f"re-classifying {len(targets)} Z-99 records under {PROMPT_VERSION}")
+        con.executemany("DELETE FROM classifications WHERE record_id=?",
+                        [(t,) for t in targets])
+        con.executemany("DELETE FROM record_meta WHERE record_id=?", [(t,) for t in targets])
+        con.commit()
+
     done = {r[0] for r in con.execute("SELECT DISTINCT record_id FROM record_meta")}
     rows = [dict(r) for r in con.execute("""
         SELECT rec.record_id, rec.source, rec.text_raw, rec.thread_context
