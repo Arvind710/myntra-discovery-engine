@@ -15,9 +15,10 @@
 | 3 | `edgecase.md` | ✅ v1 — ~90 cases, silent-failure register |
 | 4 | `evals.md` | ✅ v1 — per-stage gates, 13 thresholds |
 | 5 | `implementationplan.md` | ✅ v1 — 6 phases (P0–P5), gate per phase, schema deltas, gold sampling fix |
-| 6 | Build P0 → P5 | ⬜ **next** — P0 Foundation & Freeze |
+| 6 | **P0 — Foundation & Freeze** | ✅ built, gate signed off `evals/reports/gate_P0_20260819.md` — 37/37 checks green; codebook frozen `v1:718e9f3e` |
+| 7 | P1 → P5 | ⬜ **next** — P1 Collection & Data Bank, blocked on credentials |
 
-**Nothing has been built yet.** All four documents are design artifacts. No code, no repo, no data collected.
+**P0 is built.** Repo initialised, schema applied, codebook frozen at `v1:718e9f3e` before any scoring, 37 P0 gate checks green, app shell runs clean. No data collected yet — P1 is blocked on the credentials below.
 
 ---
 
