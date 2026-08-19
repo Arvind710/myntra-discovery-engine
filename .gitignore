@@ -5,6 +5,7 @@
 # Embeddings: LOCAL ONLY. Never ships to Streamlit (architecture.md §2, §10)
 data/embeddings.npy
 data/*.npy
+data/*.npz
 
 # Raw LLM responses / quarantine
 data/quarantine/
