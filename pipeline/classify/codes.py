@@ -72,6 +72,11 @@ def build_code_prompt(cb: cbm.Codebook, stages: list[str]) -> tuple[str, list[st
         "mismatch invalidates the record. Quote the shortest span that carries the",
         "evidence.",
         "",
+        "NEVER quote these code definitions, their questions, or their boundary",
+        "notes. They are instructions to you, not words the user wrote. A span",
+        "that appears in this prompt but not in the record is a fabricated",
+        "citation.",
+        "",
         "The span MUST come from inside <record>...</record>. Anything in a",
         "<context nonquotable> block is background to help you read the record —",
         "it is another person's words and quoting it would attribute their",
@@ -82,9 +87,28 @@ def build_code_prompt(cb: cbm.Codebook, stages: list[str]) -> tuple[str, list[st
     for d in cands:
         lines.append(f"\n### {d['id']} — {d['name']}")
         if d.get("question"):
-            lines.append(f"The unresolved question: {d['question']}")
+            # Wrapped, not bare: an earlier run quoted this line verbatim as
+            # an evidence_span, which would put a fabricated quote behind a
+            # real citation -- a silent NFR-1 break (EC-CLS-6).
+            lines.append(f"(What this code is about, NOT quotable: {d['question']})")
         lines.append(f"Phase: {d['phase']} | Typical outcome: {d['outcome_default']}")
         lines.append(f"BOUNDARY: {' '.join(str(d['boundary_note']).split())}")
+
+    if any(d["id"] in ("C9", "C11") for d in cands):
+        lines += [
+            "",
+            "MUTUALLY EXCLUSIVE — do not assign these together:",
+            "- C9 (intent was never live) CANNOT co-occur with any doubt code",
+            "  (C1 fit, C2 material, C3 styling, C4 evidence, C5 comparison,",
+            "  C10 approval, C12 decay, C14 verification). Voicing a doubt about",
+            "  an item IS evidence that intent existed. If the user expresses any",
+            "  hesitation about buying, intent was live — code the doubt, not C9.",
+            "  C9 is only for pure collecting with no purchase consideration at all.",
+            "- C11 (need extinguished — already bought this or a substitute",
+            "  elsewhere) likewise cannot co-occur with doubt codes about the same",
+            "  item. C11 requires evidence a PURCHASE COMPLETED somewhere else.",
+            "  Refusing to buy a brand again is NOT C11 — that is C2 or C7.",
+        ]
 
     lines += [
         "",
@@ -170,6 +194,22 @@ def classify_with_retry(client, model: str, cb: cbm.Codebook, rec: dict) -> tupl
     return out, usage
 
 
+def _with_backoff(fn, *, tries: int = 5):
+    """429s are expected at concurrency; a dropped record is a silent hole in
+    the corpus, so retry rather than quarantine."""
+    import random, time as _t
+    for attempt in range(tries):
+        try:
+            return fn()
+        except Exception as e:                                   # noqa: BLE001
+            if "429" not in str(e) and "rate" not in str(e).lower():
+                raise
+            if attempt == tries - 1:
+                raise
+            _t.sleep(min(2 ** attempt + random.random(), 30))
+    raise RuntimeError("unreachable")
+
+
 def classify(client, model: str, cb: cbm.Codebook, rec: dict) -> tuple[dict, dict]:
     # The CONTEXT block exists so a bare comment ("same, mine's been there for
     # months") can be read at all. But evidence_span must be traceable to THE
@@ -187,27 +227,41 @@ def classify(client, model: str, cb: cbm.Codebook, rec: dict) -> tuple[dict, dic
         usage["out"] += u.output_tokens
         usage["cached"] += getattr(getattr(u, "input_tokens_details", None), "cached_tokens", 0) or 0
 
-    r1 = client.responses.create(
+    r1 = _with_backoff(lambda: client.responses.create(
         model=model, instructions=STAGE_PROMPT, input=body,
         reasoning={"effort": "minimal"},
         text={"format": {"type": "json_schema", "name": "stage",
-                         "schema": STAGE_SCHEMA, "strict": True}})
+                         "schema": STAGE_SCHEMA, "strict": True}}))
     acc(r1.usage)
     stages = json.loads(r1.output_text)["stages"] or ["Z-99"]
 
     prompt, valid = build_code_prompt(cb, stages)
-    r2 = client.responses.create(
+    r2 = _with_backoff(lambda: client.responses.create(
         model=model, instructions=prompt, input=body,
         reasoning={"effort": CODE_EFFORT},
         text={"format": {"type": "json_schema", "name": "codes",
-                         "schema": code_schema(valid), "strict": True}})
+                         "schema": code_schema(valid), "strict": True}}))
     acc(r2.usage)
     out = json.loads(r2.output_text)
     out["stages"] = stages
     return out, usage
 
 
+# Corpus text carries curly quotes, en/em dashes and non-breaking spaces;
+# models emit the ASCII equivalents. Comparing raw strings marks those as
+# paraphrases when the words are identical (EC-CHAT-11). NFKC plus an
+# explicit punctuation map fixes the class.
+_PUNCT_MAP = str.maketrans({
+    "\u2018": "'", "\u2019": "'", "\u201a": "'", "\u201b": "'",
+    "\u201c": '"', "\u201d": '"', "\u201e": '"',
+    "\u2013": "-", "\u2014": "-", "\u2012": "-", "\u2212": "-",
+    "\u00a0": " ", "\u2026": "...", "\u00b4": "'", "\u0060": "'",
+})
+
+
 def normalise(s: str) -> str:
+    import unicodedata
+    s = unicodedata.normalize("NFKC", s).translate(_PUNCT_MAP)
     return " ".join(s.split()).lower()
 
 
@@ -223,6 +277,30 @@ def persist(con, cb: cbm.Codebook, rec: dict, out: dict, run_id: str) -> int:
                   "evidence_span": rec["text_raw"][:120],
                   "reasoning": "no code assigned by model; forced to residual (EC-CLS-1)"}]
 
+    conf_phase = {c["code"] for c in codes
+                  if cb.codes.get(c["code"], {}).get("phase") == "confidence"}
+    if conf_phase:
+        dropped = [c["code"] for c in codes if c["code"] in ("C9", "C11")]
+        if dropped:
+            # A voiced doubt is positive evidence that intent existed, so the
+            # doubt wins and the no-intent code goes. Recorded in reasoning
+            # rather than silently removed (EC-CLS-4).
+            codes = [c for c in codes if c["code"] not in ("C9", "C11")]
+            if out.get("blocking_code") in dropped:
+                out["blocking_code"] = sorted(
+                    conf_phase,
+                    key=lambda x: cb.codes[x]["journey_rank"])[0]
+
+    # C9 and C11 are pairwise exclusive: intent never existed vs intent
+    # existed and was satisfied elsewhere. Different populations, different
+    # solves. A completed purchase is positive evidence that intent existed,
+    # so C11 wins and C9 goes -- the same principle as above.
+    present = {c["code"] for c in codes}
+    if "C9" in present and "C11" in present:
+        codes = [c for c in codes if c["code"] != "C9"]
+        if out.get("blocking_code") == "C9":
+            out["blocking_code"] = "C11"
+
     span_fails = 0
     for c in codes:
         span = c["evidence_span"]
@@ -234,11 +312,11 @@ def persist(con, cb: cbm.Codebook, rec: dict, out: dict, run_id: str) -> int:
             c["_span_ok"] = 1
         con.execute(
             "INSERT OR REPLACE INTO classifications (record_id, code, chunk_index,"
-            " confidence, evidence_span, reasoning, is_blocking, run_id)"
-            " VALUES (?,?,0,?,?,?,?,?)",
+            " confidence, evidence_span, reasoning, is_blocking, span_verified, run_id)"
+            " VALUES (?,?,0,?,?,?,?,?,?)",
             (rec["record_id"], c["code"], float(c["confidence"]), span,
              c.get("reasoning", "")[:600],
-             int(c["code"] == out.get("blocking_code")), run_id))
+             int(c["code"] == out.get("blocking_code")), c["_span_ok"], run_id))
 
     seg = out.get("segment") or {}
     seg_label = seg.get("label", "unknown")
@@ -280,7 +358,7 @@ def persist(con, cb: cbm.Codebook, rec: dict, out: dict, run_id: str) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=0)
-    ap.add_argument("--workers", type=int, default=10)
+    ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--model", default=None)
     args = ap.parse_args()
 

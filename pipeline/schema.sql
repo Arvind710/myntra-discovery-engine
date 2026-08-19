@@ -114,6 +114,14 @@ CREATE TABLE IF NOT EXISTS classifications (
   evidence_span TEXT NOT NULL,          -- EXACT substring of text_raw — T-6, absolute (EC-CLS-6)
   reasoning     TEXT,                   -- audit trail (NFR-4) + confusion analysis input
   is_blocking   INTEGER NOT NULL DEFAULT 0,
+  -- T-6 / EC-CLS-6. A span that is not an exact substring of text_raw is
+  -- NOT evidence and must never be rendered as a quote. The CODE assignment
+  -- can still be sound (the model did read the record) and it is the QUOTE that
+  -- is unverified. So the row is kept and counted, and flagged 0 here, and
+  -- every citation path filters on span_verified=1. That keeps the
+  -- invariant "no fabricated quote is ever displayed" absolute, without
+  -- silently discarding a valid classification.
+  span_verified INTEGER NOT NULL DEFAULT 1,
   run_id        TEXT NOT NULL,
   PRIMARY KEY (record_id, code, chunk_index, run_id)
 );
