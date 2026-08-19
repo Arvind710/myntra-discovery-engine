@@ -18,9 +18,22 @@ from typing import Any
 # read time. USD per 1M tokens. `cached_in` is the prompt-caching rate
 # that applies to the stable codebook prefix (arch §6.2).
 # NOTE: batch jobs bill at 50% -- see Run.finish(batch=True).
+# Confirmed 2026-08-19 against developers.openai.com/api/docs/pricing.
+# Batch jobs bill at 50% -- applied in Run.cost_usd(), not duplicated here.
 MODEL_RATES: dict[str, dict[str, float]] = {
-    # filled in at P0 from the live pricing page; asserted non-empty by P0-7
+    "gpt-5":                  {"in": 1.25, "cached_in": 0.125, "out": 10.00},
+    "gpt-5-mini":             {"in": 0.25, "cached_in": 0.025, "out": 2.00},
+    "gpt-5-nano":             {"in": 0.05, "cached_in": 0.005, "out": 0.40},
+    "gpt-4.1":                {"in": 2.00, "cached_in": 0.50,  "out": 8.00},
+    "gpt-4.1-mini":           {"in": 0.40, "cached_in": 0.10,  "out": 1.60},
+    "text-embedding-3-small": {"in": 0.02, "cached_in": 0.02,  "out": 0.00},
 }
+
+# The classification model. architecture.md §6.2 and DECISIONS.md both refuse
+# tier-splitting here: the C1-vs-C8 boundary is exactly where smaller models
+# fail, and the analysis IS the project.
+CLASSIFIER_MODEL = "gpt-5"
+EMBEDDING_MODEL = "text-embedding-3-small"
 
 
 def _now() -> str:
