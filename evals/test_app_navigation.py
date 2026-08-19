@@ -91,3 +91,45 @@ def test_label_tool_is_not_a_public_section(at_repo_root):
         "app/pages/ is auto-discovered by Streamlit and would re-introduce an "
         "implicit second navigation alongside the declared one")
     assert (ROOT / "tools" / "label_app.py").exists(), "labeller should live in tools/"
+
+
+# --------------------------------------------------------------------------
+# Labelling tool — the gate must actually open, and must say when it doesn't
+# --------------------------------------------------------------------------
+def _labeller(pw: str = "correct-horse"):
+    from streamlit.testing.v1 import AppTest
+    at = AppTest.from_file(str(ROOT / "tools" / "label_app.py"), default_timeout=180)
+    at.secrets["LABEL_PASSWORD"] = pw
+    return at.run()
+
+
+def _unlocked(at) -> bool:
+    try:
+        return bool(at.session_state["label_ok"])
+    except Exception:                                          # noqa: BLE001
+        return False
+
+
+def test_correct_password_opens_the_gate(at_repo_root):
+    """This shipped broken: st.rerun() was called INSIDE the `with st.form`
+    block, so submitting the right password did nothing at all. The failure was
+    invisible to every check that only asserted the page renders — the gate
+    rendered perfectly, it just never opened."""
+    at = _labeller()
+    at.text_input[0].input("correct-horse").run()
+    at.button[0].click().run()
+    assert _unlocked(at), "correct password did not unlock the labeller"
+    assert not at.exception, at.exception[0].value
+    labels = [b.label for b in at.button]
+    assert any("Save and next" in b for b in labels), labels
+    assert any("Skip" in b for b in labels), "skip control missing"
+
+
+def test_wrong_password_says_so_rather_than_doing_nothing(at_repo_root):
+    """A silent rejection and a broken gate look identical to the user, which
+    is exactly how the bug above went unreported for a build."""
+    at = _labeller()
+    at.text_input[0].input("wrong").run()
+    at.button[0].click().run()
+    assert not _unlocked(at)
+    assert at.error, "a wrong password must produce a visible message"

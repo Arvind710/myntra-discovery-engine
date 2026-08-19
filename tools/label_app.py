@@ -96,9 +96,16 @@ def _gate() -> bool:
         return True
     with st.form("gate"):
         pw = st.text_input("Password", type="password")
-        if st.form_submit_button("Unlock") and pw == want:
+        ok = st.form_submit_button("Unlock")
+    # st.rerun() must be called OUTSIDE the form block, and a wrong password
+    # must say so. Both were wrong here, and both presented identically: you
+    # type the password, press Enter, and nothing at all happens.
+    if ok:
+        if pw == want:
             st.session_state["label_ok"] = True
             st.rerun()
+        st.error("That password does not match `LABEL_PASSWORD` in "
+                 "`.streamlit/secrets.toml`.", icon="🔒")
     return False
 
 
