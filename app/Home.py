@@ -1,121 +1,38 @@
-"""Home — what this is and how it works. This page IS the one-slide (AC-8)."""
+"""Entrypoint and router.
 
-import json
+WHY NAVIGATION IS DECLARED EXPLICITLY
+-------------------------------------
+This app previously relied on Streamlit's implicit `app/pages/` discovery.
+The sections were then reachable only through a sidebar that auto-collapses
+on a narrow window, and nothing in the code stated what the app's sections
+were — so "are Data Bank and Analysis reachable?" could not be answered by
+reading the source, or asserted by a test.
+
+`st.navigation` makes the section list an explicit, testable declaration.
+Paths are built from `__file__`, never from a relative string: Streamlit
+Cloud runs the process from the repo root while the script lives in `app/`,
+so a relative path resolves against a directory that does not contain it.
+That mismatch is what took the app down once already, and it did not
+reproduce locally because the local run happened to start inside `app/`.
+"""
+
 from pathlib import Path
 
 import streamlit as st
 
-from lib import db, framework as F
+HERE = Path(__file__).resolve().parent
+VIEWS = HERE / "views"
 
-ROOT = Path(__file__).resolve().parents[1]
-st.set_page_config(page_title="Myntra Discovery Engine", page_icon="🔎", layout="wide",
-                   initial_sidebar_state="expanded")
+st.set_page_config(page_title="Myntra Discovery Engine", page_icon="🔎",
+                   layout="wide", initial_sidebar_state="expanded")
 
-st.title("AI Discovery Engine — Myntra wishlist conversion")
-st.caption("Turning public user feedback into a quantified, source-cited ranking of the "
-           "barriers preventing wishlist → purchase conversion.")
+# The four project sections pinned by implementationplan.md §0.5. Insights and
+# Ask are absent rather than stubbed — a nav entry that leads nowhere tells an
+# evaluator the section exists. Home states their status instead.
+SECTIONS = [
+    st.Page(VIEWS / "home.py", title="Home", icon="🔎", default=True),
+    st.Page(VIEWS / "data_bank.py", title="Data Bank", icon="🗄️"),
+    st.Page(VIEWS / "analysis.py", title="Analysis", icon="📊"),
+]
 
-pop = db.corpus_is_populated()
-if pop:
-    m = db.query("""SELECT (SELECT count(*) FROM records)                        AS collected,
-                           (SELECT count(*) FROM relevance WHERE is_relevant=1)  AS relevant,
-                           (SELECT count(DISTINCT author_hash) FROM records
-                             WHERE author_hash IS NOT NULL)                      AS authors,
-                           (SELECT count(*) FROM record_meta)                    AS classified""").iloc[0]
-    a, b, c, d = st.columns(4)
-    a.metric("Records collected", f"{int(m.collected):,}")
-    b.metric("Relevant to the decision", f"{int(m.relevant):,}")
-    c.metric("Distinct authors", f"{int(m.authors):,}")
-    d.metric("Classified", f"{int(m.classified):,}")
-
-left, right = st.columns([3, 2])
-
-with left:
-    st.subheader("The question")
-    st.markdown(
-        "> Which barrier stops users buying what they already saved — and how "
-        "confident can we be, given that public feedback measures **who talks about "
-        "what**, not drop-off rates?"
-    )
-
-    st.subheader("How it works")
-    st.markdown("""
-**1 · Collect.** Reddit, YouTube, Play Store, App Store, Myntra product reviews, and
-verified published research. Every record keeps its permalink, a pseudonymised author
-id, and the search query that surfaced it — so a theme's prevalence can be audited
-against the terms used to find it.
-
-**2 · Filter.** A written rubric separates feedback bearing on the *save → purchase*
-decision from general complaints. The hardest boundary is deliberate: a past bad
-experience cited as a reason for **present** hesitation is in; a complaint about a late
-order is out.
-
-**3 · Classify.** Every relevant record is scored against a **pre-registered, frozen
-codebook** — stage first, then codes within that stage. Pre-registering it before
-scoring is what stops the analysis quietly confirming its author's expectations.
-
-**4 · Quantify.** Prevalence with denominators, distinct-author counts, co-occurrence
-lift, workaround intensity, and per-segment barrier profiles.
-""")
-
-    st.subheader("What makes a number here defensible")
-    st.markdown("""
-- **Every quote is verified as an exact substring** of the record it cites. A span that
-  is not exact is not evidence and is never displayed.
-- **Every count carries a distinct-author count.** 200 records from 12 people is a
-  weaker claim than 200 from 180.
-- **Nothing is deleted silently.** Every excluded record is logged with its reason and
-  is browsable.
-- **Measurements beat predictions, including our own.** The prefilter was removed after
-  it was measured dropping 23% of relevant records; a model-tier decision was reversed
-  after testing it on hand-labelled boundary cases.
-""")
-
-    st.info(
-        "**Proxy discipline.** Every share reported here is a share of *discussion*, "
-        "never a conversion or drop-off rate. Silent barriers — *'I forgot the wishlist "
-        "existed'* — are under-represented by construction, because forgetting produces "
-        "no complaint.", icon="⚠️")
-
-with right:
-    st.subheader("Status")
-    frozen = ROOT / "codebook" / "FROZEN.json"
-    if frozen.exists():
-        fz = json.loads(frozen.read_text())
-        st.metric("Codebook", fz["version_string"])
-        st.caption(f"{fz['n_scored_codes']} codes · frozen {fz['frozen_at'][:10]}, "
-                   "before any scoring")
-
-    if pop:
-        src = db.query("SELECT source, count(*) AS n FROM retained GROUP BY source ORDER BY n DESC")
-        st.markdown("**Corpus by source**")
-        st.dataframe(src, width="stretch", hide_index=True)
-
-        seg = db.query("""SELECT segment_name, count(*) AS n FROM segments_v2
-                          GROUP BY segment_id, segment_name ORDER BY n DESC""")
-        if not seg.empty:
-            st.markdown("**Segments** (derived, 100% coverage)")
-            st.dataframe(seg, width="stretch", hide_index=True)
-
-    st.markdown("""
-| Phase | Ships | |
-|---|---|---|
-| P0 | Foundation & freeze | ✅ gate passed |
-| P1 | Data Bank | ✅ gate passed |
-| P2 | Analysis | ⚠️ page live, **gate open** |
-| P3 | Insights | ⬜ |
-| P4 | Ask | ⬜ |
-""")
-    st.warning(
-        "**The P2 numbers are not yet validated.** A tick here means the exit gate "
-        "passed, not that the page exists. P2 is open on three counts: the gold set "
-        "is unlabelled, so per-code agreement against a human (T-3/T-4, AC-9) is "
-        "unmeasured; unclassifiable records sit at 31.7% against a 15% ceiling "
-        "(AC-11 fails), so the codebook is formally incomplete; and Track B "
-        "clustering — the check against codebook blindness — is not built. "
-        "Read every figure on the Analysis page as provisional until this clears.",
-        icon="⚠️")
-
-st.divider()
-st.caption("Public data only · authors pseudonymised · no PII in outputs. "
-           "A research instrument, not a Myntra product.")
+st.navigation(SECTIONS).run()

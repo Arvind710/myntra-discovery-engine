@@ -13,7 +13,6 @@ import streamlit as st
 
 from lib import charts, db
 
-st.set_page_config(page_title="Data Bank", page_icon="🗂️", layout="wide")
 st.title("Data Bank")
 st.caption("Every record, its provenance, and everything that was excluded — with the reason.")
 

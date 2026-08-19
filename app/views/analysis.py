@@ -14,7 +14,6 @@ import streamlit as st
 
 from lib import charts, db, framework as F
 
-st.set_page_config(page_title="Analysis", page_icon="📊", layout="wide")
 st.title("Analysis")
 st.caption("Every relevant record scored against the pre-registered codebook. "
            "Reported in the updated framework's codes.")
