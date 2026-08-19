@@ -16,8 +16,11 @@ from lib import charts, db
 st.title("Data Bank")
 st.caption("Every record, its provenance, and everything that was excluded — with the reason.")
 
-if not db.corpus_is_populated():
-    st.info("The corpus has not been collected yet. Run the collectors in `pipeline/collect/`.")
+status, detail = db.db_status()
+if status != "ok":
+    # Report which condition actually holds. "Not collected yet" asserted a
+    # cause the check never established, and read as a project that never ran.
+    (st.error if status in ("missing", "unreadable") else st.info)(detail)
     st.stop()
 
 # ---------------------------------------------------------------- overview

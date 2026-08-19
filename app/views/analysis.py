@@ -18,8 +18,12 @@ st.title("Analysis")
 st.caption("Every relevant record scored against the pre-registered codebook. "
            "Reported in the updated framework's codes.")
 
-if not db.corpus_is_populated():
-    st.info("No corpus yet."); st.stop()
+status, detail = db.db_status()
+if status != "ok":
+    # Report which condition actually holds. "Not collected yet" asserted a
+    # cause the check never established, and read as a project that never ran.
+    (st.error if status in ("missing", "unreadable") else st.info)(detail)
+    st.stop()
 
 prev = db.query("SELECT * FROM analysis_code_prevalence ORDER BY n DESC")
 if prev.empty:
