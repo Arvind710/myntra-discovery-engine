@@ -28,7 +28,7 @@ the T-2 interval on the pass whose failure would be permanent.
 BLINDING
 --------
 The frame stores no model output — no code, no confidence, no relevance
-verdict. `9_Label.py` renders text and nothing else. A gold set that shows
+verdict. `tools/label_app.py` renders text and nothing else. A gold set that shows
 the labeller what the model said measures agreement with a suggestion, not
 independent judgement, and it would inflate every metric downstream while
 looking exactly like a clean result.
