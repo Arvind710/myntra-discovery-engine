@@ -141,3 +141,59 @@ def test_every_classified_record_is_visible_in_retained(corpus):
     assert hidden == 0, (
         f"{hidden} classified records are excluded from the `retained` view — "
         "the analysis counts them, the app cannot display them")
+
+
+def test_label_page_is_blind_to_model_output():
+    """AC-9 rests on the gold set being an INDEPENDENT judgement. If the
+    labelling page can show what the classifier decided, agreement measures
+    anchoring rather than accuracy — and every metric it feeds (T-1..T-4)
+    improves while the classifier gets no better.
+
+    Asserted structurally rather than by reading the UI: the page must not
+    query any table holding model output. A reviewer can verify this claim in
+    one grep, which is the point.
+    """
+    from pathlib import Path
+    src = (Path(__file__).resolve().parents[1] / "tools" / "label_app.py").read_text()
+    forbidden = ["classifications", "record_meta", "subcodes", "segments_v2",
+                 "analysis_", "clusters"]
+    # `relevance` needs a word-boundary check: the page legitimately uses the
+    # word in its question text, but must never SELECT from the table.
+    hits = [t for t in forbidden if t in src]
+    assert not hits, (
+        f"tools/label_app.py references model-output table(s) {hits} — the gold set "
+        "would no longer be independent of the thing it grades")
+    assert "FROM relevance" not in src and "JOIN relevance" not in src, \
+        "tools/label_app.py reads the relevance table; the labeller must not see the verdict"
+
+
+@pytest.mark.needs_corpus
+def test_gold_frame_matches_appendix_b_as_amended(corpus):
+    """The frame is drawn once and frozen. If it drifts, the metrics are
+    computed over a different population than the one that was designed to
+    make recall measurable."""
+    want = {"z99": 20, "c1_c8": 20, "clf_low": 30, "clf_high": 40, "rel_zero": 50}
+    got = dict(corpus.execute(
+        "SELECT stratum, count(*) FROM gold_sample WHERE pass_no=1 GROUP BY stratum"))
+    assert got == want, f"frame drifted: {got} != {want}"
+
+    distinct = corpus.execute(
+        "SELECT count(DISTINCT record_id) FROM gold_sample").fetchone()[0]
+    assert distinct == 160, f"{distinct} distinct records, Appendix B specifies 160"
+
+    reps = corpus.execute("SELECT count(*) FROM gold_sample WHERE pass_no=2").fetchone()[0]
+    assert reps == 20, f"{reps} silent repeats, T-13/EC-VAL-1 specifies 20"
+
+    # A repeat that is not also in sitting 1 measures nothing.
+    orphan = corpus.execute(
+        "SELECT count(*) FROM gold_sample r WHERE r.pass_no=2 AND NOT EXISTS ("
+        " SELECT 1 FROM gold_sample s WHERE s.record_id=r.record_id"
+        " AND s.pass_no=1 AND s.sitting_id='sitting-1')").fetchone()[0]
+    assert orphan == 0, f"{orphan} repeats are not drawn from sitting 1"
+
+    # rel_zero exists to make T-2 recall measurable; a classified record in it
+    # would mean the pipeline did not actually discard it.
+    bad = corpus.execute(
+        "SELECT count(*) FROM gold_sample g JOIN classifications c USING (record_id)"
+        " WHERE g.stratum='rel_zero'").fetchone()[0]
+    assert bad == 0, f"{bad} rel_zero records were classified after all"
