@@ -358,3 +358,20 @@ CREATE TABLE IF NOT EXISTS gold_sample (
   run_id      TEXT NOT NULL,
   PRIMARY KEY (record_id, pass_no)
 );
+
+-- Records the labeller could not judge. A skip is DATA, not an absence.
+-- Guessing when unsure injects noise that is indistinguishable from classifier
+-- error downstream, so skipping is the correct action — but it must be counted:
+-- the hard strata (clf_low, c1_c8, z99) are deliberately over-sampled, and
+-- silently dropping them biases the sample toward easy records and inflates
+-- every agreement metric. A concentration of skips on one boundary is evidence
+-- about the CODEBOOK (EC-CLS-12 / AC-11), not only about the classifier.
+CREATE TABLE IF NOT EXISTS gold_skip (
+  record_id  TEXT NOT NULL REFERENCES records(record_id),
+  pass_no    INTEGER NOT NULL DEFAULT 1,
+  sitting_id TEXT NOT NULL,
+  stratum    TEXT NOT NULL,
+  reason     TEXT,
+  skipped_at TEXT NOT NULL,
+  PRIMARY KEY (record_id, pass_no)
+);
