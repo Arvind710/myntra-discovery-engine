@@ -379,6 +379,11 @@ def main() -> int:
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--model", default=None)
+    ap.add_argument("--redo-bad-spans", action="store_true",
+                    help="Re-classify records holding an unverified evidence_span. "
+                         "S2-INV-2 / T-6 is absolute and on Appendix C's never-cut "
+                         "list, so a surviving violation is not reportable as a "
+                         "limitation — it has to be fixed.")
     ap.add_argument("--redo-z99", action="store_true",
                     help="Re-classify every record currently coded Z-99. This is the "
                          "§4.3 remediation loop for the build_code_prompt fix: 75%% of "
@@ -394,6 +399,14 @@ def main() -> int:
     cb = cbm.load()
 
     con = dbm.connect()
+    if args.redo_bad_spans:
+        targets = [r[0] for r in con.execute(
+            "SELECT DISTINCT record_id FROM classifications WHERE span_verified=0")]
+        print(f"re-classifying {len(targets)} records with unverified spans")
+        con.executemany("DELETE FROM classifications WHERE record_id=?", [(t,) for t in targets])
+        con.executemany("DELETE FROM record_meta WHERE record_id=?", [(t,) for t in targets])
+        con.commit()
+
     if args.redo_z99:
         targets = [r[0] for r in con.execute(
             "SELECT DISTINCT record_id FROM classifications WHERE code LIKE 'Z%'")]
