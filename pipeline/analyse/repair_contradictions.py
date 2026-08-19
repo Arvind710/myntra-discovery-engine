@@ -53,8 +53,23 @@ def run(con) -> dict:
                 con.execute(
                     "UPDATE record_meta SET blocking_code=?, blocking_phase=? WHERE record_id=?",
                     (new, cb.codes[new]["phase"], rid))
+    # Changing blocking_code can leave an outcome the NEW code forbids
+    # (S2-INV-4). Re-coerce every row from the codebook, not just repaired
+    # ones -- cheap, and it makes the invariant hold by construction rather
+    # than by the repair having been careful.
+    coerced = 0
+    for r in con.execute(
+            "SELECT record_id, blocking_code, outcome FROM record_meta"
+            " WHERE blocking_code IS NOT NULL").fetchall():
+        d = cb.codes.get(r["blocking_code"])
+        if d and r["outcome"] and r["outcome"] not in d["outcome_allowed"]:
+            con.execute("UPDATE record_meta SET outcome=? WHERE record_id=?",
+                        (d["outcome_default"], r["record_id"]))
+            coerced += 1
+
     con.commit()
-    return {"records_fixed": fixed_records, "codes_removed": removed}
+    return {"records_fixed": fixed_records, "codes_removed": removed,
+            "outcomes_coerced": coerced}
 
 
 if __name__ == "__main__":
