@@ -1,0 +1,28 @@
+# PIPELINE DEPENDENCIES — laptop only. NEVER installed on Streamlit Cloud.
+# Installing these in the deployed app is an AR-5 failure (cold-start timeout).
+-r requirements.txt
+
+# Collectors
+praw>=7.8                      # Reddit
+google-api-python-client>=2.150 # YouTube Data API v3
+google-play-scraper>=1.2.7
+app-store-scraper>=0.3.5
+
+# Cleaning
+datasketch>=1.6                # MinHash LSH — author-scoped near-dedupe (EC-CLEAN-1)
+fasttext-wheel>=0.9.2          # language id
+regex>=2024.9.11
+
+# Clustering (Track B)
+numpy>=1.26
+scikit-learn>=1.5
+umap-learn>=0.5.7
+hdbscan>=0.8.40
+
+# Analysis
+scipy>=1.14
+pyarrow>=17.0                  # Parquet spill for large analysis tables
+
+# Dev / eval
+pytest>=8.3
+requests>=2.32                 # curated-source live-URL verification (EC-COL-15)

@@ -1,0 +1,10 @@
+# APP DEPENDENCIES ONLY — this is what Streamlit Community Cloud installs.
+# Keep minimal: cold-start time is the practical payoff of the
+# no-runtime-vectors decision (architecture.md §10, AR-5).
+# Heavy pipeline deps live in requirements-pipeline.txt and MUST NOT appear here.
+streamlit>=1.40
+pandas>=2.2
+plotly>=5.24
+rank-bm25>=0.2.2
+openai>=1.60
+PyYAML>=6.0

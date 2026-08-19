@@ -1,0 +1,745 @@
+# =====================================================================
+# Hypothesis codebook v1 — PRE-REGISTERED, CLOSED SET
+# Source: problemstatement.md §5.3-§5.6 (33 canonical codes) + Z-99 residual
+#
+# This file is FROZEN before scoring (FR-5.6). It is consumed by the
+# classifier prompt, the app's codebook page, the labelling UI, and the
+# analytics. A version bump forces FULL re-classification (NFR-3, AR-3).
+#
+# Fields that do analytical work downstream:
+#   phase                   - eliminator | confidence | trigger | na
+#   outcome_default         - the code's canonical outcome
+#   outcome_allowed         - what the classifier may legitimately assign
+#   journey_rank            - position in the decision sequence, WITHIN stage.
+#                             Total order, no ties (P0-3). The blocking code is
+#                             the MINIMUM journey_rank among assigned codes
+#                             above the confidence floor (arch §7.1)
+#   solvable_without_money  - the C-2 constraint applied at hypothesis level
+#   boundary_note           - the load-bearing field. Boundaries are where
+#                             classification fails; this is what the pass-2
+#                             prompt carries in full for every candidate code
+# =====================================================================
+
+version: v1
+frozen_at: null          # set by pipeline/common/codebook.py freeze at P0 gate
+n_codes: 33              # excludes Z-99, which is the residual bucket
+confidence_floor: 0.50   # below this a code is retained but excluded from ranked claims (EC-CLS-3)
+min_n_ranked_claim: 30   # AR-12 / arch §9.4
+min_n_visible: 15
+
+# ---------------------------------------------------------------------
+# STAGE A — Recall / Discovery
+# Metric: % of wishlist-adders who open the wishlist within 30 days
+# Population: saved an item, never came back to the list
+#
+# EXPECTED UNDER-DETECTION. Forgetting produces no complaint. Low A-counts
+# must be reported as PLAUSIBLY ARTEFACTUAL, never as evidence Stage A is
+# small (problemstatement.md §8; inversion threshold, arch §7.3).
+# ---------------------------------------------------------------------
+codes:
+  - id: A1.3
+    stage: A
+    name: Save never encoded as a decision
+    sub_theme: No trigger to return
+    phase: trigger
+    outcome_default: defer
+    outcome_allowed: [defer]
+    journey_rank: 1
+    solvable_without_money: yes
+    question: "Was the save ever a decision at all?"
+    barrier_in_users_words: "It was one tap while scrolling"
+    root_cause: Save never encoded as a decision
+    blueprint_refs: [new]
+    boundary_note: >
+      The save was a reflex, but a real preference existed at the moment of
+      saving. If the user says there was never any intention to buy — pure
+      collecting or inspiration — that is C9, not A1.3. A1.3 is about the
+      SAVE ACTION being too cheap to encode intent; C9 is about intent never
+      existing. Different solves: A1.3 wants friction or context at save
+      time, C9 wants exclusion from the opportunity.
+
+  - id: A1.1
+    stage: A
+    name: No trigger to return
+    sub_theme: No trigger to return
+    phase: trigger
+    outcome_default: defer
+    outcome_allowed: [defer]
+    journey_rank: 2
+    solvable_without_money: yes
+    question: "What would bring the user back to the list?"
+    barrier_in_users_words: "I forgot I even had a wishlist"
+    root_cause: The list is write-only — it never reaches back out
+    blueprint_refs: ["Recall H1", H1]
+    boundary_note: >
+      Forgetting the LIST EXISTS. If the user remembers the list but has no
+      reason to act TODAY on a specific item, that is C13. If they remember
+      and cannot find the item inside the list, that is B1.x. A1.1 is
+      failure to return at all.
+
+  - id: A1.2
+    stage: A
+    name: No change signal
+    sub_theme: No trigger to return
+    phase: trigger
+    outcome_default: defer
+    outcome_allowed: [defer]
+    journey_rank: 3
+    solvable_without_money: yes
+    question: "Did anything tell the user something had changed?"
+    barrier_in_users_words: "Nothing told me anything had changed"
+    root_cause: No price / stock / low-inventory signal
+    blueprint_refs: [new]
+    cross_links: [C13]
+    boundary_note: >
+      Absence of an OUTBOUND signal about a saved item (price moved, stock
+      low, back in size). If the user received a signal and still did not
+      act, that is not A1.2. If the complaint is that the price itself is
+      too high, that is C6. A1.2 is about notification, not price.
+
+  - id: A2.1
+    stage: A
+    name: Wishlist entry point buried
+    sub_theme: Access friction
+    phase: na
+    outcome_default: defer
+    outcome_allowed: [defer]
+    journey_rank: 4
+    solvable_without_money: yes
+    question: "Can the user get to the list?"
+    barrier_in_users_words: "I don't know where the wishlist lives"
+    root_cause: Entry point buried in navigation
+    blueprint_refs: ["Recall H2"]
+    boundary_note: >
+      Cannot FIND THE LIST. Once inside the list and unable to find an item,
+      that is B1.x. Generic app-navigation complaints unrelated to the
+      wishlist are out of scope at the relevance pass, not coded here.
+
+  - id: A2.2
+    stage: A
+    name: Cross-device / logged-out saves
+    sub_theme: Access friction
+    phase: na
+    outcome_default: defer
+    outcome_allowed: [defer]
+    journey_rank: 5
+    solvable_without_money: yes
+    question: "Is the list where the user is shopping?"
+    barrier_in_users_words: "I saved on phone, I shop on laptop"
+    root_cause: Cross-device or logged-out saves do not persist
+    blueprint_refs: [new]
+    boundary_note: >
+      The saved items are unreachable from where the user actually buys, or
+      were lost with a logged-out session. Distinct from A2.1 (list findable
+      but buried) — here the list or its contents are absent on this device.
+
+  - id: A3.1
+    stage: A
+    name: Static list, no new information
+    sub_theme: No reason to return
+    phase: trigger
+    outcome_default: defer
+    outcome_allowed: [defer]
+    journey_rank: 6
+    solvable_without_money: yes
+    question: "Is there anything new to come back for?"
+    barrier_in_users_words: "It's the same list as last time"
+    root_cause: Static list — no new information since the save
+    blueprint_refs: [new]
+    boundary_note: >
+      The user CAN return and knows how, but the list offers nothing new.
+      Distinct from A1.1 (forgot it exists) and A1.2 (no outbound signal):
+      A3.1 is about the list's own content being inert on arrival.
+
+  - id: A3.2
+    stage: A
+    name: Re-entry via search or feed
+    sub_theme: No reason to return
+    phase: trigger
+    outcome_default: defer
+    outcome_allowed: [defer]
+    journey_rank: 7
+    solvable_without_money: yes
+    question: "Does the user use the list at all, or route around it?"
+    barrier_in_users_words: "I just search for it again"
+    root_cause: Users re-enter via feed or search instead of the wishlist
+    blueprint_refs: [new]
+    boundary_note: >
+      An OBSERVED WORKAROUND: the user reaches the item without the list.
+      Strong evidence — the user is proving the list is not load-bearing.
+      Distinct from A2.1: the list is not hard to find, it is simply not used.
+
+# ---------------------------------------------------------------------
+# STAGE B — Wishlist-level retrieval
+# Metric: % of wishlist-openers who click into the item they came for
+# Population: opened the list, couldn't get to the item
+# ---------------------------------------------------------------------
+
+  - id: B1.3
+    stage: B
+    name: Undifferentiated grid
+    sub_theme: Retrieval failure at scale
+    phase: na
+    outcome_default: defer
+    outcome_allowed: [defer]
+    journey_rank: 1
+    solvable_without_money: yes
+    question: "Is the list navigable at all?"
+    barrier_in_users_words: "It's one long undifferentiated grid"
+    root_cause: No grouping by category, occasion, or intent
+    blueprint_refs: [new]
+    boundary_note: >
+      Structural — the list has no organising principle. B1.1 is the absence
+      of an active tool (search/filter/sort); B1.3 is the absence of passive
+      structure. A record can carry both.
+
+  - id: B1.1
+    stage: B
+    name: No search, filter, or sort within wishlist
+    sub_theme: Retrieval failure at scale
+    phase: na
+    outcome_default: defer
+    outcome_allowed: [defer]
+    journey_rank: 2
+    solvable_without_money: yes
+    question: "Can the user find a specific saved item?"
+    barrier_in_users_words: "I can't find the kurta I saved last month"
+    root_cause: No sort, filter, or search within the wishlist
+    blueprint_refs: [H1]
+    boundary_note: >
+      Cannot locate a REMEMBERED item inside the list. If the user cannot
+      remember WHY they saved it, that is B3.1. If they cannot find the list
+      itself, that is A2.1.
+
+  - id: B1.2
+    stage: B
+    name: Reverse-chronological only
+    sub_theme: Retrieval failure at scale
+    phase: na
+    outcome_default: defer
+    outcome_allowed: [defer]
+    journey_rank: 3
+    solvable_without_money: yes
+    question: "Does old intent stay reachable?"
+    barrier_in_users_words: "Old stuff is at the bottom forever"
+    root_cause: Reverse-chronological ordering only
+    blueprint_refs: [H1]
+    boundary_note: >
+      Specifically about ORDERING burying older saves. B1.1 is the absence
+      of a retrieval tool; B1.2 is a wrong default order.
+
+  - id: B2.1
+    stage: B
+    name: Out-of-stock items clutter the list
+    sub_theme: Dead inventory clutter
+    phase: na
+    outcome_default: defer
+    outcome_allowed: [defer]
+    journey_rank: 4
+    solvable_without_money: yes
+    question: "Is the list still mostly alive?"
+    barrier_in_users_words: "Half of it is sold out"
+    root_cause: Out-of-stock items still occupy the grid
+    blueprint_refs: [H1]
+    boundary_note: >
+      CRITICAL BOUNDARY vs C8. B2.1 is out-of-stock items degrading the LIST
+      as a browsing surface — a clutter and hygiene problem. C8 is the user
+      wanting a SPECIFIC item and its size not being purchasable at the
+      moment of decision. B2.1 is solvable without money (hide, group, or
+      flag dead items); C8 is supply-side and fails C-2. If the text is
+      about the list looking dead, code B2.1; if it is about not being able
+      to buy the one thing they came for, code C8.
+
+  - id: B2.2
+    stage: B
+    name: Delisted or vanished products
+    sub_theme: Dead inventory clutter
+    phase: na
+    outcome_default: defer
+    outcome_allowed: [defer]
+    journey_rank: 5
+    solvable_without_money: yes
+    question: "Did the item survive at all?"
+    barrier_in_users_words: "This one just vanished"
+    root_cause: Delisted products, brand exits
+    blueprint_refs: [new]
+    boundary_note: >
+      The item no longer exists on the platform, as opposed to existing but
+      being unavailable (B2.1 / C8). The complaint is about disappearance
+      without notice.
+
+  - id: B2.3
+    stage: B
+    name: Duplicate saves
+    sub_theme: Dead inventory clutter
+    phase: na
+    outcome_default: defer
+    outcome_allowed: [defer]
+    journey_rank: 6
+    solvable_without_money: yes
+    question: "Is the list self-consistent?"
+    barrier_in_users_words: "I've saved the same thing three times"
+    root_cause: No duplicate detection
+    blueprint_refs: [new]
+    boundary_note: >
+      The same product saved repeatedly. Note this is ALSO evidence of A1.1
+      (the user did not remember they had it) — multi-label where both are
+      supported.
+
+  - id: B3.1
+    stage: B
+    name: Save context not captured
+    sub_theme: Recognition failure
+    phase: na
+    outcome_default: defer
+    outcome_allowed: [defer]
+    journey_rank: 7
+    solvable_without_money: yes
+    question: "Does the user remember why this is here?"
+    barrier_in_users_words: "I don't remember why I saved this"
+    root_cause: Thumbnail-only tile, no save context captured
+    blueprint_refs: [new]
+    boundary_note: >
+      Recognition failure on arrival at the list. Distinct from B1.1: the
+      user is looking at the item and cannot reconstruct their own intent.
+      Distinct from C12 (desire decayed) — in C12 they remember wanting it
+      and no longer do; in B3.1 they cannot recall the intent at all.
+
+  - id: B3.2
+    stage: B
+    name: Variant not preserved
+    sub_theme: Recognition failure
+    phase: na
+    outcome_default: defer
+    outcome_allowed: [defer]
+    journey_rank: 8
+    solvable_without_money: yes
+    question: "Which version did the user actually want?"
+    barrier_in_users_words: "Which colour did I want?"
+    root_cause: Variant (colour/size) not preserved on the tile
+    blueprint_refs: [new]
+    boundary_note: >
+      The product is recognised but the chosen VARIANT is lost. Distinct
+      from C1 — B3.2 is forgetting which size/colour was selected at save
+      time; C1 is not knowing which size to pick in the first place.
+
+# ---------------------------------------------------------------------
+# STAGE C — Item-level decision  (the deepest stage)
+# Metric: % of item-viewers who click 'Add to Bag'
+# Population: found the item, opened it, didn't add it
+#
+# Journey order is GATED: Eliminators (C8 -> C6 -> C7) are evaluated before
+# Confidence questions (C12, C1, C2, C4, C14, C3, C10, C5) and finally the
+# Trigger (C13). Solving a Confidence barrier for a user who already failed
+# an Eliminator changes nothing. C9 and C11 sit at rank 0-1 as preconditions.
+# ---------------------------------------------------------------------
+
+  - id: C9
+    stage: C
+    name: Intent was never live
+    phase: na
+    outcome_default: na
+    outcome_allowed: [na]
+    journey_rank: 0
+    solvable_without_money: na
+    question: null
+    blueprint_refs: [H12, H14]
+    workarounds: []
+    is_denominator_control: true
+    boundary_note: >
+      DENOMINATOR CONTROL, NOT AN OPPORTUNITY. The user's non-purchase is
+      CORRECT BEHAVIOUR — no live purchase intent ever existed. Saving as a
+      taste archive, inspiration, window shopping, "someday". Counting C9
+      inside the addressable opportunity inflates it, which is exactly why
+      this code exists (AC-12, EC-INS-3). MUTUALLY EXCLUSIVE with every
+      Confidence-phase code: a user with no intent has no fit doubt.
+      Distinct from C12 — in C12 intent EXISTED and decayed; in C9 it never
+      existed. Distinct from A1.3 — A1.3 is a cheap save action with a real
+      preference behind it.
+
+  - id: C11
+    stage: C
+    name: Need extinguished
+    phase: na
+    outcome_default: exit
+    outcome_allowed: [exit]
+    journey_rank: 1
+    solvable_without_money: partly
+    question: null
+    barrier_in_users_words: "I already bought one somewhere else"
+    blueprint_refs: [new C6b, H9, DH8]
+    workarounds: []
+    boundary_note: >
+      The need was met elsewhere — this item, or a substitute, was bought
+      from another retailer or offline. LOST TO COMPETITOR. Mutually
+      exclusive with Confidence-phase codes. Distinct from C14: in C14 the
+      user LEAVES TO VERIFY and the session dies; in C11 the transaction
+      completed somewhere else. If the text says both (left to check, then
+      bought there), code C14 as blocking and C11 as outcome.
+
+  - id: C8
+    stage: C
+    name: Availability at decision time
+    phase: eliminator
+    outcome_default: exit
+    outcome_allowed: [exit]
+    journey_rank: 2
+    solvable_without_money: no          # supply-side. FAILS the C-2 constraint
+    question: "My size isn't there right now"
+    blueprint_refs: [H11, DH1]
+    workarounds: [waiting, checking back manually, buying elsewhere]
+    workaround_effort_typical: 2
+    boundary_note: >
+      THE KNOWN DANGER PAIR IS C1 vs C8 (EC-CLS-12) — they read similarly
+      and have OPPOSITE solves. C8 is the size/variant NOT BEING PURCHASABLE:
+      out of stock, size unavailable, "never in my size". Supply-side,
+      Eliminator, fails C-2. C1 is the user NOT KNOWING WHICH SIZE TO PICK
+      while the item is fully available: solvable Confidence problem.
+      Test: could the user have completed the purchase if they had been
+      certain? YES -> C1. NO, the option did not exist -> C8.
+      Confusing them means building the wrong thing while the data appears
+      to agree.
+
+  - id: C6
+    stage: C
+    name: Value & price uncertainty
+    phase: eliminator
+    outcome_default: exit
+    outcome_allowed: [exit, defer]     # source doc records BOTH — see contradictions.notes
+    journey_rank: 3
+    solvable_without_money: partly     # price-history transparency and loss-framing, NOT the price
+    question: "Is this the right price, and is now the right time?"
+    blueprint_refs: [H7, H9, H10, DH2]
+    workarounds: [cross-platform price checks, waiting on sale calendars]
+    workaround_effort_typical: 2
+    boundary_note: >
+      C-2 CRITICAL. Includes price-fairness doubt, "is this worth it",
+      waiting for a sale, suspicion that the discount is fake, and
+      cross-platform price comparison. It does NOT include cost revealed
+      LATE at checkout (shipping, fees, COD charge) — that is D1, an
+      information-timing problem with a clean non-monetary fix. It does not
+      include affordability alone with no doubt about value. When resolving
+      a price complaint, ask whether the non-monetary component is
+      TRANSPARENCY (price history, honest anchoring) or TIMING (when to buy)
+      — record that in reasoning, because "users want it cheaper" is an
+      unusable finding under C-2.
+
+  - id: C7
+    stage: C
+    name: Fulfilment & returns trust (risk floor)
+    phase: eliminator
+    outcome_default: exit
+    outcome_allowed: [exit]
+    journey_rank: 4
+    solvable_without_money: partly     # return-EFFORT disclosure, not the policy
+    question: "If it's wrong, how painful is sending it back?"
+    blueprint_refs: [H8, DH3]
+    workarounds: [reading the return policy, preferring COD, buying in-store]
+    workaround_effort_typical: 2
+    boundary_note: >
+      Anticipated RETURN/EXCHANGE EFFORT or delivery risk suppressing the
+      decision BEFORE purchase. A past bad experience cited as a reason for
+      PRESENT hesitation belongs here (this is the EC-REL-1 boundary that
+      makes the record relevant at all). A complaint about a return that
+      already happened, with no bearing on a current decision, is NOT
+      relevant and must not reach classification.
+
+  - id: C12
+    stage: C
+    name: Desire decay / impulse cooled
+    phase: confidence
+    outcome_default: exit
+    outcome_allowed: [exit, defer]
+    journey_rank: 5
+    solvable_without_money: partly
+    question: "Do I still actually want this?"
+    blueprint_refs: [H15, DH4]
+    workarounds: []
+    boundary_note: >
+      Intent EXISTED and FADED. "I don't know why I wanted it", "the moment
+      passed". Newly homed from H15, which had no place in the blueprint's
+      C1-C9 (gap 1, problemstatement.md §5.7). Distinct from C9 (intent
+      never existed) and from B3.1 (cannot recall the intent at all rather
+      than having lost it).
+
+  - id: C1
+    stage: C
+    name: Fit & size uncertainty
+    phase: confidence
+    outcome_default: defer
+    outcome_allowed: [defer]
+    journey_rank: 6
+    solvable_without_money: yes
+    question: "Which size, when every brand runs different?"
+    blueprint_refs: [H6, H11, DH5]
+    workarounds: [ordering two sizes, checking a garment they own, abandoning]
+    workaround_effort_typical: 3
+    boundary_note: >
+      Doubt about WHICH SIZE TO PICK, while the item is purchasable. Brand-
+      to-brand inconsistency, unreliable size charts, "will it fit me".
+      IF THE SIZE IS SIMPLY NOT PURCHASABLE, THAT IS C8 — different phase,
+      opposite solve, and the single most consequential confusion in this
+      codebook (EC-CLS-12). If the doubt is about fabric, drape, colour
+      accuracy or quality rather than measurement, that is C2. If the user
+      forgot which size they had chosen at save time, that is B3.2.
+
+  - id: C2
+    stage: C
+    name: Physical-vs-digital gap (material & quality)
+    phase: confidence
+    outcome_default: defer
+    outcome_allowed: [defer]
+    journey_rank: 7
+    solvable_without_money: yes
+    question: "Will the fabric, colour and quality match the photos?"
+    blueprint_refs: [H6, DH6]
+    workarounds: [zooming images, hunting buyer photos, asking in comments]
+    workaround_effort_typical: 2
+    boundary_note: >
+      Doubt about the PHYSICAL PROPERTIES of the garment versus its
+      depiction: fabric feel, sheerness, colour accuracy, stitching, "will
+      it look cheap". C1 is measurement; C2 is material. If the user wants
+      OTHER BUYERS' evidence to resolve it, that is C4 — C2 is the doubt,
+      C4 is the missing evidence to settle it. Multi-label where both hold.
+
+  - id: C4
+    stage: C
+    name: Real-buyer evidence insufficient
+    phase: confidence
+    outcome_default: defer
+    outcome_allowed: [defer]
+    journey_rank: 8
+    solvable_without_money: yes
+    question: "What did people who actually received it say?"
+    blueprint_refs: [H5, H13, DH7]
+    workarounds: [reading reviews for on-body photos, sizing comments, complaint patterns]
+    workaround_effort_typical: 2
+    boundary_note: >
+      ON-PLATFORM review evidence is thin, stale, photo-less, or untrusted.
+      A CONTENT problem. C14 is the RETENTION problem that follows when the
+      user leaves to find that evidence elsewhere. Same trigger, opposite
+      solves — this split closes gap 3 in problemstatement.md §5.7. If the
+      text describes wanting better reviews, code C4; if it describes going
+      to YouTube/Reddit/Instagram to look, code C14 (and usually both).
+
+  - id: C14
+    stage: C
+    name: Off-platform verification exit
+    phase: confidence
+    outcome_default: defer
+    outcome_allowed: [defer, exit]
+    journey_rank: 9
+    solvable_without_money: yes        # HIGHEST STRATEGIC VALUE
+    question: "Let me go check this properly somewhere else"
+    blueprint_refs: [H5, DH8]
+    workarounds: [YouTube unboxings, Reddit threads, Instagram, price comparison sites]
+    workaround_effort_typical: 3
+    boundary_note: >
+      The user LEAVES THE PLATFORM to verify, and the session dies. The
+      strongest workaround evidence in the corpus — a user who builds this
+      much effort is proving the unmet need without being asked. If they
+      left and bought elsewhere, C11 is the outcome and C14 the blocking
+      cause. If they wanted better on-platform evidence but did not leave,
+      that is C4 alone.
+
+  - id: C3
+    stage: C
+    name: Styling & self-image / wardrobe integration
+    phase: confidence
+    outcome_default: defer
+    outcome_allowed: [defer]
+    journey_rank: 10
+    solvable_without_money: yes
+    question: "Will it look good on *me*, with what I own?"
+    blueprint_refs: [H4, DH9]
+    workarounds: [screenshotting to compare with wardrobe, Pinterest checks]
+    workaround_effort_typical: 2
+    boundary_note: >
+      Doubt about the item ON THIS PERSON or WITH THIS WARDROBE — body type,
+      skin tone, "what would I wear it with", occasion-appropriateness.
+      C1/C2 are doubts about the GARMENT; C3 is a doubt about the MATCH
+      between garment and self. If the user wants someone else's approval,
+      that is C10.
+
+  - id: C10
+    stage: C
+    name: Approval & permission
+    phase: confidence
+    outcome_default: defer
+    outcome_allowed: [defer]
+    journey_rank: 11
+    solvable_without_money: yes
+    question: "I need to check with my partner/parent"
+    blueprint_refs: [new C4b, DH10]
+    workarounds: [sharing the link, group polls, waiting for a reply]
+    workaround_effort_typical: 1
+    boundary_note: >
+      The decision requires ANOTHER PERSON — spousal/parental approval,
+      budget permission, or social validation before committing. Distinct
+      from C3 (the user's own uncertainty about fit-to-self) and from C5
+      (choosing between options). The blocker is an external dependency.
+
+  - id: C5
+    stage: C
+    name: Comparison paralysis / shortlist commitment
+    phase: confidence
+    outcome_default: defer
+    outcome_allowed: [defer]
+    journey_rank: 12
+    solvable_without_money: yes
+    question: "Which of these five do I actually pick?"
+    blueprint_refs: [H2, H3, DH11]
+    workarounds: [opening multiple tabs, screenshot collages, deferring]
+    workaround_effort_typical: 2
+    boundary_note: >
+      Blocked by CHOICE AMONG ALTERNATIVES, not by doubt about any single
+      item. Requires evidence of multiple candidates. If the user is
+      comparing the same item ACROSS RETAILERS on price, that is C6; across
+      retailers for evidence, that is C14.
+
+  - id: C13
+    stage: C
+    name: No trigger to act now
+    phase: trigger
+    outcome_default: defer
+    outcome_allowed: [defer]
+    journey_rank: 13
+    solvable_without_money: yes
+    question: "What makes today different from tomorrow?"
+    blueprint_refs: [DH12]
+    cross_links: [A1.2]
+    workarounds: [indefinite deferral, waiting for an unnamed prompt]
+    workaround_effort_typical: 1
+    boundary_note: >
+      No doubt remains and nothing is blocking — there is simply no reason
+      to act TODAY. Closes gap 2 in problemstatement.md §5.7; the only
+      hypothesis the blueprint marks as spanning two stages, cross-linked to
+      A1.2. Code C13 only when the record shows resolved-but-unacted intent.
+      If an unresolved doubt is present, code that doubt instead. If the
+      user is waiting for a SPECIFIC named event (sale, salary, restock),
+      that is C6 or C8 with segment S2, not C13.
+
+# ---------------------------------------------------------------------
+# STAGE D — Cart-level
+# Metric: % of add-to-bag users who complete purchase
+# Population: added to bag, didn't pay
+# ---------------------------------------------------------------------
+
+  - id: D1
+    stage: D
+    name: Cost surprise
+    phase: eliminator
+    outcome_default: exit
+    outcome_allowed: [exit]
+    journey_rank: 1
+    solvable_without_money: yes        # a DISCLOSURE fix, not a discount — survives C-2 cleanly
+    question: "Why is the total higher than the price?"
+    barrier_in_users_words: "Shipping and fees appeared at the last step"
+    blueprint_refs: ["Cart H1", DH13]
+    boundary_note: >
+      Cost revealed LATE: shipping, platform/convenience fee, COD charge,
+      tax. The complaint is about TIMING AND DISCLOSURE, not the item's
+      price. Doubt about the ITEM's price at the decision stage is C6. This
+      distinction matters under C-2: D1 has a clean non-monetary fix
+      (disclose earlier), C6 mostly does not.
+
+  - id: D3
+    stage: D
+    name: Late-revealed terms
+    phase: eliminator
+    outcome_default: exit
+    outcome_allowed: [exit]
+    journey_rank: 2
+    solvable_without_money: yes        # an information-timing problem
+    question: "Will it arrive in time, and can I send it back?"
+    barrier_in_users_words: "Delivery date was after the wedding"
+    blueprint_refs: [new]
+    boundary_note: >
+      NON-PRICE terms revealed too late: delivery date too late for the
+      occasion, item turns out non-returnable. D1 is money revealed late;
+      D3 is conditions revealed late. Anticipated return EFFORT before
+      add-to-bag is C7; discovering non-returnability AT CHECKOUT is D3.
+
+  - id: D4
+    stage: D
+    name: Final reconsideration
+    phase: confidence
+    outcome_default: exit
+    outcome_allowed: [exit]
+    journey_rank: 3
+    solvable_without_money: partly     # overlaps C6 — COUNT ONCE, AT D
+    question: "Do I want all of this, at this total?"
+    barrier_in_users_words: "Saw the basket total and backed out"
+    blueprint_refs: [new]
+    boundary_note: >
+      Second thoughts at the BASKET TOTAL, or the cart used as a holding
+      pen. Overlaps C6 by construction: where a record supports both, COUNT
+      IT ONCE, AT D. This rule exists so cart-stage price hesitation is not
+      double-counted into the Stage C ranking.
+
+  - id: D2
+    stage: D
+    name: Mechanical friction
+    phase: eliminator
+    outcome_default: exit
+    outcome_allowed: [exit]
+    journey_rank: 4
+    solvable_without_money: yes        # cheapest win available anywhere in the funnel
+    question: "Did the transaction physically complete?"
+    barrier_in_users_words: "Payment failed three times"
+    blueprint_refs: [new, DH13]
+    boundary_note: >
+      Payment failure, no preferred payment method, OTP drop, pincode
+      rejected at checkout. A MECHANICAL failure, not a decision. Generic
+      app crashes unrelated to completing a purchase are out of scope at
+      the relevance pass. If the user chose not to pay, that is D4, not D2.
+
+# ---------------------------------------------------------------------
+# RESIDUAL — not one of the 33
+# ---------------------------------------------------------------------
+
+  - id: Z-99
+    stage: Z
+    name: Residual — relevant but uncoded
+    phase: na
+    outcome_default: na
+    outcome_allowed: [exit, defer, na]
+    journey_rank: 99
+    solvable_without_money: na
+    is_residual: true
+    blueprint_refs: []
+    boundary_note: >
+      THE HONESTY VALVE (FR-5.4). Relevant to the save-to-purchase decision
+      but fitting no code above. Reachable FROM ANY STAGE, not only from
+      "no stage" (EC-CLS-8). If Z-99 exceeds 15% of relevant records the
+      codebook is treated as INCOMPLETE: cluster the residual, propose new
+      codes, version the codebook, re-run classification. Never use Z-99 as
+      a low-effort default — force a real code where one genuinely fits.
+
+# ---------------------------------------------------------------------
+# CONTRADICTION MATRIX (EC-CLS-4, S2-INV-3)
+# Violations are flagged for re-classification, not silently corrected.
+# ---------------------------------------------------------------------
+contradictions:
+  mutually_exclusive_groups:
+    - codes: [C9]
+      excludes_phase: [confidence]
+      rationale: >
+        No live intent means no fit doubt, no styling doubt, no comparison
+        problem. A record carrying both is incoherent.
+    - codes: [C11]
+      excludes_phase: [confidence]
+      rationale: >
+        The need was met elsewhere; unresolved confidence questions about
+        this item cannot also be the state.
+    - codes: [C9, C11]
+      pairwise: true
+      rationale: >
+        Intent never existed vs intent existed and was satisfied elsewhere.
+        Different populations.
+  notes: >
+    S2-INV-4 asserts ELIMINATOR => EXIT in one direction only. It must NOT
+    assert confidence => defer: C12 and D4 are confidence-phase with an
+    exit outcome, and C6 is an eliminator whose source definition allows
+    BOTH exit and defer. Use outcome_allowed, not outcome_default, when
+    evaluating that invariant.

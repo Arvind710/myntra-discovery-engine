@@ -1,0 +1,22 @@
+# Secrets — never committed
+.streamlit/secrets.toml
+.env
+
+# Embeddings: LOCAL ONLY. Never ships to Streamlit (architecture.md §2, §10)
+data/embeddings.npy
+data/*.npy
+
+# Raw LLM responses / quarantine
+data/quarantine/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# OS
+.DS_Store

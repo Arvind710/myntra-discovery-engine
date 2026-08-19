@@ -1,0 +1,110 @@
+# =====================================================================
+# Segment codebook v1 — the SECOND analytical axis
+# Source: problemstatement.md §5.8
+#
+# Three rules that keep this honest:
+#  1. `unknown` is the EXPECTED MAJORITY. Public text rarely states why
+#     someone saved. Forcing every record into a segment fabricates the
+#     entire segmentation (R-10).
+#  2. S3 non-conversion is NOT a problem to solve. Bookmarkers behave
+#     correctly by not buying. Size them, then EXCLUDE them from the
+#     addressable opportunity (AC-12) — same discipline as C9.
+#  3. Segment is a hypothesis about the CORPUS, not a fact about Myntra's
+#     base. Relative sizes reflect who posts, not who saves (§8).
+# =====================================================================
+
+version: v1
+frozen_at: null
+confidence_threshold: 0.60   # below this the label MUST be `unknown` (arch §6.3, open question #10)
+
+segments:
+  - id: S1
+    name: Buying-soon — immediate need
+    why_they_saved: A live need, now
+    reengagement_30d: very high
+    intent_urgency: high
+    price_sensitivity: low        # has a budget range and will pay inside it
+    positive_signals:
+      - named near-term deadline
+      - delivery-speed concern
+      - active checking behaviour
+      - decision language ("should I or shouldn't I")
+    giveaway_phrasing:
+      - "need it by Friday"
+      - "will it arrive before"
+      - "should I order it or not"
+    predicted_dominant_codes: [C1, C2, C4, C8, C14]
+    predicted_outcome_mix: Mostly Defer, short window -> winnable
+    boundary_note: >
+      Requires a NEAR-TERM, UNCONDITIONAL need. A dated occasion months away
+      is S2, not S1. Urgency about DELIVERY of an item already decided on is
+      still S1.
+
+  - id: S2
+    name: Future-event / conditional
+    why_they_saved: A dated occasion, a sale, a salary cycle, or a size restock
+    reengagement_30d: moderate     # returns for price change and size checks
+    intent_urgency: moderate
+    price_sensitivity: high        # waiting for sales, price drops, better deals
+    positive_signals:
+      - named future occasion
+      - conditional waiting
+      - explicit price or stock trigger
+    giveaway_phrasing:
+      - "saving it for the wedding"
+      - "waiting for EOSS"
+      - "after salary"
+      - "if it comes back in my size"
+    predicted_dominant_codes: [C6, C13, A1.2, C8]
+    predicted_outcome_mix: Defer, long window -> needs a trigger
+    boundary_note: >
+      Intent is REAL but CONDITIONAL on a named future event or threshold.
+      The condition must be stated or clearly implied. Vague "maybe later"
+      with no condition is `unknown`, not S2.
+
+  - id: S3
+    name: Bookmarker / taste archive / aspirational
+    why_they_saved: Collection, reference, inspiration
+    reengagement_30d: very low     # dormant, may never return
+    intent_urgency: zero
+    price_sensitivity: na
+    positive_signals:
+      - collection or inspiration framing
+      - no purchase language anywhere
+      - volume-of-saves talk
+    giveaway_phrasing:
+      - "just saving for later"
+      - "my wishlist has 200 items"
+      - "window shopping"
+      - "someday"
+    predicted_dominant_codes: [C9]
+    predicted_outcome_mix: Not addressable
+    excluded_from_opportunity: true    # AC-12 / EC-INS-3 — sized, then excluded
+    boundary_note: >
+      NOT A PROBLEM TO SOLVE. Requires POSITIVE evidence of collecting
+      behaviour, not merely the absence of purchase language — absence is
+      `unknown`. This is the segment most likely to be over-assigned, and
+      over-assigning it shrinks the opportunity as wrongly as under-
+      assigning it inflates it.
+
+  - id: unknown
+    name: Segment not inferable from the text
+    is_default: true
+    boundary_note: >
+      THE EXPECTED MAJORITY, and a first-class label — never a failure.
+      Assign whenever confidence < 0.60, or when signals conflict
+      ("for my wedding next year" AND "need it now" — EC-CLS-10: lower the
+      confidence, do NOT average conflicting signals).
+      Segment-conditional results are computed ONLY over the labelled
+      subset, and coverage is displayed beside EVERY segment chart
+      (S2-INV-10). The app never renders a segment breakdown without its
+      coverage figure.
+
+reporting_rules:
+  - Coverage percentage is STORED at analysis time, not inferred at render.
+  - Where segment x code is too sparse (expected at 2,000 records), fall back
+    to segment x STAGE — a 3x4 matrix over the same records — and mark
+    code-level detail DIRECTIONAL (arch §9.4, EC-INS-8).
+  - Predicted dominant codes above are PRE-REGISTERED PREDICTIONS, to be
+    tested rather than assumed. Corpus contradiction is a finding worth more
+    than confirmation (FR-3.5).
