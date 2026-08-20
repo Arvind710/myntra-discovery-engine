@@ -1,0 +1,895 @@
+{
+  "check": "S1-HUM-1",
+  "population": "retained",
+  "population_n": 5099,
+  "n": 30,
+  "seed": 20260820,
+  "records": [
+    {
+      "record_id": "cd220591ab24a970a1e55b2881555e978c9184cd",
+      "source": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=MYWsdRhfYkI&lc=UgzT_4ny21bQFfOjqUR4AaABAg",
+      "created_at": "2025-05-20T02:55:39+00:00",
+      "text_raw": "To kaise usko open kre",
+      "thread_context": "Myntra Return Put on Hold | Myntra Quality Check failed | How to Take refund ?? ( in Hindi )",
+      "rating": null,
+      "collect_query": "myntra quality check before you buy",
+      "lang": "hi-Latn",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 0,
+        "reason": "Asks how to open feature about return/refund (post-purchase issue)",
+        "confidence": 0.86,
+        "secondhand": 0,
+        "myntra_specific": 1
+      },
+      "codes": [],
+      "meta": null,
+      "segment": null,
+      "in_gold": false
+    },
+    {
+      "record_id": "ed8576667965c567a9d661132bb3eb6703f6edfa",
+      "source": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=1dgDXkc-lJ8&lc=UgyNMLzVIFLdNpj18cV4AaABAg",
+      "created_at": "2026-02-21T22:46:27+00:00",
+      "text_raw": "Myntra pe ye kaam nhi krra, aur ajio pe jitna cancel karoge utni br platform fee bdte jaaegi😂😅",
+      "thread_context": "Always use this trick when you shop from myntra or ajio app😉",
+      "rating": null,
+      "collect_query": "is myntra worth buying",
+      "lang": "en",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 0,
+        "reason": "Discusses cancellations/platform fees, not purchase decision factors",
+        "confidence": 0.9,
+        "secondhand": 0,
+        "myntra_specific": 1
+      },
+      "codes": [],
+      "meta": null,
+      "segment": null,
+      "in_gold": false
+    },
+    {
+      "record_id": "65fac87c9ee4c67834abb9e796fe00de5f6baa26",
+      "source": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=Uf81X8shUB8&lc=UgyVbubcNcmUeDCYEsh4AaABAg",
+      "created_at": "2022-09-21T05:55:54+00:00",
+      "text_raw": "Man matters beard oil review podunga anna",
+      "thread_context": "Must Watch before Choosing Shirt Sizes Online 😱 | No more Shirt Return 😍❤️",
+      "rating": null,
+      "collect_query": "online shopping fashion india size problem",
+      "lang": "en",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 0,
+        "reason": "Beard oil (personal care), not fashion purchase decision",
+        "confidence": 0.95,
+        "secondhand": 0,
+        "myntra_specific": 0
+      },
+      "codes": [],
+      "meta": null,
+      "segment": null,
+      "in_gold": false
+    },
+    {
+      "record_id": "b0af8c4fd446b598bec82c615fa3686d456d97fc",
+      "source": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=1XD6msqkAUE&lc=Ugzzi5LoG8TeAyYCXUx4AaABAg",
+      "created_at": "2025-07-22T05:10:03+00:00",
+      "text_raw": "Second one black silwar kitny ka h",
+      "thread_context": "Summer Kurta Sets in Budget ❤️ Myntra Kurta sets #beginnerscreativity #fashion #kurtaset",
+      "rating": null,
+      "collect_query": "myntra kurta haul review",
+      "lang": "en",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 0,
+        "reason": "Asks item price, not about purchase hesitation or saving behavior",
+        "confidence": 0.8,
+        "secondhand": 0,
+        "myntra_specific": 0
+      },
+      "codes": [],
+      "meta": null,
+      "segment": null,
+      "in_gold": false
+    },
+    {
+      "record_id": "fbd4260a2ba2cbba4929f62c280a22dc578c0c8d",
+      "source": "reddit",
+      "source_url": "https://www.reddit.com/r/IndianFashionAddicts/comments/1uyl5jv/need_some_advice/oy0pco7/",
+      "created_at": "2026-07-17T02:55:02+00:00",
+      "text_raw": "Prbly go to any hyd chain store, wear simple. It'll do I guess.",
+      "thread_context": "r/IndianFashionAddicts | Need some advice",
+      "rating": null,
+      "collect_query": "should i buy myntra",
+      "lang": "en",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 1,
+        "reason": "advises in-person shopping/trying before buying online",
+        "confidence": 0.7,
+        "secondhand": 0,
+        "myntra_specific": 0
+      },
+      "codes": [
+        {
+          "code": "Z-99",
+          "confidence": 0.5,
+          "is_blocking": 1,
+          "evidence_span": "Prbly go to any hyd chain store, wear simple. It'll do I guess.",
+          "span_verified": 1,
+          "reasoning": "no code assigned by model; forced to residual (EC-CLS-1)"
+        }
+      ],
+      "meta": {
+        "blocking_code": "Z-99",
+        "outcome": "na",
+        "intensity": 1,
+        "workaround": 0,
+        "workaround_text": "",
+        "counterfactual": 0,
+        "counterfactual_text": ""
+      },
+      "segment": {
+        "segment_id": 1,
+        "segment_name": "Collectors"
+      },
+      "in_gold": false
+    },
+    {
+      "record_id": "b0f3eedc92e67b656f10f8fabc3884f7903541ef",
+      "source": "play",
+      "source_url": "https://play.google.com/store/apps/details?id=com.myntra.android&reviewId=6a870b7d-9c45-4dfb-a099-578a5abf2207",
+      "created_at": "2026-08-18T21:58:07+00:00",
+      "text_raw": "overall it's very nice 👍",
+      "thread_context": "Play Store review (IN/en)",
+      "rating": 5,
+      "collect_query": "play/in/en/newest",
+      "lang": "en",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 0,
+        "reason": "No purchase-intent or hesitation mentioned",
+        "confidence": 0.87,
+        "secondhand": 0,
+        "myntra_specific": 0
+      },
+      "codes": [],
+      "meta": null,
+      "segment": null,
+      "in_gold": false
+    },
+    {
+      "record_id": "bc641339fe6a1068ca753ad8f0fa104b44377180",
+      "source": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=MYWsdRhfYkI&lc=UgwUb47lxOXOq47WHnR4AaABAg",
+      "created_at": "2021-10-01T17:34:03+00:00",
+      "text_raw": "Sir mera product (return approval pe chala gya hai pls help me",
+      "thread_context": "Myntra Return Put on Hold | Myntra Quality Check failed | How to Take refund ?? ( in Hindi )",
+      "rating": null,
+      "collect_query": "myntra quality check before you buy",
+      "lang": "hi-Latn",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 0,
+        "reason": "Post-purchase return/refund request, not about buying decision",
+        "confidence": 0.9,
+        "secondhand": 0,
+        "myntra_specific": 1
+      },
+      "codes": [],
+      "meta": null,
+      "segment": null,
+      "in_gold": false
+    },
+    {
+      "record_id": "9f0f3773ef75efc979b240d97b1ddd3d7f8701ce",
+      "source": "play",
+      "source_url": "https://play.google.com/store/apps/details?id=com.myntra.android&reviewId=46ed56d8-c5a4-412d-bd22-c62c4b18ad79",
+      "created_at": "2024-09-22T12:01:44+00:00",
+      "text_raw": "डाउनलोड होने के बाद ही पता चलेगा| 🤔🤔",
+      "thread_context": "Play Store review (IN/hi)",
+      "rating": 3,
+      "collect_query": "play/in/hi/newest",
+      "lang": "hi",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 0,
+        "reason": "App-store comment unrelated to purchasing or fashion decision",
+        "confidence": 0.67,
+        "secondhand": 0,
+        "myntra_specific": 0
+      },
+      "codes": [],
+      "meta": null,
+      "segment": null,
+      "in_gold": false
+    },
+    {
+      "record_id": "eaadbed84b66d70daacaf6685e5c4594a06a1560",
+      "source": "reddit",
+      "source_url": "https://www.reddit.com/r/IndianFashionAddicts/comments/1fcmvrp/snitch_jeans_review/mbj25sg/",
+      "created_at": "2025-02-07T19:20:57+00:00",
+      "text_raw": "ok thnks for info ewill try this brand",
+      "thread_context": "r/IndianFashionAddicts | SNITCH jeans review",
+      "rating": null,
+      "collect_query": "myntra size not sure",
+      "lang": "en",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 1,
+        "reason": "expresses intent to try/buy a fashion brand",
+        "confidence": 0.8,
+        "secondhand": 0,
+        "myntra_specific": 0
+      },
+      "codes": [
+        {
+          "code": "Z-99",
+          "confidence": 0.7,
+          "is_blocking": 1,
+          "evidence_span": "will try this brand",
+          "span_verified": 1,
+          "reasoning": "The comment expresses a generic future intent without any identifiable barrier or wishlist-specific behavior; none of the hypothesis codes cleanly apply."
+        }
+      ],
+      "meta": {
+        "blocking_code": "Z-99",
+        "outcome": "na",
+        "intensity": 1,
+        "workaround": 0,
+        "workaround_text": "",
+        "counterfactual": 0,
+        "counterfactual_text": ""
+      },
+      "segment": {
+        "segment_id": 1,
+        "segment_name": "Collectors"
+      },
+      "in_gold": false
+    },
+    {
+      "record_id": "d8470f243c012a58e6cc382a294ba7aee9ae6c62",
+      "source": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=qNU-whuMLzY&lc=UgxFoDD_Rp6abxsvvxF4AaABAg",
+      "created_at": "2024-06-07T08:03:29+00:00",
+      "text_raw": "Thank god yeh shorts dekh liya ,main toh 5k ka samman mangwane wali thi😢😢,nahi mangwayoungi",
+      "thread_context": "Myntra return on hold quality check failed #myntra #quality #youtubeshorts #shortfeed #shorts",
+      "rating": null,
+      "collect_query": "myntra quality check before you buy",
+      "lang": "hi-Latn",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 1,
+        "reason": "User states they aborted an intended clothing purchase after seeing shorts",
+        "confidence": 0.9,
+        "secondhand": 0,
+        "myntra_specific": 0
+      },
+      "codes": [
+        {
+          "code": "C14",
+          "confidence": 0.72,
+          "is_blocking": 1,
+          "evidence_span": "shorts dekh liya",
+          "span_verified": 1,
+          "reasoning": "They watched an off-platform video (a short) and as a result decided not to place the order."
+        }
+      ],
+      "meta": {
+        "blocking_code": "C14",
+        "outcome": "exit",
+        "intensity": 4,
+        "workaround": 1,
+        "workaround_text": "shorts dekh liya",
+        "counterfactual": 0,
+        "counterfactual_text": ""
+      },
+      "segment": {
+        "segment_id": 4,
+        "segment_name": "Stuck Deciders"
+      },
+      "in_gold": false
+    },
+    {
+      "record_id": "1dd43bcfcb5472a82e1310ff58b206b1d6de1c13",
+      "source": "play",
+      "source_url": "https://play.google.com/store/apps/details?id=com.myntra.android&reviewId=2841418b-d7fe-4f4e-a1c0-a421baaff707",
+      "created_at": "2026-08-17T00:35:28+00:00",
+      "text_raw": "really good and real product in myntra compair the flipkart and ajio",
+      "thread_context": "Play Store review (IN/en)",
+      "rating": 5,
+      "collect_query": "play/in/en/newest",
+      "lang": "en",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 0,
+        "reason": "Post-purchase praise, not about purchase hesitation or intent",
+        "confidence": 0.82,
+        "secondhand": 0,
+        "myntra_specific": 1
+      },
+      "codes": [],
+      "meta": null,
+      "segment": null,
+      "in_gold": false
+    },
+    {
+      "record_id": "aa723a9320d15ba7b86a1cc16524b3d465129ca5",
+      "source": "play",
+      "source_url": "https://play.google.com/store/apps/details?id=com.myntra.android&reviewId=828a4dac-8dc0-497a-b4b5-809aef633d1b",
+      "created_at": "2024-10-10T20:23:47+00:00",
+      "text_raw": "Super shoping complex",
+      "thread_context": "Play Store review (IN/hi)",
+      "rating": 5,
+      "collect_query": "play/in/hi/newest",
+      "lang": "en",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 0,
+        "reason": "Praise of app/store, no mention of purchase intent or hesitation",
+        "confidence": 0.78,
+        "secondhand": 0,
+        "myntra_specific": 0
+      },
+      "codes": [],
+      "meta": null,
+      "segment": null,
+      "in_gold": false
+    },
+    {
+      "record_id": "4e9a3abb8cdea7af0b2f517fd968845f55e1d02e",
+      "source": "reddit",
+      "source_url": "https://www.reddit.com/r/TwoXIndia/comments/1tq1zc0/ladies_did_i_over_spend/oojflii/",
+      "created_at": "2026-05-29T09:47:07+00:00",
+      "text_raw": "Girl its 400 off rn, so you definitely overpaid 💀",
+      "thread_context": "r/TwoXIndia | Ladies did I over spend?😭",
+      "rating": null,
+      "collect_query": "myntra saved items",
+      "lang": "en",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 1,
+        "reason": "price regret due to current discount",
+        "confidence": 0.82,
+        "secondhand": 0,
+        "myntra_specific": 0
+      },
+      "codes": [
+        {
+          "code": "C6",
+          "confidence": 0.9,
+          "is_blocking": 1,
+          "evidence_span": "400 off rn",
+          "span_verified": 1,
+          "reasoning": "User points out a lower current price (sale) implying price/timing uncertainty — they overpaid and might have waited for discount."
+        }
+      ],
+      "meta": {
+        "blocking_code": "C6",
+        "outcome": "defer",
+        "intensity": 2,
+        "workaround": 0,
+        "workaround_text": "",
+        "counterfactual": 0,
+        "counterfactual_text": ""
+      },
+      "segment": {
+        "segment_id": 5,
+        "segment_name": "Committed Waiters"
+      },
+      "in_gold": false
+    },
+    {
+      "record_id": "9fc79beb0f52dad64df41f8bfbb5fa9e8fc4b682",
+      "source": "play",
+      "source_url": "https://play.google.com/store/apps/details?id=com.myntra.android&reviewId=25b2221c-a3c9-4937-a921-8c655b038fe5",
+      "created_at": "2026-08-17T14:09:02+00:00",
+      "text_raw": "I got an amazing product deal and quality products on time.",
+      "thread_context": "Play Store review (IN/en)",
+      "rating": 5,
+      "collect_query": "play/in/en/newest",
+      "lang": "en",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 0,
+        "reason": "Post-purchase praise, no hesitation or saving/buying decision mentioned",
+        "confidence": 0.58,
+        "secondhand": 0,
+        "myntra_specific": 0
+      },
+      "codes": [],
+      "meta": null,
+      "segment": null,
+      "in_gold": false
+    },
+    {
+      "record_id": "ee48662f4a24d24566b2648b1ba1cf7bd762bd14",
+      "source": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=E5ymstMjHOk&lc=Ugy_1l2YCLlsJo4LTcl4AaABAg",
+      "created_at": "2026-04-27T10:18:55+00:00",
+      "text_raw": "High waist jeans link",
+      "thread_context": "👉 Low Waist vs High Waist Jeans | Myntra Try On Haul 👖✨",
+      "rating": null,
+      "collect_query": "myntra try on haul size",
+      "lang": "en",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 0,
+        "reason": "No purchase hesitation or decision behaviour mentioned",
+        "confidence": 0.74,
+        "secondhand": 0,
+        "myntra_specific": 1
+      },
+      "codes": [],
+      "meta": null,
+      "segment": null,
+      "in_gold": false
+    },
+    {
+      "record_id": "88d771509daeb61e1dcfebfebc77457612428cf7",
+      "source": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=PdLSnQQGYn8&lc=Ugy2XU_rmYdSXtZVKQp4AaABAg",
+      "created_at": "2026-08-11T07:26:45+00:00",
+      "text_raw": "Mam 1 wala suit ka plazo usme alg dikya h or aap flred bata rhi h",
+      "thread_context": "Rakshabandhan Special Myntra Kurta Set Haul, Embroidered Kurta Pant Set With Dupatta, Kurta Palazzo",
+      "rating": null,
+      "collect_query": "myntra kurta haul review",
+      "lang": "en",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 1,
+        "reason": "Questioning garment styling/fit affecting purchase decision",
+        "confidence": 0.82,
+        "secondhand": 0,
+        "myntra_specific": 1
+      },
+      "codes": [
+        {
+          "code": "B3.2",
+          "confidence": 0.87,
+          "is_blocking": 1,
+          "evidence_span": "Mam 1 wala suit ka plazo usme alg dikya h",
+          "span_verified": 1,
+          "reasoning": "User indicates that the saved item's variant (the palazzo) appears different — evidence that the chosen variant isn't preserved or is unclear."
+        },
+        {
+          "code": "C2",
+          "confidence": 0.45,
+          "is_blocking": 0,
+          "evidence_span": "aap flred bata rhi h",
+          "span_verified": 1,
+          "reasoning": "User comments on appearance/shape ('flared') suggesting concern about how the garment looks (material/fit perception). Confidence is moderate-low because the phrase could be descriptive rather than a purchase-blocking doubt."
+        }
+      ],
+      "meta": {
+        "blocking_code": "B3.2",
+        "outcome": "defer",
+        "intensity": 2,
+        "workaround": 0,
+        "workaround_text": "",
+        "counterfactual": 0,
+        "counterfactual_text": ""
+      },
+      "segment": {
+        "segment_id": 4,
+        "segment_name": "Stuck Deciders"
+      },
+      "in_gold": false
+    },
+    {
+      "record_id": "c517dcaaf772c88ab203e15c66ca9dac61718755",
+      "source": "appstore",
+      "source_url": "https://itunes.apple.com/in/review?id=907394059&type=Purple%20Software",
+      "created_at": "2026-08-15T12:00:41+00:00",
+      "text_raw": "Awsome collection and on time delivery. Awsome collection and on time delivery",
+      "thread_context": "App Store review (IN)",
+      "rating": 5,
+      "collect_query": "appstore/in/page10",
+      "lang": "en",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 0,
+        "reason": "Post-purchase praise, no decision/hesitation information",
+        "confidence": 0.94,
+        "secondhand": 0,
+        "myntra_specific": 0
+      },
+      "codes": [],
+      "meta": null,
+      "segment": null,
+      "in_gold": false
+    },
+    {
+      "record_id": "a87e2fec171823c1113a52de070b89ea71b1ea3c",
+      "source": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=UV09E6Qn91A&lc=UgzC7QNAMbxVZrhXU9x4AaABAg",
+      "created_at": "2026-05-30T17:11:36+00:00",
+      "text_raw": "Ye last wala kurti pink colour ya peach ?",
+      "thread_context": "Myntra Festive Wear Kurta Set Haul❤️Myntra Anarkali Kurta Set #myntra #anarkali #fashion #shorts",
+      "rating": null,
+      "collect_query": "myntra kurta haul review",
+      "lang": "hi-Latn",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 1,
+        "reason": "asks about product colour accuracy affecting purchase decision",
+        "confidence": 0.77,
+        "secondhand": 0,
+        "myntra_specific": 1
+      },
+      "codes": [
+        {
+          "code": "A1.1",
+          "confidence": 0.35,
+          "is_blocking": 1,
+          "evidence_span": "Ye last wala kurti pink colour ya peach ?",
+          "span_verified": 1,
+          "reasoning": "User asks about color—no explicit trigger to return, could indicate low intent to act now; weak evidence."
+        }
+      ],
+      "meta": {
+        "blocking_code": "A1.1",
+        "outcome": "defer",
+        "intensity": 1,
+        "workaround": 0,
+        "workaround_text": "",
+        "counterfactual": 0,
+        "counterfactual_text": ""
+      },
+      "segment": {
+        "segment_id": 3,
+        "segment_name": "Ready Buyers"
+      },
+      "in_gold": false
+    },
+    {
+      "record_id": "1cfa0284bb0bc1ac1f45489da7f91c67ab8700eb",
+      "source": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=Gaa99Q7zicc&lc=UgxdkZkTGjuLghvJL514AaABAg",
+      "created_at": "2025-10-02T09:12:58+00:00",
+      "text_raw": "The video is very creative ❤ the only problem was the light 😅 it made the clothes look too bright asif like u put a filter on the whole video 😊\nFor reviews it's better to show in natural light 😊❤",
+      "thread_context": "*Huge Myntra*Try On Haul😍 Shirts, Denims,Trousers ,Tops &amp; Kurtas | Affordable College + Office Wear",
+      "rating": null,
+      "collect_query": "myntra try on haul size",
+      "lang": "en",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 1,
+        "reason": "Color/lighting affects perceived product appearance, influencing purchase decisions",
+        "confidence": 0.9,
+        "secondhand": 0,
+        "myntra_specific": 0
+      },
+      "codes": [
+        {
+          "code": "C2",
+          "confidence": 0.82,
+          "is_blocking": 1,
+          "evidence_span": "the light 😅 it made the clothes look too bright asif like u put a filter on the whole video",
+          "span_verified": 1,
+          "reasoning": "User is concerned the video's lighting alters appearance of garments (how they look), indicating doubt about physical properties (colour/appearance) vs depiction."
+        },
+        {
+          "code": "C4",
+          "confidence": 0.75,
+          "is_blocking": 0,
+          "evidence_span": "For reviews it's better to show in natural light",
+          "span_verified": 1,
+          "reasoning": "User requests better review-style evidence (natural-light photos/videos) to trust appearance — a content/reviewer-evidence issue prompting need for improved real-buyer evidence."
+        }
+      ],
+      "meta": {
+        "blocking_code": "C2",
+        "outcome": "defer",
+        "intensity": 2,
+        "workaround": 0,
+        "workaround_text": "",
+        "counterfactual": 1,
+        "counterfactual_text": "show in natural light"
+      },
+      "segment": {
+        "segment_id": 4,
+        "segment_name": "Stuck Deciders"
+      },
+      "in_gold": false
+    },
+    {
+      "record_id": "f62096fb3951ffa86ef22d7c9595afc34a76adbd",
+      "source": "appstore",
+      "source_url": "https://itunes.apple.com/in/review?id=907394059&type=Purple%20Software",
+      "created_at": "2026-08-18T05:00:06+00:00",
+      "text_raw": "Super. It’s nice fabric and nice print",
+      "thread_context": "App Store review (IN)",
+      "rating": 5,
+      "collect_query": "appstore/in/page2",
+      "lang": "en",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 0,
+        "reason": "Post-purchase praise without indicating purchase hesitation or intent",
+        "confidence": 0.9,
+        "secondhand": 0,
+        "myntra_specific": 0
+      },
+      "codes": [],
+      "meta": null,
+      "segment": null,
+      "in_gold": false
+    },
+    {
+      "record_id": "d3d8f8ed93a2a36d10d96167915a68848fce4ac5",
+      "source": "play",
+      "source_url": "https://play.google.com/store/apps/details?id=com.myntra.android&reviewId=958acda8-4abe-4ed3-8983-50ae91c0ceb5",
+      "created_at": "2026-08-16T13:49:10+00:00",
+      "text_raw": "isse accha aur bharosemand koi app nhi hai",
+      "thread_context": "Play Store review (IN/en)",
+      "rating": 5,
+      "collect_query": "play/in/en/newest",
+      "lang": "hi-Latn",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 0,
+        "reason": "General praise of app, no mention of purchase intent or hesitation",
+        "confidence": 0.86,
+        "secondhand": 0,
+        "myntra_specific": 0
+      },
+      "codes": [],
+      "meta": null,
+      "segment": null,
+      "in_gold": false
+    },
+    {
+      "record_id": "ef78d7c8756e5d5010ea5d56fe7ec206c5c11eaf",
+      "source": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=61rIR8Fr5oA&lc=UgxAVspjre_EY09h1KZ4AaABAg",
+      "created_at": "2024-10-19T07:00:05+00:00",
+      "text_raw": "Quality looks cheap, these type of tops have soft material not polyester like this one",
+      "thread_context": "Most viral top|| myntra haul|| top haul|| meesho haul|| sale #myntrahaul #meeshohaul #fashion #haul",
+      "rating": null,
+      "collect_query": "myntra haul review honest",
+      "lang": "en",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 1,
+        "reason": "Comments on product quality affecting purchase decision",
+        "confidence": 0.84,
+        "secondhand": 0,
+        "myntra_specific": 0
+      },
+      "codes": [
+        {
+          "code": "C2",
+          "confidence": 0.9,
+          "is_blocking": 1,
+          "evidence_span": "not polyester like this one",
+          "span_verified": 1,
+          "reasoning": "Explicit comment about material being polyester vs expected soft material; further evidence of material/quality mismatch."
+        }
+      ],
+      "meta": {
+        "blocking_code": "C2",
+        "outcome": "defer",
+        "intensity": 2,
+        "workaround": 0,
+        "workaround_text": "",
+        "counterfactual": 0,
+        "counterfactual_text": ""
+      },
+      "segment": {
+        "segment_id": 4,
+        "segment_name": "Stuck Deciders"
+      },
+      "in_gold": false
+    },
+    {
+      "record_id": "8651aac87ad63674fd44ce72cd6c658291f0eb40",
+      "source": "reddit",
+      "source_url": "https://www.reddit.com/r/TwoXIndia/comments/1tq1zc0/ladies_did_i_over_spend/ood1quu/",
+      "created_at": "2026-05-28T12:43:36+00:00",
+      "text_raw": "Can you share the link of the pants that you got?",
+      "thread_context": "r/TwoXIndia | Ladies did I over spend?😭",
+      "rating": null,
+      "collect_query": "myntra saved items",
+      "lang": "en",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 0,
+        "reason": "Just asks for a product link, no purchase-decision info",
+        "confidence": 0.92,
+        "secondhand": 0,
+        "myntra_specific": 0
+      },
+      "codes": [],
+      "meta": null,
+      "segment": null,
+      "in_gold": false
+    },
+    {
+      "record_id": "d665ddae95d6d921f4dff89b9bc04b21002b4056",
+      "source": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=1dgDXkc-lJ8&lc=UgxBHY-BMOHK1BFwM3d4AaABAg",
+      "created_at": "2026-02-25T06:37:48+00:00",
+      "text_raw": "Hmm.. also account get blocked waah bete waah mouj kardi😂😂😂",
+      "thread_context": "Always use this trick when you shop from myntra or ajio app😉",
+      "rating": null,
+      "collect_query": "is myntra worth buying",
+      "lang": "en",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 0,
+        "reason": "Mentions account block, not purchase decision or wishlist",
+        "confidence": 0.8,
+        "secondhand": 0,
+        "myntra_specific": 0
+      },
+      "codes": [],
+      "meta": null,
+      "segment": null,
+      "in_gold": false
+    },
+    {
+      "record_id": "e32a3b6a8177c7a261175c0ba0c5d374aba65a2b",
+      "source": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=qNU-whuMLzY&lc=UgynLhyog4IhabKy6dJ4AaABAg",
+      "created_at": "2025-01-01T09:50:29+00:00",
+      "text_raw": "10times baat kar suki hu. Byt bar bar cancel ho rha h. Abhi m kya kru. 4k ki product mein mereko 1000 ki cheap quality kurta reciv hui h",
+      "thread_context": "Myntra return on hold quality check failed #myntra #quality #youtubeshorts #shortfeed #shorts",
+      "rating": null,
+      "collect_query": "myntra quality check before you buy",
+      "lang": "hi-Latn",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 0,
+        "reason": "Post-purchase complaint about quality/returns, not purchase hesitation",
+        "confidence": 0.88,
+        "secondhand": 0,
+        "myntra_specific": 1
+      },
+      "codes": [],
+      "meta": null,
+      "segment": null,
+      "in_gold": false
+    },
+    {
+      "record_id": "a6cda5905f09eace6a21b9ea8d3ace6b3fec4efa",
+      "source": "reddit",
+      "source_url": "https://www.reddit.com/r/IndianFashion/comments/1mid5xf/21f_finally_wore_this_dress_after_long_wait/n73ca72/",
+      "created_at": "2025-08-05T18:04:11+00:00",
+      "text_raw": "Aisa mat kro yar, wo bechare jo car mai ja rahe they might fall from cliffs 😅",
+      "thread_context": "r/IndianFashion | 21F - Finally wore this dress after long wait😭",
+      "rating": null,
+      "collect_query": "saved for later never bought",
+      "lang": "en",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 0,
+        "reason": "No purchase intent or decision-related content; casual comment.",
+        "confidence": 0.94,
+        "secondhand": 0,
+        "myntra_specific": 0
+      },
+      "codes": [],
+      "meta": null,
+      "segment": null,
+      "in_gold": false
+    },
+    {
+      "record_id": "dfa05612f19f10aebe007e95e2ffc3d0bc486190",
+      "source": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=R-AbqUGqQMo&lc=Ugzrgfdfc5JaIMHYdhR4AaABAg",
+      "created_at": "2026-03-06T14:59:38+00:00",
+      "text_raw": "Really worst service facing ryt now",
+      "thread_context": "Also they are not refunding my amount . #myntra #scam #fraud . Don&#39;t buy from this app.",
+      "rating": null,
+      "collect_query": "myntra quality check before you buy",
+      "lang": "en",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 0,
+        "reason": "Complaint about refunds/post-purchase service, not purchase decision factors",
+        "confidence": 0.93,
+        "secondhand": 0,
+        "myntra_specific": 1
+      },
+      "codes": [],
+      "meta": null,
+      "segment": null,
+      "in_gold": false
+    },
+    {
+      "record_id": "b1ac1ff51c6522742fec528bda0f2bda44accf72",
+      "source": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=Uf81X8shUB8&lc=Ugyqgg9PqXUo9jK54J94AaABAg",
+      "created_at": "2024-05-26T16:14:22+00:00",
+      "text_raw": "Bro pant Kum sollunga",
+      "thread_context": "Must Watch before Choosing Shirt Sizes Online 😱 | No more Shirt Return 😍❤️",
+      "rating": null,
+      "collect_query": "online shopping fashion india size problem",
+      "lang": "en",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 1,
+        "reason": "Asks about pant sizing affecting buying decision",
+        "confidence": 0.91,
+        "secondhand": 0,
+        "myntra_specific": 0
+      },
+      "codes": [
+        {
+          "code": "Z-99",
+          "confidence": 0.5,
+          "is_blocking": 1,
+          "evidence_span": "Bro pant Kum sollunga",
+          "span_verified": 1,
+          "reasoning": "no code assigned by model; forced to residual (EC-CLS-1)"
+        }
+      ],
+      "meta": {
+        "blocking_code": "Z-99",
+        "outcome": "na",
+        "intensity": 1,
+        "workaround": 0,
+        "workaround_text": "",
+        "counterfactual": 0,
+        "counterfactual_text": ""
+      },
+      "segment": {
+        "segment_id": 1,
+        "segment_name": "Collectors"
+      },
+      "in_gold": false
+    },
+    {
+      "record_id": "aa7f83f1fb3aa3a106dfff012680edbacf72b4fc",
+      "source": "reddit",
+      "source_url": "https://www.reddit.com/r/IndianFashion/comments/1mid5xf/21f_finally_wore_this_dress_after_long_wait/n7qzajg/",
+      "created_at": "2025-08-09T09:04:10+00:00",
+      "text_raw": "Is this kimadi?",
+      "thread_context": "r/IndianFashion | 21F - Finally wore this dress after long wait😭",
+      "rating": null,
+      "collect_query": "saved for later never bought",
+      "lang": "en",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 0,
+        "reason": "Question about garment identification, not about purchase intent or hesitation",
+        "confidence": 0.93,
+        "secondhand": 0,
+        "myntra_specific": 0
+      },
+      "codes": [],
+      "meta": null,
+      "segment": null,
+      "in_gold": false
+    },
+    {
+      "record_id": "13ee5adba5debb5bf1c9fcbacddc807c063d78ed",
+      "source": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=1l7TpFvPT8o&lc=Ugxp4zXsiXHaV7O8ghx4AaABAg",
+      "created_at": "2023-06-30T10:38:36+00:00",
+      "text_raw": "Koi app download krna pdta h kya",
+      "thread_context": "1 Rs. Mein Product || Itna Sasta Huge Parcel #shorts #trending #viral",
+      "rating": null,
+      "collect_query": "online shopping fashion india size problem",
+      "lang": "hi-Latn",
+      "text_available": 1,
+      "relevance": {
+        "is_relevant": 0,
+        "reason": "Question about app download, not a fashion purchase decision",
+        "confidence": 0.8,
+        "secondhand": 0,
+        "myntra_specific": 0
+      },
+      "codes": [],
+      "meta": null,
+      "segment": null,
+      "in_gold": false
+    }
+  ]
+}
