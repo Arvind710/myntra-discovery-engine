@@ -1,27 +1,35 @@
-"""Analysis — the quantified barrier ranking, in the framework's codes.
+"""Analysis — the user journey, and where it breaks.
 
-Design rule from architecture.md §4.2: this page performs NO aggregation
-over raw records. Everything is a SELECT from a materialised analysis_*
-table, which is what guarantees the charts and the chatbot cannot disagree.
+STRUCTURED AROUND THE JOURNEY, NOT THE CODEBOOK
+-----------------------------------------------
+This page used to open with a ranked list of code ids: "C2 · 241 · 0.237". That
+is legible to whoever wrote the codebook and to nobody else. A first-time reader
+needs the model before any number means anything — a saved item must survive
+four things, and the codes are the specific ways each one fails.
 
-Every chart shows n. Every code shows its DISTINCT-AUTHOR count. Nothing is
-rendered as a drop-off or conversion rate — these are shares of DISCUSSION,
-and the difference is the whole of §8.
+So the order here is: teach the four stages, show where the conversation
+actually sits, then let a reader open a stage to see its failure modes in the
+users' own words. Code ids appear, but always in small type beside a plain-
+language label, never as the thing a reader has to decode first.
+
+Design rule from architecture.md §4.2 is unchanged: this page performs NO
+aggregation over raw records. Everything is a SELECT from a materialised
+analysis_* table.
 """
+
+from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
-from lib import charts, db, framework as F
+from lib import charts, db, framework as F, story as S
 
-st.title("Analysis")
-st.caption("Every relevant record scored against the pre-registered codebook. "
-           "Reported in the updated framework's codes.")
+st.title("Where the journey breaks")
+st.caption("Every relevant record scored against a barrier list that was fixed "
+           "before any of it was read.")
 
 status, detail = db.db_status()
 if status != "ok":
-    # Report which condition actually holds. "Not collected yet" asserted a
-    # cause the check never established, and read as a project that never ran.
     (st.error if status in ("missing", "unreadable") else st.info)(detail)
     st.stop()
 
@@ -30,187 +38,244 @@ if prev.empty:
     st.info("Classification has not run yet."); st.stop()
 
 denom = int(prev["denominator"].iloc[0])
-prev["fw"] = prev["code"].map(F.to_framework)
-prev["label"] = prev["code"].map(F.name_of)
+prev["stage"] = prev["code"].map(S.stage_of)
 
-st.warning(
-    "**These are shares of discussion, not drop-off rates.** Public feedback measures "
-    "who talks about what, how often and how intensely — not how many users a stage "
-    "loses. Silent barriers are under-represented by construction: forgetting a wishlist "
-    "produces no complaint. Read this as an evidence-weighted ranking, never as a funnel "
-    "measurement.",
-    icon="⚠️",
-)
+st.markdown(S.THE_MODEL)
+st.warning(S.PROXY_WARNING, icon="⚠️")
 
-tab_rank, tab_seg, tab_sub, tab_co, tab_val = st.tabs(
-    ["Barrier ranking", "Segments", "Sub-codes", "Compound barriers", "Validation"])
+# ------------------------------------------------------------ the journey
+stage_n = db.query("SELECT stage, sum(n) AS n FROM analysis_stage_outcome GROUP BY stage")
+stage_n = {r["stage"]: int(r["n"]) for _, r in stage_n.iterrows()}
 
-# ------------------------------------------------------------ ranking
-with tab_rank:
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Relevant records", f"{denom:,}")
-    c2.metric("Codes with evidence", f"{int((prev['n'] > 0).sum())} of {len(prev)}")
-    z = prev[prev["code"] == "Z-99"]
-    if not z.empty:
-        c3.metric("Residual (Z-99)", f"{float(z['share'].iloc[0]):.1%}",
-                  help="Above 15% means the codebook is treated as incomplete (FR-5.4)")
+st.subheader("Four things have to go right")
+rows = [{"n": stage_n.get(s, 0), "title": S.stage_title(s), "colour": S.STAGE_COLOUR[s]}
+        for s in S.STAGE_ORDER]
+st.plotly_chart(charts.journey(rows), width="stretch")
+st.caption("Width is share of coded conversation, not drop-off. A record can raise "
+           "barriers at more than one stage, so the parts describe emphasis rather "
+           "than a population being whittled down.")
 
-    top = prev[(prev["n"] > 0) & (prev["code"] != "Z-99")].head(15).copy()
-    top["display"] = top["fw"] + " · " + top["label"].str.slice(0, 34)
-    st.plotly_chart(
-        charts.bar(top.sort_values("n"), "display", "n",
-                   title="Barrier prevalence — share of save-decision discussion",
-                   n_col="n", orientation="h", height=520),
-        width="stretch")
-    st.caption("Grey bars fall below n=30 and are shown but not ranked (AR-12). "
-               "Denominator is every relevant record, so shares sum above 100% — "
-               "records are multi-labelled by design (FR-2.3).")
+cols = st.columns(4)
+for col, s in zip(cols, S.STAGE_ORDER):
+    spec = S.stages()[s]
+    with col:
+        st.markdown(f"<div style='border-top:4px solid {S.STAGE_COLOUR[s]};padding-top:.6rem'>"
+                    f"<b>{spec['title']}</b></div>", unsafe_allow_html=True)
+        st.caption(spec["user_situation"])
+        st.metric("records", f"{stage_n.get(s,0):,}",
+                  f"{stage_n.get(s,0)/denom:.0%} of the corpus", delta_color="off")
+        if spec.get("note"):
+            st.caption(f"⚠️ {' '.join(spec['note'].split())}")
 
-    show = top[["fw", "label", "n", "n_distinct_authors", "share", "n_sources", "stage"]]
-    show.columns = ["code", "barrier", "records", "distinct authors", "share", "sources", "stage"]
-    st.dataframe(show, width="stretch", hide_index=True)
+st.info(
+    "**Two of these four stages are quiet for a reason, not because they are small.** "
+    "Forgetting a wishlist produces no complaint, and nobody posts about a list being "
+    "hard to scroll — they just search for the item again. The Insights page puts a "
+    "number on how far off that could throw the ranking.", icon="🔇")
+
+st.divider()
+
+tab_stuck, tab_who, tab_pairs, tab_how = st.tabs(
+    ["Where people get stuck", "Who gets stuck", "Barriers that travel together",
+     "How we know this"])
+
+# ------------------------------------------------------- where people stick
+with tab_stuck:
+    st.caption("Each bar is a barrier in the words people actually used. The code in "
+               "brackets is the framework id, for cross-referencing — you do not need "
+               "it to read the chart.")
+
+    pick = st.radio("Show", ["Everything"] + [S.stage_title(s) for s in S.STAGE_ORDER],
+                    horizontal=True, label_visibility="collapsed")
+    sel = prev if pick == "Everything" else prev[
+        prev["stage"] == next(s for s in S.STAGE_ORDER if S.stage_title(s) == pick)]
+
+    shown = sel[(sel["n"] > 0) & (sel["code"] != "Z-99")].copy()
+    if shown.empty:
+        st.info("No evidence recorded at this stage.")
+    else:
+        shown["label"] = shown["code"].map(S.chart_label)
+        st.plotly_chart(
+            charts.bar(shown.sort_values("n").tail(14), "label", "n",
+                       title="How often each barrier comes up", n_col="n",
+                       orientation="h", height=max(300, 34 * min(len(shown), 14) + 90)),
+            width="stretch")
+        st.caption("Grey bars sit below 30 records — shown, never ranked. " + S.explain("n"))
+
+        st.markdown("**What each one actually is**")
+        for _, r in shown.sort_values("n", ascending=False).head(14).iterrows():
+            c = r["code"]
+            with st.expander(f"**{S.voice(c)}**  ·  {int(r['n'])} records"):
+                st.markdown(f"{S.plain(c)}")
+                a, b, d = st.columns(3)
+                a.metric("records", f"{int(r['n']):,}")
+                b.metric("different people", f"{int(r['n_distinct_authors']):,}")
+                d.metric("share of conversation", f"{float(r['share']):.1%}")
+                st.caption(f"Analytic name **{S.name(c)}** · framework code "
+                           f"`{S.tag(c)}` · appears on {int(r['n_sources'])} of the "
+                           f"4 sources · mean classifier confidence "
+                           f"{float(r['mean_confidence'] or 0):.2f}")
+                if int(r["below_min_n"]):
+                    st.warning("Below 30 records — reportable, but not rankable "
+                               "against the others.", icon="⚠️")
+
+        sub = db.query("SELECT * FROM analysis_subcode WHERE theme = ? ORDER BY n DESC",
+                       (str(shown.sort_values("n", ascending=False).iloc[0]["code"]),))
+        if not sub.empty:
+            top = str(shown.sort_values("n", ascending=False).iloc[0]["code"])
+            st.markdown(f"**Inside the biggest one — “{S.voice(top)}”**")
+            st.caption("A barrier's headline number does not tell you what to build. "
+                       "The split below does. Records can carry more than one, so these "
+                       "add to more than 100%.")
+            d2 = sub.copy()
+            d2["what it is"] = d2["subcode"].map(lambda x: F.subcode_label(top, x))
+            d2["share of this barrier"] = d2["share"].map(lambda v: f"{v:.0%}")
+            st.dataframe(d2[["what it is", "n", "share of this barrier"]],
+                         width="stretch", hide_index=True)
 
     zero = prev[prev["n"] == 0]
-    if not zero.empty:
-        st.markdown("**Codes with zero evidence** — reported, not hidden (AC-10)")
-        st.caption("A code with no evidence is a result. A code never *checked* is a hole. "
-                   "Stage A is expected to under-report by construction.")
-        st.write(", ".join(sorted(zero["fw"])))
+    if not zero.empty and pick == "Everything":
+        with st.expander(f"{len(zero)} barriers with no evidence at all — reported, not hidden"):
+            st.caption("A barrier nobody mentions is a result. A barrier never *checked* "
+                       "would be a hole, which is why the list was fixed in advance and "
+                       "every entry is still shown.")
+            for c in zero["code"]:
+                st.markdown(f"- **{S.voice(c)}** · `{S.tag(c)}`")
 
-# ------------------------------------------------------------ segments
-with tab_seg:
-    seg = db.query("""SELECT segment_id, segment_name, count(*) AS n
-                      FROM segments_v2 GROUP BY segment_id ORDER BY segment_id""")
+# ------------------------------------------------------------- who gets stuck
+with tab_who:
+    seg = db.query("""SELECT segment_id, segment_name, count(*) AS n FROM segments_v2
+                      GROUP BY segment_id, segment_name ORDER BY segment_id""")
     if seg.empty:
         st.info("Segments not derived yet.")
     else:
-        st.caption(
-            "Derived structurally from three questions — is there intent, what is the "
-            "horizon, have they decided — rather than inferred from stated motivation. "
-            "That is why coverage is 100% where the earlier motivation-based "
-            "segmentation reached 6.6%."
-        )
-        seg["label"] = seg["segment_id"].map(lambda i: F.SEGMENTS[i][0])
-        cols = st.columns(len(seg))
-        for col, (_, r) in zip(cols, seg.iterrows()):
-            star = " ★" if r.segment_id == F.TARGET_SEGMENT else ""
-            col.metric(f"{r.label}{star}", f"{int(r.n):,}", f"{r.n/denom:.1%}")
+        st.markdown("#### These groups come out of the item-decision stage")
+        st.markdown(S.SEGMENT_DERIVATION)
+        st.divider()
 
-        st.plotly_chart(charts.bar(seg, "label", "n", title="Segment sizes", n_col="n"),
-                        width="stretch")
+        for _, r in seg.iterrows():
+            sid = int(r["segment_id"])
+            star = "  ⭐ **target**" if sid == F.TARGET_SEGMENT else ""
+            with st.container(border=True):
+                a, b = st.columns([3, 1])
+                a.markdown(f"**{S.segment_label(sid)}**{star}")
+                a.caption(S.segment_blurb(sid))
+                b.metric("people", f"{int(r['n']):,}", f"{int(r['n'])/denom:.0%}",
+                         delta_color="off")
 
-        st.subheader(f"{F.SEGMENTS[F.TARGET_SEGMENT][0]} — the target segment")
-        st.caption(F.SEGMENTS[F.TARGET_SEGMENT][1])
+        st.divider()
+        st.markdown(f"#### What stops **{S.segment_label(F.TARGET_SEGMENT)}** specifically")
         sc = db.query("""SELECT * FROM analysis_segment_code_v2
                          WHERE segment_id = ? AND n >= 15 ORDER BY n DESC""",
                       (F.TARGET_SEGMENT,))
-        if not sc.empty:
+        if sc.empty:
+            st.info("No barrier in this group reaches the visibility floor.")
+        else:
             base = dict(zip(prev["code"], prev["share"]))
-            sc["fw"] = sc["code"].map(F.to_framework)
-            sc["barrier"] = sc["code"].map(F.name_of)
             sc["lift"] = sc.apply(
                 lambda r: r["share"] / base[r["code"]] if base.get(r["code"]) else None, axis=1)
-            out = sc[["fw", "barrier", "n", "n_distinct_authors", "share", "lift"]]
-            out.columns = ["code", "barrier", "records", "authors", "share of segment", "lift vs corpus"]
-            st.dataframe(out, width="stretch", hide_index=True)
-            st.caption("**Lift** is what makes this segment distinctive rather than merely "
-                       "large. A barrier at 2.8× is characteristic of these users; one at "
-                       "1.0× is simply common everywhere.")
+            for _, r in sc.iterrows():
+                c = r["code"]
+                lift = float(r["lift"] or 0)
+                flag = ("  —  **{:.1f}× more than everyone else**".format(lift)
+                        if lift >= 1.5 else "")
+                st.markdown(f"- **{S.voice(c)}** · {int(r['n'])} people, "
+                            f"{float(r['share']):.0%} of the group{flag}")
+            st.caption(S.explain("lift"))
+            st.info("Lift here is **partly built in**: this group is *defined* as the "
+                    "people with an unresolved item-level doubt, so item-level doubts "
+                    "are bound to concentrate in it. It still ranks them against each "
+                    "other usefully — it just cannot prove the group is special.",
+                    icon="🔁")
 
-# ------------------------------------------------------------ sub-codes
-with tab_sub:
-    # Reads the materialised roll-up, not `subcodes` directly. The raw table
-    # holds TWO runs for C2 and C3 (a re-run after a prompt fix) over different
-    # populations, and aggregating it here unioned them — which put C2.4 above
-    # 100% of C2 once the counts were done properly. The roll-up takes the
-    # latest run per theme and honours the corpus exclusions.
-    subs = db.query("SELECT * FROM analysis_subcode ORDER BY theme, n DESC")
-    if subs.empty:
-        st.info("Sub-coding has not run yet.")
-    else:
-        st.caption("A theme's headline number does not say what to build. The sub-code does. "
-                   "Sub-coding is multi-label, so shares within a theme sum above 100%.")
-        for theme in subs["theme"].unique():
-            d = subs[subs["theme"] == theme].copy()
-            tot = int(d["n_theme"].iloc[0])
-            st.markdown(f"**{F.to_framework(theme)} — {F.name_of(theme)}**  ·  n = {tot}")
-            d["what it is"] = d.apply(lambda r: F.subcode_label(theme, r["subcode"]), axis=1)
-            st.dataframe(d[["subcode", "what it is", "n", "share", "mean_confidence"]]
-                         .rename(columns={"share": "share of theme",
-                                          "mean_confidence": "confidence"}),
-                         width="stretch", hide_index=True)
-
-# ------------------------------------------------------- co-occurrence
-with tab_co:
+# --------------------------------------------------------------- pairs
+with tab_pairs:
     co = db.query("""SELECT * FROM analysis_cooccurrence
                      WHERE min_support_met = 1 AND code_a <> 'Z-99' AND code_b <> 'Z-99'
-                     ORDER BY lift DESC LIMIT 15""")
+                     ORDER BY lift DESC LIMIT 10""")
     if co.empty:
         st.info("No pairs above the minimum-support floor.")
     else:
-        st.caption(
-            "Ranked by **lift**, not by frequency. A high-lift pair means two barriers "
-            "co-occur far more than chance — evidence they are one compound problem with "
-            "one fix, rather than two independent ones."
-        )
-        co["pair"] = co["code_a"].map(F.to_framework) + " × " + co["code_b"].map(F.to_framework)
-        co["a"] = co["code_a"].map(F.name_of)
-        co["b"] = co["code_b"].map(F.name_of)
-        st.dataframe(co[["pair", "a", "b", "n_joint", "lift", "pmi"]],
-                     width="stretch", hide_index=True)
+        st.markdown(S.explain("cooccurrence"))
+        st.caption("Ranked by how *surprising* the pairing is, not by how often it "
+                   "happens. Two very common barriers will co-occur a lot by chance; "
+                   "that is not evidence they are connected.")
+        for _, r in co.iterrows():
+            with st.container(border=True):
+                st.markdown(f"**{S.voice(r['code_a'])}**")
+                st.markdown(f"…together with **{S.voice(r['code_b'])}**")
+                st.caption(f"{int(r['n_joint'])} records raise both — "
+                           f"**{float(r['lift']):.1f}× more often than chance**. "
+                           f"`{S.tag(r['code_a'])}` × `{S.tag(r['code_b'])}`")
 
-# -------------------------------------------------------- validation
-with tab_val:
-    st.subheader("Validation")
-    st.caption("How do you know the classifier is right? This is the answer, with numbers. "
-               "It lives beside the analysis it qualifies rather than in a corner of the nav.")
+# ------------------------------------------------------------ how we know
+with tab_how:
+    st.caption("Everything a sceptic should check. Kept out of the pages above so "
+               "they stay readable, kept in the app so it is never only in a repo.")
 
-    runs = db.query("SELECT stage, model, n_output, cost_usd, codebook_version, started_at"
-                    " FROM runs WHERE n_output > 0 ORDER BY started_at DESC LIMIT 12")
-    st.markdown("**Pipeline provenance** — every pass, its model, and what it cost")
-    st.dataframe(runs, width="stretch", hide_index=True)
+    st.markdown("#### What this corpus is")
+    a, b, c, d = st.columns(4)
+    a.metric("Relevant records", f"{denom:,}")
+    b.metric("Barriers with evidence", f"{int((prev['n'] > 0).sum())} of {len(prev)}")
+    z = prev[prev["code"] == "Z-99"]
+    if not z.empty:
+        c.metric("Unmatched", f"{float(z['share'].iloc[0]):.1%}")
+    d.metric("Sources", "4")
+    if not z.empty:
+        st.caption(S.explain("residual"))
 
+    st.markdown("#### Known limitations, stated rather than discovered")
+    st.markdown("""
+- **Two stages are under-detected by construction.** Forgetting produces no complaint, so
+  a low count for *Coming back* is not evidence that it is small.
+- **A human agreed with the pipeline on 19 of 30 randomly drawn records** (63%, Wilson 95%
+  CI 45–78%). Every one of the 11 disagreements fell on a record the filter **rejected** —
+  all 9 it accepted were confirmed. What is in this corpus belongs here; the open question
+  is what is missing.
+- **The relevance rule is deliberately narrow**, excluding post-purchase satisfaction and
+  order/refund complaints. Admitting those would raise the material-quality and
+  returns-trust counts more than the others, so **the ranking is conditional on that rule.**
+- **Agreement with a human coder clears its threshold for only 2 of the 5 barriers with
+  enough hand-labelled data to measure it.** *"I need to check with my partner"* is the
+  least reliable of all and every claim resting on it says so.
+- **Only ~36% of the corpus is Myntra-specific.** Platform-mechanical barriers are ranked
+  on their Myntra-specific count, not the pooled one.
+- **Reddit was collected through a third-party service** after its API proved unavailable.
+  Disclosed rather than hidden.
+""")
+
+    st.markdown("#### Evidence quality")
     spans = db.query("SELECT sum(span_verified) AS ok, count(*) AS n FROM classifications")
     if not spans.empty and spans["n"].iloc[0]:
         ok, n = int(spans["ok"].iloc[0]), int(spans["n"].iloc[0])
-        st.metric("Evidence spans verified as exact quotes", f"{ok/n:.1%}",
-                  help="A span that is not an exact substring of the record is not "
-                       "evidence and is never rendered as a quote (T-6).")
+        st.metric("Quotes verified word-for-word against the original record", f"{ok/n:.1%}")
+        st.caption("Every quote shown anywhere in this app is checked as an exact substring "
+                   "of the record it came from. A quote that is not exact is not evidence "
+                   "and is never displayed.")
 
-    # B-5 requires the gate reports to be published IN THE APP, and they were
-    # not — the P2 write-up said "published to the Validation tab" when the tab
-    # only held a hard-coded limitations list. An evaluator could not read what
-    # the gate actually found without cloning the repository.
-    from pathlib import Path as _P
-    REPORTS = _P(__file__).resolve().parents[2] / "evals" / "reports"
+    with st.expander("Pipeline provenance — every pass, its model, and what it cost"):
+        st.dataframe(
+            db.query("SELECT stage, model, n_output, cost_usd, codebook_version, started_at"
+                     " FROM runs WHERE n_output > 0 ORDER BY started_at DESC LIMIT 15"),
+            width="stretch", hide_index=True)
+
+    with st.expander("Is a barrier just an artefact of where it was found?"):
+        st.caption("If a barrier appears far more on one platform than across the corpus, "
+                   "it may be telling you about that platform's users rather than about "
+                   "shoppers. Divergence is highest where that risk is greatest.")
+        st.dataframe(
+            db.query("""SELECT source, code, n, round(share,3) AS share_in_source,
+                               round(js_divergence,3) AS divergence
+                        FROM analysis_source_code WHERE n >= 15
+                        ORDER BY js_divergence DESC, n DESC LIMIT 20"""),
+            width="stretch", hide_index=True)
+
+    # B-5: the gate reports must be readable IN THE APP, not only in the repo.
+    REPORTS = Path(__file__).resolve().parents[2] / "evals" / "reports"
     gates = sorted(REPORTS.glob("gate_P*.md"), reverse=True)
     if gates:
-        st.markdown("**Exit gate reports** — what each phase's gate actually found, "
-                    "including what it found failing")
-        st.caption("A tick on Home means the gate passed, not that the page exists. "
-                   "These are the documents behind the ticks.")
+        st.markdown("#### Exit gate reports")
+        st.caption("What each phase's gate actually found, including what it found failing.")
         for g in gates:
             with st.expander(g.stem.replace("_", " ").replace("gate ", "Gate ")):
                 st.markdown(g.read_text())
-
-    st.markdown("**Known limitations, stated rather than discovered**")
-    st.markdown("""
-- **Stage A is under-detected by construction.** Forgetting produces no complaint, so a
-  low Stage A count is not evidence that Stage A is small.
-- **Only ~36% of the corpus is Myntra-specific.** Platform-mechanical codes (Stage B,
-  D1–D3, C7, C8) are ranked on their Myntra-specific count, not the pooled one.
-- **The prefilter was removed after measurement.** It dropped 23% of relevant records
-  while saving $2.49. The corpus now has 100% scoring coverage.
-- **Reddit was collected through a third-party service** after its API proved
-  unavailable. Disclosed rather than hidden.
-- **A human agreed with the pipeline on 19 of 30 randomly drawn records** (63%, Wilson 95%
-  CI 45–78%). Every one of the 11 disagreements fell on a record the filter **rejected** —
-  all 9 records it accepted were confirmed. So what is in this corpus belongs here; the
-  open question is what is missing.
-- **The relevance rubric is deliberately narrow, and that is a scope choice, not an
-  oversight.** It excludes post-purchase satisfaction and order/refund complaints. Six of
-  those 11 are that exclusion working as written. Admitting them would raise the
-  material/quality (C2) and returns-trust (C7) counts more than the others, so **the
-  ranking is conditional on the rubric** — the weight-robustness figure on the Insights
-  page tests the scoring, not this.
-""")

@@ -1,120 +1,123 @@
-"""Home — what this is and how it works. This page IS the one-slide (AC-8)."""
+"""Home — what this is, in the order a stranger needs it (AC-8).
+
+The old version opened with the pipeline: collect, filter, classify, quantify.
+That is how the system works, not what it found, and it asks the reader to care
+about the machinery before they have been given a reason to. This version leads
+with the question, then the model that makes every later number legible, then
+the answer — and puts the method behind a fold for the people who want it.
+"""
 
 import json
 from pathlib import Path
 
 import streamlit as st
 
-from lib import db, framework as F
+from lib import db, framework as F, story as S
 
 ROOT = Path(__file__).resolve().parents[1]
 
-st.title("AI Discovery Engine — Myntra wishlist conversion")
-st.caption("Turning public user feedback into a quantified, source-cited ranking of the "
-           "barriers preventing wishlist → purchase conversion.")
+st.title("Why don't people buy what they saved?")
+st.caption("A discovery engine that reads public conversation at scale and turns it "
+           "into a ranked, source-cited account of what gets in the way.")
 
 pop = db.corpus_is_populated()
+
+# ------------------------------------------------------------- the model
+st.markdown(S.THE_MODEL)
+
 if pop:
+    stage_n = {r["stage"]: int(r["n"]) for _, r in
+               db.query("SELECT stage, sum(n) AS n FROM analysis_stage_outcome "
+                        "GROUP BY stage").iterrows()}
+    cols = st.columns(4)
+    for i, (col, s) in enumerate(zip(cols, S.STAGE_ORDER), 1):
+        spec = S.stages()[s]
+        with col:
+            st.markdown(
+                f"<div style='border-top:4px solid {S.STAGE_COLOUR[s]};padding-top:.5rem'>"
+                f"<span style='font-size:.72rem;letter-spacing:.08em;color:#888'>"
+                f"STEP {i}</span><br><b>{spec['title']}</b></div>",
+                unsafe_allow_html=True)
+            st.caption(spec["question"])
+
+    st.divider()
+
+    # ------------------------------------------------------------ the answer
+    st.subheader("What the corpus says")
+    opp = db.query("""SELECT o.code, o.n, o.rank FROM analysis_opportunity o
+                      WHERE o.rank IS NOT NULL ORDER BY o.rank LIMIT 3""")
+    if not opp.empty:
+        st.caption("The three barriers that rank highest once size, intensity, evidence "
+                   "quality and *whether it can be fixed without a discount* are all "
+                   "taken into account:")
+        for _, r in opp.iterrows():
+            st.markdown(f"**{int(r['rank'])}. “{S.voice(r['code'])}”**  ·  "
+                        f"{int(r['n'])} records")
+            st.caption(S.plain(r["code"]))
+        st.caption("Full ranking, the weights behind it, and how much it moves when you "
+                   "change them — on the **Insights** page.")
+
+    st.divider()
     m = db.query("""SELECT (SELECT count(*) FROM records)                        AS collected,
                            (SELECT count(*) FROM relevance WHERE is_relevant=1)  AS relevant,
                            (SELECT count(DISTINCT author_hash) FROM records
-                             WHERE author_hash IS NOT NULL)                      AS authors,
-                           (SELECT count(*) FROM record_meta)                    AS classified""").iloc[0]
-    a, b, c, d = st.columns(4)
-    a.metric("Records collected", f"{int(m.collected):,}")
-    b.metric("Relevant to the decision", f"{int(m.relevant):,}")
-    c.metric("Distinct authors", f"{int(m.authors):,}")
-    d.metric("Classified", f"{int(m.classified):,}")
+                             WHERE author_hash IS NOT NULL)                      AS authors""").iloc[0]
+    a, b, c = st.columns(3)
+    a.metric("Comments, posts and reviews read", f"{int(m.collected):,}")
+    b.metric("Bearing on the save-to-buy decision", f"{int(m.relevant):,}")
+    c.metric("Different people", f"{int(m.authors):,}")
+    st.caption("Everything downstream is counted over the middle number. The gap between "
+               "the first two is the filter doing its job — most public conversation about "
+               "a shopping app is about delivery and refunds, not about deciding.")
 
-left, right = st.columns([3, 2])
+st.warning(S.PROXY_WARNING, icon="⚠️")
 
-with left:
-    st.subheader("The question")
-    st.markdown(
-        "> Which barrier stops users buying what they already saved — and how "
-        "confident can we be, given that public feedback measures **who talks about "
-        "what**, not drop-off rates?"
-    )
-
-    st.subheader("How it works")
+# ------------------------------------------------------------- the method
+with st.expander("How it works, and why you should believe any of it"):
     st.markdown("""
-**1 · Collect.** Reddit, YouTube, Play Store, App Store, Myntra product reviews, and
-verified published research. Every record keeps its permalink, a pseudonymised author
-id, and the search query that surfaced it — so a theme's prevalence can be audited
-against the terms used to find it.
+**The barrier list was written down and frozen before a single record was read.** That is
+the whole defence against finding what you expected to find: the engine cannot invent a
+category mid-analysis to fit a result it likes. Where a record fits nothing on the list,
+it goes to a residual bucket — and the size of that bucket is reported, because if it
+were large the list would be wrong.
 
-**2 · Filter.** A written rubric separates feedback bearing on the *save → purchase*
-decision from general complaints. The hardest boundary is deliberate: a past bad
-experience cited as a reason for **present** hesitation is in; a complaint about a late
-order is out.
+**Every quote is verified word-for-word** against the record it came from. A quote that is
+not an exact substring is not evidence and is never shown.
 
-**3 · Classify.** Every relevant record is scored against a **pre-registered, frozen
-codebook** — stage first, then codes within that stage. Pre-registering it before
-scoring is what stops the analysis quietly confirming its author's expectations.
+**Every count carries how many *different people* it came from.** 200 records from 12
+people is a much weaker claim than 200 from 180.
 
-**4 · Quantify.** Prevalence with denominators, distinct-author counts, co-occurrence
-lift, workaround intensity, and per-segment barrier profiles.
+**Nothing is deleted quietly.** Every excluded record is logged with its reason and stays
+browsable on the Data Bank page.
+
+**Measurements beat predictions, including our own.** A pre-filter was removed after it was
+measured throwing away 23% of relevant records to save $2.49. A model-tier decision was
+reversed after testing it on hand-labelled boundary cases. Both are written up in the repo
+with the numbers that overturned them.
 """)
 
-    st.subheader("What makes a number here defensible")
+with st.expander("What this engine cannot tell you"):
     st.markdown("""
-- **Every quote is verified as an exact substring** of the record it cites. A span that
-  is not exact is not evidence and is never displayed.
-- **Every count carries a distinct-author count.** 200 records from 12 people is a
-  weaker claim than 200 from 180.
-- **Nothing is deleted silently.** Every excluded record is logged with its reason and
-  is browsable.
-- **Measurements beat predictions, including our own.** The prefilter was removed after
-  it was measured dropping 23% of relevant records; a model-tier decision was reversed
-  after testing it on hand-labelled boundary cases.
+- **It is not a funnel.** No user-level data exists here. Nothing on any page is a drop-off
+  or conversion rate, however much it may look like one.
+- **Quiet barriers are under-counted by construction.** Forgetting a wishlist produces no
+  complaint. The Insights page quantifies how far off that could throw the ranking.
+- **The relevance rule is narrow on purpose**, and a human reviewer disagreed with it on 11
+  of 30 randomly drawn records — every one of them a record the filter had *rejected*.
+  Recorded as a limitation rather than repaired, because fixing it would mean re-running
+  the analysis.
+- **It is a research instrument, not a Myntra product**, built on public data only.
 """)
 
-    st.info(
-        "**Proxy discipline.** Every share reported here is a share of *discussion*, "
-        "never a conversion or drop-off rate. Silent barriers — *'I forgot the wishlist "
-        "existed'* — are under-represented by construction, because forgetting produces "
-        "no complaint.", icon="⚠️")
-
-with right:
-    st.subheader("Status")
+with st.sidebar:
     frozen = ROOT / "codebook" / "FROZEN.json"
     if frozen.exists():
         fz = json.loads(frozen.read_text())
-        st.metric("Codebook", fz["version_string"])
-        st.caption(f"{fz['n_scored_codes']} codes · frozen {fz['frozen_at'][:10]}, "
-                   "before any scoring")
-
+        st.caption(f"Barrier list **{fz['version_string']}**  \n{fz['n_scored_codes']} "
+                   f"barriers, frozen {fz['frozen_at'][:10]} — before any scoring")
     if pop:
-        src = db.query("SELECT source, count(*) AS n FROM retained GROUP BY source ORDER BY n DESC")
-        st.markdown("**Corpus by source**")
-        st.dataframe(src, width="stretch", hide_index=True)
-
-        seg = db.query("""SELECT segment_name, count(*) AS n FROM segments_v2
-                          GROUP BY segment_id, segment_name ORDER BY n DESC""")
-        if not seg.empty:
-            st.markdown("**Segments** (derived, 100% coverage)")
-            st.dataframe(seg, width="stretch", hide_index=True)
-
-    st.markdown("""
-| Phase | Ships | |
-|---|---|---|
-| P0 | Foundation & freeze | ✅ gate passed |
-| P1 | Data Bank | ✅ gate passed |
-| P2 | Analysis | ✅ gate passed, **with recorded limitations** |
-| P3 | Insights & Hypotheses | ✅ gate passed |
-| P4 | Ask (research analyst) | ⬜ |
-""")
-    st.warning(
-        "**Two validation thresholds are failing, and are reported as failing rather "
-        "than tuned away.** Per-code agreement with a human coder clears 0.60 for only "
-        "2 of the 5 codes with enough gold labels to measure (C1 0.66, C6 0.64; C3 0.52, "
-        "C2 0.43, **C10 0.10**), and relevance recall is an *estimate* of ~79% against "
-        "an 85% threshold. C10 is specifically unreliable — the human labeller read it "
-        "as app permissions where the codebook means another person's approval — so "
-        "every C10 claim carries that caveat, including the novel one on the Insights "
-        "page. Details on the Analysis page's Validation tab.",
-        icon="⚠️")
+        st.caption("**Phases**  \nP0 foundation ✅  \nP1 data bank ✅  \nP2 analysis ✅  \n"
+                   "P3 insights ✅  \nP4 ask ⬜")
 
 st.divider()
-st.caption("Public data only · authors pseudonymised · no PII in outputs. "
-           "A research instrument, not a Myntra product.")
+st.caption("Public data only · authors pseudonymised · no personal information in outputs.")

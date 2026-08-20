@@ -61,3 +61,38 @@ def caption_n(n: int, authors: int | None = None) -> str:
         if n and authors:
             s += f" ({n / authors:.1f} records per author)"
     return s
+
+
+def journey(stage_rows, *, height: int = 200):
+    """The four stages as one horizontal band, drawn to scale.
+
+    NOT a funnel. A funnel implies each stage passes survivors to the next and
+    that the widths are drop-off — neither is true here. These are shares of
+    CONVERSATION, and two of the four stages are under-detected by construction
+    because forgetting and a hard-to-scroll list produce no complaint. Drawing
+    them as a tapering funnel would put a false claim in the most eye-catching
+    element on the page.
+
+    So: one bar, segments proportional to what people talk about, with the
+    quiet stages labelled as quiet rather than made to look small and settled.
+    """
+    fig = go.Figure()
+    total = sum(r["n"] for r in stage_rows) or 1
+    for r in stage_rows:
+        share = r["n"] / total
+        fig.add_trace(go.Bar(
+            x=[r["n"]], y=["conversation"], orientation="h",
+            name=r["title"], marker_color=r["colour"],
+            text=[f"<b>{r['title']}</b><br>{share:.0%} · n={r['n']:,}"],
+            textposition="inside", insidetextanchor="middle",
+            hovertemplate=f"<b>{r['title']}</b><br>{r['n']:,} records"
+                          f"<br>{share:.1%} of coded conversation<extra></extra>",
+        ))
+    fig.update_layout(
+        barmode="stack", height=height, showlegend=False,
+        margin=dict(l=6, r=6, t=10, b=6),
+        plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+        xaxis=dict(visible=False), yaxis=dict(visible=False),
+        uniformtext=dict(mode="hide", minsize=10),
+    )
+    return fig
