@@ -11,10 +11,11 @@ the source-bias caveats in problemstatement.md §8 — a mentor asking
 
 import streamlit as st
 
-from lib import charts, db
+from lib import charts, db, story as S
 
-st.title("Data Bank")
-st.caption("Every record, its provenance, and everything that was excluded — with the reason.")
+st.title("The evidence")
+st.caption("Every comment, post and review this project read — and everything it threw "
+           "away, with the reason.")
 
 status, detail = db.db_status()
 if status != "ok":
@@ -32,22 +33,24 @@ totals = db.query("""
              WHERE author_hash IS NOT NULL)                                 AS authors
 """).iloc[0]
 
-c1, c2, c3, c4 = st.columns(4)
+c1, c2, c3 = st.columns(3)
 c1.metric("Collected", f"{int(totals.collected):,}")
-c2.metric("Retained", f"{int(totals.retained):,}")
-c3.metric("Excluded", f"{int(totals.excluded):,}",
-          help="Nothing is dropped silently — every exclusion is logged with a reason (FR-1.6)")
-c4.metric("Distinct authors", f"{int(totals.authors):,}",
-          help="EC-COL-9: 200 records from 12 authors is a weaker claim than 200 from 180")
+c2.metric("Kept", f"{int(totals.retained):,}")
+c3.metric("Set aside", f"{int(totals.excluded):,}")
 
 ok = int(totals.collected) == int(totals.retained) + int(totals.excluded)
 st.caption(
-    f"{'✅' if ok else '❌'} **S1-INV-1 accounting identity**: "
-    f"{int(totals.collected):,} collected = {int(totals.retained):,} retained "
-    f"+ {int(totals.excluded):,} excluded. No record vanishes unlogged."
+    f"{'✅' if ok else '❌'} {int(totals.collected):,} collected "
+    f"= {int(totals.retained):,} kept + {int(totals.excluded):,} set aside. "
+    "**The sum is checked on every page load** — it is what guarantees no record "
+    "disappeared without a logged reason. Set-aside records are not deleted; they are "
+    "browsable in the last tab with the reason attached."
 )
+st.caption(f"Written by **{int(totals.authors):,} different people**. "
+           + S.explain("authors"))
 
-tab_browse, tab_comp, tab_excl = st.tabs(["Browse", "Corpus composition", "Exclusion log"])
+tab_browse, tab_comp, tab_excl = st.tabs(
+    ["Read the records", "What is in the corpus", "What was set aside"])
 
 # ---------------------------------------------------------------- browse
 with tab_browse:
@@ -92,11 +95,12 @@ with tab_browse:
 
 # ---------------------------------------------------------- composition
 with tab_comp:
-    st.subheader("What is actually in the corpus")
+    st.subheader("Where it all came from")
     st.caption(
-        "Volume across sources reflects platform activity, not user population "
-        "(problemstatement.md §8). These numbers are the evidence base for that caveat, "
-        "not a measure of the funnel."
+        "**Read this as a map of where people talk, not of who shops.** YouTube leads "
+        "because YouTube comment threads are long and public, not because YouTube users "
+        "hesitate more. Every claim on the Analysis page that leans on one source alone "
+        "is flagged there for exactly this reason."
     )
 
     by_src = db.query("""
@@ -116,32 +120,38 @@ with tab_comp:
     st.markdown("**Per-source detail**")
     st.dataframe(by_src, width='stretch', hide_index=True)
 
-    st.markdown("**Yield per search query** — bias auditing (EC-COL-12)")
-    st.caption(
-        "Stored so a theme's prevalence can be audited against the search terms that found it. "
-        "A code that only appears under one query may be an artefact of that query."
-    )
-    by_q = db.query("""
-        SELECT collect_query AS query, count(*) AS n,
-               count(DISTINCT author_hash) AS authors
-        FROM retained WHERE collect_query IS NOT NULL
-        GROUP BY collect_query ORDER BY n DESC""")
-    st.dataframe(by_q, width='stretch', hide_index=True)
+    st.markdown("---")
+    with st.expander("Which searches found this material, and how well they worked"):
+        st.caption(
+            "Each record remembers the search that surfaced it, so a barrier's size can be "
+            "checked against the words used to go looking for it. A barrier that only ever "
+            "appears under one search term may be an artefact of that term. **The store "
+            "listings marked `play/` and `appstore/` used no search at all** — they take "
+            "the newest reviews, which is why they yield so little."
+        )
+        by_q = db.query("""
+            SELECT collect_query AS search, count(*) AS found,
+                   sum(CASE WHEN v.is_relevant = 1 THEN 1 ELSE 0 END) AS "bore on the decision"
+            FROM retained r LEFT JOIN relevance v ON v.record_id = r.record_id
+            WHERE collect_query IS NOT NULL
+            GROUP BY collect_query ORDER BY found DESC""")
+        st.dataframe(by_q, width='stretch', hide_index=True)
 
-    st.markdown("**Cross-author consensus** — measured, never removed")
-    st.caption(
-        "EC-CLEAN-1: many different people saying the same thing IS the finding. "
-        "Near-duplicate removal is scoped to a single author; cross-author similarity "
-        "is recorded here as evidence strength instead."
-    )
-    cons = db.query("""
-        SELECT n_similar_xauthor AS distinct_authors_echoing, count(*) AS records
-        FROM consensus WHERE n_similar_xauthor > 0
-        GROUP BY n_similar_xauthor ORDER BY n_similar_xauthor DESC LIMIT 15""")
-    if cons.empty:
-        st.caption("No cross-author echoes above threshold — the corpus is lexically diverse.")
-    else:
-        st.dataframe(cons, width='stretch', hide_index=True)
+    with st.expander("When many different people say the same thing"):
+        st.caption(
+            "Near-duplicate text from **one** author is removed as spam. The same thing said "
+            "by **many** authors is the opposite of noise — it is the finding — so it is "
+            "counted here instead of collapsed."
+        )
+        cons = db.query("""
+            SELECT n_similar_xauthor AS "other people saying much the same",
+                   count(*) AS records
+            FROM consensus WHERE n_similar_xauthor > 0
+            GROUP BY n_similar_xauthor ORDER BY n_similar_xauthor DESC LIMIT 15""")
+        if cons.empty:
+            st.caption("No echoes above threshold — the corpus is lexically diverse.")
+        else:
+            st.dataframe(cons, width='stretch', hide_index=True)
 
     st.info(
         "**Source gap on record.** Reddit's API was unavailable to this project "
@@ -155,8 +165,10 @@ with tab_comp:
 
 # ------------------------------------------------------------ exclusions
 with tab_excl:
-    st.subheader("What was excluded, and why")
-    st.caption("Corpus composition is itself a finding (FR-1.6). Nothing is dropped silently.")
+    st.subheader("What was set aside, and why")
+    st.caption("Nothing is deleted. Every record below is still here, still readable, with "
+               "the reason it was put aside — because what a corpus leaves out shapes its "
+               "answer as much as what it keeps.")
 
     by_reason = db.query("""
         SELECT reason, stage, count(DISTINCT record_id) AS n

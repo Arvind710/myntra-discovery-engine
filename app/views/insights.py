@@ -19,33 +19,35 @@ import json
 import pandas as pd
 import streamlit as st
 
-from lib import charts, db, framework as F
+from lib import charts, db, framework as F, story as S
 
 COMPONENTS = ["prevalence", "intensity", "defer_share",
               "solvable_without_money", "evidence_strength", "segment_fit"]
 
+# Each slider's explanation comes from the shared vocabulary layer, so the same
+# words describe the same metric wherever it appears in the app.
 COMPONENT_HELP = {
-    "prevalence": "How much of the addressable discussion carries this barrier, "
-                  "scaled against the largest. A share of DISCUSSION — never a drop-off rate.",
-    "intensity": "How hard people work around it: expressed intensity and workaround "
-                 "effort, equally weighted. Effort proves an unmet need without the "
-                 "person being asked.",
-    "defer_share": "How often intent survives. Defer is the winnable population; exit "
-                   "mostly is not.",
-    "solvable_without_money": "The binding constraint. 1 = solvable without a monetary "
-                              "incentive, 0.5 = partly, 0 = not. Discounts are out of scope.",
-    "evidence_strength": "How well-supported the code is independent of size: source "
-                         "diversity, counterfactual and workaround rates, classifier "
-                         "confidence.",
-    "segment_fit": "Lift into the target segment, capped at 2×. PARTLY CIRCULAR — the "
-                   "segment is derived from the classification, so Confidence-phase codes "
-                   "are barred from three of the six segments by definition. Set this to "
-                   "zero to see the ranking without it.",
+    "prevalence": "How much of the addressable conversation raises this barrier, "
+                  "scaled against the largest. " + S.explain("share"),
+    "intensity": S.explain("workaround"),
+    "defer_share": S.explain("defer"),
+    "solvable_without_money": S.explain("solvable"),
+    "evidence_strength": S.explain("evidence_strength"),
+    "segment_fit": S.explain("segment_fit"),
 }
 
-st.title("Insights & Hypotheses")
-st.caption("What the corpus says, what would disprove it, and how much the answer "
-           "depends on choices we made.")
+COMPONENT_LABEL = {
+    "prevalence": "How often it comes up",
+    "intensity": "How hard people work around it",
+    "defer_share": "How often intent survives",
+    "solvable_without_money": "Fixable without a discount",
+    "evidence_strength": "How well-supported",
+    "segment_fit": "How specific to the target group",
+}
+
+st.title("What to do about it")
+st.caption("Which barrier is worth solving, how sure we are, and what would prove "
+           "us wrong.")
 
 status, detail = db.db_status()
 if status != "ok":
@@ -102,7 +104,7 @@ with tab_opp:
     weights = {}
     for i, comp in enumerate(COMPONENTS):
         weights[comp] = wcols[i % 3].slider(
-            comp.replace("_", " "), 0.0, 2.0, 1.0, 0.05, help=COMPONENT_HELP[comp])
+            COMPONENT_LABEL[comp], 0.0, 2.0, 1.0, 0.05, help=COMPONENT_HELP[comp])
     if st.button("Reset to equal weights"):
         st.rerun()
 
@@ -120,7 +122,7 @@ with tab_opp:
                  f"**{ranked.iloc[0]['fw']}**.", icon="↕️")
 
     show = ranked.copy()
-    show["display"] = show["fw"] + " · " + show["barrier"].str.slice(0, 30)
+    show["display"] = show["code"].map(S.chart_label)
     st.plotly_chart(
         charts.bar(show.sort_values("live_score"), "display", "live_score",
                    title="Opportunity score — addressable barriers only", height=460,
@@ -129,19 +131,22 @@ with tab_opp:
     st.caption("Only barriers at n ≥ 30 are ranked (AR-12). Everything scored but "
                "unranked is listed below with its count.")
 
-    tbl = show[["live_rank", "fw", "barrier", "n", "live_score"] + COMPONENTS]
-    tbl.columns = (["#", "code", "barrier", "records", "score"]
-                   + [c.replace("_", " ") for c in COMPONENTS])
+    show["what the shopper is thinking"] = show["code"].map(S.voice)
+    tbl = show[["live_rank", "what the shopper is thinking", "n", "live_score"] + COMPONENTS]
+    tbl.columns = (["#", "what the shopper is thinking", "records", "score"]
+                   + [COMPONENT_LABEL[c] for c in COMPONENTS])
     st.dataframe(tbl, width="stretch", hide_index=True,
                  column_config={c: st.column_config.ProgressColumn(
                      c, min_value=0.0, max_value=1.0, format="%.2f")
-                     for c in ["score"] + [c.replace("_", " ") for c in COMPONENTS]})
+                     for c in ["score"] + [COMPONENT_LABEL[c] for c in COMPONENTS]})
 
     excl = opp[(opp["excluded"] == 1) | (opp["rank"].isna())]
     if not excl.empty:
         with st.expander(f"Scored but not ranked — {len(excl)} codes, and why"):
-            e = excl[["fw", "barrier", "n", "excluded", "exclusion_reason"]].copy()
-            e.columns = ["code", "barrier", "records", "excluded", "reason"]
+            excl = excl.copy()
+            excl["what the shopper is thinking"] = excl["code"].map(S.voice)
+            e = excl[["what the shopper is thinking", "n", "excluded", "exclusion_reason"]].copy()
+            e.columns = ["what the shopper is thinking", "records", "excluded", "reason"]
             st.dataframe(e.sort_values("records", ascending=False),
                          width="stretch", hide_index=True)
 
@@ -173,12 +178,12 @@ with tab_sens:
             st.warning("The top two cannot be separated on this evidence. The honest "
                        "headline is a tie, and the interviews are the tiebreak rather "
                        "than a formality (EC-INS-1).", icon="⚖️")
-        s = sens.copy()
-        s["code"] = s["code"].map(F.to_framework)
-        s["barrier"] = sens["code"].map(F.name_of)
-        st.dataframe(s[["code", "barrier", "top_share", "top3_share", "mean_rank",
-                        "p05_rank", "p95_rank"]],
-                     width="stretch", hide_index=True)
+        d = sens.copy()
+        d["barrier"] = d["code"].map(S.voice)
+        d = d[["barrier", "top_share", "top3_share", "mean_rank", "p05_rank", "p95_rank"]]
+        d.columns = ["barrier", "held 1st place", "stayed in top 3",
+                     "average rank", "best rank", "worst rank"]
+        st.dataframe(d, width="stretch", hide_index=True)
         st.caption("`p05`–`p95` is the rank interval across the draws. A code whose "
                    "interval is a single number never moved.")
 
@@ -236,13 +241,12 @@ with tab_seg:
             if dist:
                 st.markdown("**What makes this segment distinctive, not merely large**")
                 dd = pd.DataFrame(dist)
-                dd["code"] = dd["code"].map(F.to_framework)
-                dd["barrier"] = pd.DataFrame(dist)["code"].map(F.name_of)
-                st.dataframe(dd[["code", "barrier", "n", "share", "lift"]],
-                             width="stretch", hide_index=True)
-                st.caption("**Lift** is share within the segment against the corpus rate. "
-                           "A barrier at 1.0× is common everywhere and tells you nothing "
-                           "about who to build for.")
+                dd["what the shopper is thinking"] = dd["code"].map(S.voice)
+                dd = dd[["what the shopper is thinking", "n", "share", "lift"]]
+                dd.columns = ["what the shopper is thinking", "people",
+                              "share of the group", "vs everyone else"]
+                st.dataframe(dd, width="stretch", hide_index=True)
+                st.caption(S.explain("lift"))
                 st.info(
                     "**Read the lift with one caveat.** Segments are derived from the "
                     "classification: *not decided* is operationalised as the presence of "
@@ -281,7 +285,7 @@ with tab_hyp:
             ["_o", "supporting_n"], ascending=[True, False])
         for _, h in hyp.iterrows():
             codes = json.loads(h["codes"])
-            fw = ", ".join(F.to_framework(c) for c in codes)
+            fw = " + ".join(S.name(c) for c in codes)
             head, _, mech = str(h["statement"]).partition("\n\nMechanism: ")
             badge = {"high": "🟢", "medium": "🟡", "low": "🔴"}.get(h["confidence"], "⚪")
             with st.expander(f"{badge} **{h['hypothesis_id']}** · {fw} · "

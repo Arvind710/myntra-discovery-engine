@@ -85,6 +85,12 @@ def journey(stage_rows, *, height: int = 200):
             name=r["title"], marker_color=r["colour"],
             text=[f"<b>{r['title']}</b><br>{share:.0%} · n={r['n']:,}"],
             textposition="inside", insidetextanchor="middle",
+            # Horizontal or not at all. Plotly rotates a label that will not fit,
+            # and a 3% segment rendered its title vertically down a 30px column —
+            # unreadable, and worse than absent because it still draws the eye.
+            # uniformtext below drops anything that cannot be set at 10px; the
+            # stage cards underneath carry the same numbers for those.
+            textangle=0, constraintext="inside",
             hovertemplate=f"<b>{r['title']}</b><br>{r['n']:,} records"
                           f"<br>{share:.1%} of coded conversation<extra></extra>",
         ))

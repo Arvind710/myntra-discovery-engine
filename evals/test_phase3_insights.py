@@ -426,9 +426,14 @@ def test_insights_page_renders_the_sliders_and_the_ranking(corpus):
         at.switch_page("views/insights.py")
         at.run()
         assert not at.exception, at.exception[0].value
-        labels = {s.label for s in at.slider}
-        for comp in COMPONENTS:
-            assert comp.replace("_", " ") in labels, f"no slider for {comp}: {labels}"
+        assert len(at.slider) == len(COMPONENTS), (
+            f"expected one slider per scoring component, got {len(at.slider)}")
+        # Guards the readability property rather than a fixed wording: a control
+        # labelled `defer_share` is the codebook talking to itself. Every slider
+        # must read as English and carry its own explanation.
+        for sl in at.slider:
+            assert "_" not in sl.label, f"raw field name leaked into the UI: {sl.label!r}"
+            assert sl.help and len(sl.help) > 40, f"slider {sl.label!r} explains nothing"
         assert at.dataframe, "the opportunity ranking table did not render"
     finally:
         os.chdir(prev)
@@ -451,9 +456,12 @@ def test_moving_a_weight_slider_actually_changes_the_score(corpus):
         before = at.dataframe[0].value["score"].tolist()
         # Zero every weight except solvability: a different question entirely,
         # so a different order is expected. Identical output means dead controls.
-        for s in at.slider:
-            if s.label != "solvable without money":
-                s.set_value(0.0)
+        keep = "Fixable without a discount"
+        assert any(sl.label == keep for sl in at.slider), \
+            f"expected a slider labelled {keep!r}: {[sl.label for sl in at.slider]}"
+        for sl in at.slider:
+            if sl.label != keep:
+                sl.set_value(0.0)
         at.run()
         after = at.dataframe[0].value["score"].tolist()
         assert before != after, "the weight sliders do not affect the score"
