@@ -16,9 +16,11 @@
 | 4 | `evals.md` | ✅ v1 — per-stage gates, 13 thresholds |
 | 5 | `implementationplan.md` | ✅ v1 — 6 phases (P0–P5), gate per phase, schema deltas, gold sampling fix |
 | 6 | **P0 — Foundation & Freeze** | ✅ built, gate signed off `evals/reports/gate_P0_20260819.md` — 37/37 checks green; codebook frozen `v1:718e9f3e` |
-| 7 | P1 → P5 | ⬜ **next** — P1 Collection & Data Bank. App live: https://myntra-discovery-engine-p62azqwfs4r93yn2rx7qgx.streamlit.app |
+| 7 | **P1 — Collection & Data Bank** | ✅ built; `S1-HUM-1` (read 30 random records) outstanding |
+| 8 | **P2 — Analysis** | ✅ **CLOSED 2026-08-20 — PASS WITH RECORDED LIMITATIONS**, `evals/reports/gate_P2_20260820.md` |
+| 9 | P3 → P5 | ⬜ **next** — P3 Insights. **Blocked on an OpenAI top-up:** $10.97 spent, ~$1.55 left; P3 needs $1–2 and P4 ~$2 |
 
-**P0 is built.** Repo initialised, schema applied, codebook frozen at `v1:718e9f3e` before any scoring, 37 P0 gate checks green, app shell runs clean. No data collected yet — P1 is blocked on the credentials below.
+**P2 is closed.** Corpus 12,002 collected → 1,199 relevant → **1,018 analysed** after excluding five low-yield subreddits. Final ranking **C2 13.7% · C6 11.8% · C1 10.8% · C3 8.8% · C7 8.0%**; **Stuck Deciders 38.5%**; Z-99 **12.6%**. Gold set **108 labels + 5 repeats**; Arvind has finished labelling and will not do more, so nothing downstream may assume further human coding. App live: https://myntra-discovery-engine-p62azqwfs4r93yn2rx7qgx.streamlit.app
 
 ---
 
@@ -295,6 +297,125 @@ measurement to the prediction, including when the prediction is mine.**
 
 ---
 
+
+## P2 session — what was decided and found (2026-08-20)
+
+Five substantive decisions, each with the measurement that forced it.
+
+### 1. Gold frame amended before labelling — `prefilter_rejected` retired
+
+Appendix B allocated 25 of 160 slots to measuring prefilter recall. The
+prefilter had already been measured at 76.6% and dropped, so the stratum
+bought nothing. **Arvind moved the 25 to `rel_zero` (25 → 50)**, on the
+reasoning that relevance is the pass that cannot be re-run affordably ($5.36
+against $1.87 for classification) and 7,440 discarded records had never been
+read by a human.
+
+### 2. Nine gold labels amended against the frozen definitions (EC-VAL-5)
+
+The first scoring run said **23% of discarded records were actually
+relevant**, extrapolating to ~1,700 lost records — more than the entire kept
+corpus. Reading the actual disagreements showed eight of nine shared one
+mistake: **a positive post-purchase review coded as the doubt-code for the
+topic it mentions** ("Very nice. Good fabric" → C2, whose boundary requires
+*doubt*). Codes are barriers that BLOCKED a purchase, not topics a comment
+touches — and the labelling UI never said so on screen, which makes this a
+tool failure as much as a labelling one.
+
+After amendment the figure is **3.2%**. Every amendment records its reason and
+the prior label in `gold.notes`. Judgement differences were left alone; only
+definitional violations were corrected.
+
+**Lesson: check whether an alarming gold number is a labelling artefact before
+acting on it.** Remediation driven by uncalibrated gold tunes the classifier
+toward the labeller's errors.
+
+### 3. AC-11 was a pipeline bug, not an incomplete codebook — FR-5.4 overturned
+
+Z-99 sat at 31.7% against a 15% ceiling and `FR-5.4` treated that as evidence
+the framework was incomplete. **It was not.** 285 of 380 Z-99 records (75%)
+had pass-1 `stages=["Z-99"]`, and `build_code_prompt` skipped Z-99 when
+gathering candidates — so pass 2 received **exactly one option** and could not
+assign a real code however well the text fitted. It then recorded "does not
+match any specific predefined barrier", blaming the codebook for a list it was
+never shown.
+
+Two independent signals had agreed before the fix: the gold set (**18 model
+Z-99 against 0 human** across 59 jointly-relevant records) and the stored
+reasoning naming barriers that are verbatim in existing boundary notes
+("pricing fairness" is C6; "four outfits from existing wardrobe" is C3).
+
+Fix: fall back to the full 33-code list when the assigned stages yield no real
+candidates. **216 of 380 rescued** (C6 70, C7 51, C2 36, C1 21); **Z-99 →
+12.6%, AC-11 PASSES**; no new codes needed.
+
+**The general lesson: a two-pass design makes pass-1 errors absorbing and
+invisible. `architecture.md` §6.2 justified two passes on prompt size and
+never stated that cost.**
+
+### 4. Twenty-eight evidence-span violations found and fixed (T-6)
+
+23 quoted `thread_context` — the post or video title — instead of the record
+body, which on YouTube attributes **another person's words** to this author
+(NFR-1). 5 appeared in neither: fabricated or paraphrased. Zero were checker
+false positives. T-6 is absolute and on Appendix C's never-cut list, so these
+were fixed rather than written up as a limitation. Now 0.
+
+### 5. Five low-yield subreddits excluded — flagged by Arvind, not by the pipeline
+
+He noticed r/mumbai records were mostly not about online fashion. Measured:
+
+| subreddit | scored | relevant | yield | FP rate (gold) |
+|---|---|---|---|---|
+| IndianFashionAddicts | 544 | 212 | 39.0% | 1 of 5 |
+| TwoXIndia | 197 | 73 | 37.1% | 0 of 1 |
+| IndianFashion | 100 | 24 | 24.0% | 0 of 1 |
+| **mumbai** | 717 | 89 | 12.4% | **4 of 7** |
+| **india** | 1,151 | 69 | 6.0% | 2 of 5 |
+| **delhi** | 531 | 22 | 4.1% | 0 of 1 |
+| **bangalore** | 692 | **1** | 0.1% | — |
+| **IndiaTech** | 457 | **0** | 0.0% | — |
+
+Excluded (marked, not deleted). Corpus 1,199 → 1,018. **The ranking did not
+move** — every code held position, no share shifted more than 1.5pp — so this
+is reportable as a robustness result, not a correction to bury.
+
+Two further faults surfaced doing it:
+- **`exclusions` was a marking table nothing read.** `crosstabs.py` selected
+  `FROM relevance` directly and never consulted it; `segments.py` had the same
+  fault and briefly covered 1,199 records while the ranking used 1,018 — two
+  numbers on one screen describing different corpora. Both fixed, with a test
+  that the populations agree.
+- **r/DesiFashion was configured and collected zero records**, and nothing
+  noticed. A silent source failure is indistinguishable from a source with
+  nothing to say.
+
+### What P2 leaves failing, on the record
+
+- **T-4 per-code κ** — 2 of 5 measurable codes clear 0.60 (C1 0.66, C6 0.64;
+  C3 0.52, C2 0.43, **C10 0.10**). 16 codes are too rare in gold to measure.
+- **C10 is unreliable.** The labelling read it as *app* permissions; the
+  codebook means **another person's** approval. Any C10 claim needs the caveat.
+- **T-2 relevance recall ~79%** vs 85% — an estimate with a stated assumption.
+- **T-13 underpowered** — 5 of 20 repeats. The 40% figure must not be quoted.
+- **AC-6 novelty OPEN** — cluster labelling never run (budget). Not claimed.
+
+### Metric artefacts worth remembering
+
+**T-3 micro agreement reads 92.8% because it is dominated by true negatives**
+across 22 codes. **κ averaged over the same 22 reads median 0.00 because 16
+codes appear ≤4 times** — that is "no information", not "no agreement".
+Report κ only where gold n ≥ 5. Both artefacts flatter or damn the classifier
+for reasons unrelated to its accuracy.
+
+### Cost estimation
+
+I quoted ~$0.60 to re-run 380 records; it cost **$3.41**, because
+full-codebook prompts are ~5× longer, not the 2.5× I assumed. **Measure one
+record before quoting an LLM batch cost.**
+
+---
+
 ## Explicitly rejected
 
 Recorded so they don't quietly reappear as "optimisations":
@@ -315,18 +436,22 @@ Recorded so they don't quietly reappear as "optimisations":
 |---|---|
 | ~~Reddit app registration~~ | ⛔ **Rejected by Reddit — de-configured, see above** |
 | YouTube Data API v3 key | ✅ **verified 2026-08-19** — search + commentThreads both working |
-| OpenAI credits + hard usage cap | ⚠️ key verified (gpt-5 reachable, live call logged). **$5 loaded — covers through P2C. Top-up to ~$25 needed before the full classification run (P2D).** Hard cap still to be set |
-| Gold-set labelling, 150–200 records, ~2–4h in-app | **Arvind** — after Stage 1 pilot |
-| Curated research sourcing | **Claude** — with live-URL verification per EC-COL-15 |
+| **OpenAI top-up — THE CURRENT BLOCKER** | **Arvind.** $10.97 spent, ~$1.55 left. P3 needs $1–2, P4 ~$2 plus sweeps; ~$10 clears both. Hard cap still to be set (EC-OPS-3) |
+| ~~Gold-set labelling~~ | ✅ **done 2026-08-20 — 108 labels + 5 repeats, 14 skipped.** Arvind has finished and will do no more; **plan nothing that needs further human coding** |
+| Curated research sourcing | ✅ 5 items, URLs verified live per EC-COL-15 |
+| `S1-HUM-1` — read 30 random records | **Arvind** — outstanding from P1 |
 
 ---
 
 ## Unresolved / to watch
 
-- **A-1 is still unverified** — nobody knows the relevant-record yield rate. The Stage 1 pilot measures it. If yield is very low, source strategy changes before the full run.
-- **Segment coverage** may come back too low for a code-level segment matrix; the planned fallback is segment × stage.
-- **AC-6 (novel insight)** is a real risk — if the corpus only confirms the 28 pre-registered hypotheses, that must be reported honestly rather than manufactured.
-- **Exact OpenAI model IDs and rates** need confirming at build time; all cost figures are estimates until the pilot records actuals in the `runs` table.
+- ~~A-1 unverified~~ — **resolved**, yields measured per source and per subreddit.
+- ~~Segment coverage too low~~ — **resolved** by the v2 derivation: 100% coverage, Stuck Deciders 38.5%.
+- **AC-6 (novel insight) is OPEN and unclaimed.** Track B clusters exist (19 in the `all` space) but were never LLM-labelled, for budget. Until they are, the honest position is that novelty has not been looked for — not that none was found. **Do not let AC-6 be quietly reported as satisfied.**
+- **T-4 and T-2 fail** and are recorded as failing in the P2 gate report and the app's Validation tab. Do not restate them as passing anywhere downstream.
+- **C10 is unreliable (κ 0.10)** — read as *app* permissions by the labeller, defined as **another person's** approval. C10 maps to framework **C4.5**, the Stuck Deciders' most distinctive barrier, so this specifically threatens the sharpest claim in the analysis. Worth re-checking before it reaches the deck.
+- **C6 (price/value) rose to #2** after the Z-99 remediation and is the largest barrier that the no-monetary-incentives constraint forbids solving directly. It must be resolved into transparency, anchoring and timing.
+- **The 5 low-yield subreddits are excluded but not deleted.** Reversible by removing the `exclusions` rows written by `pipeline/collect/exclude_subreddits.py`.
 
 ---
 
