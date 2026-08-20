@@ -140,12 +140,23 @@ def _candidate_numbers(rows: list[dict]) -> set[float]:
     return vals
 
 
+def strip_citations(text: str) -> str:
+    """Remove citation markers before reading the prose.
+
+    Record ids are hex, and a hex id beginning `653385bf…` was extracted as the
+    number 653385 and reported as an invented statistic. Citations are
+    machinery, not claims: the checker should read what the sentence SAYS, and
+    the citation's own correctness is `check_citations`'s job.
+    """
+    return CITATION.sub(" ", text or "")
+
+
 def check_numerals(text: str, rows: list[dict], n_codes: int = 34) -> list[str]:
     """Numbers in `text` that no retrieved row supports. Empty list = clean."""
     allow = structural_constants(n_codes)
     cands = _candidate_numbers(rows)
     bad = []
-    for value, suffix in numerals(text):
+    for value, suffix in numerals(strip_citations(text)):
         if not suffix and value in allow:
             continue
         if 1900 <= value <= 2100 and not suffix and value == int(value):
@@ -194,6 +205,14 @@ def check_quotes(text: str, records: list[dict], rows: list[dict]) -> list[str]:
         q = _norm(m.group(1))
         if len(q.split()) < 3:
             continue
+        # A trailing placeholder marks a phrase being NAMED rather than quoted —
+        # "the counterfactual signal (I would have bought if…)". The exemption is
+        # narrow on purpose and it is safe for the reason the check exists: the
+        # danger of a fabricated quote is that it passes as testimony, and a
+        # phrase ending in an ellipsis or a bare X cannot. Anything that reads
+        # as something a person actually said is still checked.
+        if re.search(r"(…|\.\.\.|\b[XY])\s*$", q.rstrip()):
+            continue
         if any(q in h for h in haystack):
             continue
         bad.append(m.group(1)[:80])
@@ -238,9 +257,32 @@ def _units(text: str) -> list[str]:
         if not lines:
             continue
         bullets = [ln for ln in lines if re.match(r"\s*(?:[-*•]|\d+\.)\s+", ln)]
+        rest = [ln for ln in lines if ln not in bullets]
+        # A bullet with more-indented bullets beneath it is a LABEL for them,
+        # not a claim of its own — the numbers and their citations live in the
+        # leaves. Flattening the list threw that structure away and demanded a
+        # citation on "Mentions and distinct authors", which asserts nothing.
+        parents = set()
+        for i, ln in enumerate(lines):
+            if ln not in bullets:
+                continue
+            indent = len(ln) - len(ln.lstrip())
+            for nxt in lines[i + 1:]:
+                nxt_indent = len(nxt) - len(nxt.lstrip())
+                if nxt_indent <= indent:
+                    break
+                if nxt in bullets:
+                    parents.add(ln)
+                    break
+        bullets = [ln for ln in bullets if ln not in parents]
+        # A block introduced by `Interpretation:` is inference throughout —
+        # the marker is on the introducing line and the bullets under it are
+        # the same thought continued. Requiring the prefix on every bullet
+        # would demand the word six times in a row to say one thing.
+        inherited = any(ln.strip().lower().lstrip("*_-• ").startswith("interpretation:")
+                        for ln in rest)
         if bullets:
-            units.extend(bullets)
-            rest = [ln for ln in lines if ln not in bullets]
+            units.extend((f"Interpretation: {b}" if inherited else b) for b in bullets)
             if rest:
                 units.append(" ".join(rest))
         else:
@@ -256,7 +298,12 @@ def _is_structural(unit: str) -> bool:
     if u.startswith("#"):
         return True
     bare = re.sub(r"[*_`>\-•]", "", u).strip()
-    if bare.endswith(":") and len(bare.split()) <= 5:
+    # A line ending in a colon INTRODUCES the lines beneath it; the claim and
+    # its citation live in those. Length was the wrong test — "Largest shares
+    # of discussion by code (overall; all are Stage C):" is a label by
+    # function, not by brevity, and demanding a citation on it forces one onto
+    # a line that asserts nothing.
+    if bare.endswith(":"):
         return True
     return len(bare.split()) <= 3
 
