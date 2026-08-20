@@ -263,12 +263,23 @@ with tab_how:
         st.caption("If a barrier appears far more on one platform than across the corpus, "
                    "it may be telling you about that platform's users rather than about "
                    "shoppers. Divergence is highest where that risk is greatest.")
-        st.dataframe(
-            db.query("""SELECT source, code, n, round(share,3) AS share_in_source,
-                               round(js_divergence,3) AS divergence
-                        FROM analysis_source_code WHERE n >= 15
-                        ORDER BY js_divergence DESC, n DESC LIMIT 20"""),
-            width="stretch", hide_index=True)
+        src = db.query("""SELECT source, code, n, share, js_divergence
+                          FROM analysis_source_code WHERE n >= 15
+                          ORDER BY js_divergence DESC, n DESC LIMIT 20""")
+        if not src.empty:
+            src["barrier"] = src["code"].map(S.voice)
+            src["share on this platform"] = src["share"].map(lambda v: f"{v:.0%}")
+            src["share across the corpus"] = src["code"].map(
+                dict(zip(prev["code"], prev["share"]))).map(lambda v: f"{v:.0%}")
+            st.dataframe(
+                src[["source", "barrier", "n", "share on this platform",
+                     "share across the corpus"]].rename(columns={
+                        "source": "platform", "n": "records"}),
+                width="stretch", hide_index=True)
+            st.caption("Read the two share columns against each other. Price talk sitting "
+                       "at 53% on the Play Store against 20% corpus-wide is the clearest "
+                       "case: app-store reviews are written by people with a grievance, "
+                       "and that shapes what they raise.")
 
     # B-5: the gate reports must be readable IN THE APP, not only in the repo.
     REPORTS = Path(__file__).resolve().parents[2] / "evals" / "reports"

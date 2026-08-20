@@ -36,6 +36,15 @@ COMPONENT_HELP = {
     "segment_fit": S.explain("segment_fit"),
 }
 
+# The pipeline stores these labels with their code ids attached, which is right
+# for an audit trail and wrong for a page someone reads once.
+PLAIN_BUCKET = {
+    "corpus": "Everyone we heard from",
+    "c9_no_live_intent": "Never meant to buy",
+    "collectors": "Saving for reference",
+    "addressable": "Actually winnable",
+}
+
 COMPONENT_LABEL = {
     "prevalence": "How often it comes up",
     "intensity": "How hard people work around it",
@@ -63,30 +72,28 @@ addr = db.query("SELECT * FROM analysis_addressable").set_index("bucket")
 opp["fw"] = opp["code"].map(F.to_framework)
 opp["barrier"] = opp["code"].map(F.name_of)
 
-st.warning(
-    "**Shares of discussion, not drop-off rates.** No user-level or funnel data exists "
-    "in this project. A barrier's size here is how much it is *talked about*, weighted "
-    "by how hard people work around it — and silent barriers are under-represented by "
-    "construction. The Stage A panel below quantifies exactly how much that could "
-    "matter.", icon="⚠️")
+st.warning(S.PROXY_WARNING, icon="⚠️")
 
 tab_opp, tab_sens, tab_seg, tab_hyp, tab_ins, tab_art = st.tabs(
-    ["Opportunity", "How fragile is this?", "Who to build for",
-     "Hypotheses & falsifiers", "Insights", "Research artefacts"])
+    ["What to solve first", "How sure are we?", "Who to build for",
+     "What would prove us wrong", "What we learned", "Take it to interviews"])
 
 # ---------------------------------------------------------------- opportunity
 with tab_opp:
-    st.subheader("The addressable population — sized before it was narrowed")
+    st.subheader("Who this is actually about")
     st.caption(
-        "AC-12. Two populations are not conversion problems and are removed from the "
-        "opportunity. They are counted first, because how big they are is itself a "
-        "finding: leaving them in inflates the opportunity, and dropping them silently "
-        "loses the result.")
+        "Two groups are counted and then set aside, because **they are not a conversion "
+        "problem at all.** Some people never intended to buy — they save for reference, "
+        "and \"converting\" them would mean optimising against the user. Others show no "
+        "live intent at any point. Both are measured first, because how big they are is "
+        "itself one of the findings; leaving them in would quietly inflate every number "
+        "that follows.")
     cols = st.columns(4)
     for col, bucket in zip(cols, ["corpus", "c9_no_live_intent", "collectors", "addressable"]):
         if bucket in addr.index:
             r = addr.loc[bucket]
-            col.metric(str(r["label"]).split(" — ")[0], f"{int(r['n']):,}",
+            col.metric(PLAIN_BUCKET.get(bucket, str(r["label"]).split(" — ")[0]),
+                       f"{int(r['n']):,}",
                        f"{float(r['share_of_corpus']):.1%} of corpus",
                        delta_color="off", help=str(r["reason"]))
     st.caption(f"Removed together: {int(addr.loc['corpus','n']) - int(addr.loc['addressable','n'])} "
@@ -128,8 +135,9 @@ with tab_opp:
                    title="Opportunity score — addressable barriers only", height=460,
                    orientation="h"),
         width="stretch")
-    st.caption("Only barriers at n ≥ 30 are ranked (AR-12). Everything scored but "
-               "unranked is listed below with its count.")
+    st.caption("Barriers with fewer than 30 records are scored but never ranked — a handful "
+               "of comments cannot settle which problem is bigger. They are listed below "
+               "with their counts.")
 
     show["what the shopper is thinking"] = show["code"].map(S.voice)
     tbl = show[["live_rank", "what the shopper is thinking", "n", "live_score"] + COMPONENTS]
@@ -177,15 +185,17 @@ with tab_sens:
         else:
             st.warning("The top two cannot be separated on this evidence. The honest "
                        "headline is a tie, and the interviews are the tiebreak rather "
-                       "than a formality (EC-INS-1).", icon="⚖️")
+                       "than a formality.", icon="⚖️")
         d = sens.copy()
         d["barrier"] = d["code"].map(S.voice)
         d = d[["barrier", "top_share", "top3_share", "mean_rank", "p05_rank", "p95_rank"]]
         d.columns = ["barrier", "held 1st place", "stayed in top 3",
                      "average rank", "best rank", "worst rank"]
         st.dataframe(d, width="stretch", hide_index=True)
-        st.caption("`p05`–`p95` is the rank interval across the draws. A code whose "
-                   "interval is a single number never moved.")
+        st.caption("**Best and worst rank** are where each barrier landed across a "
+                   "thousand different weightings. A barrier whose best and worst are the "
+                   "same number never moved at all, however the weights were set — which "
+                   "is the strongest form this evidence can take.")
 
     st.divider()
     st.subheader("What if Stage A is under-reported?")
@@ -235,7 +245,7 @@ with tab_seg:
                 st.warning(
                     "This rests on **segment × stage**, not segment × code — too few "
                     "code cells reach n ≥ 30. Code-level detail for this segment is "
-                    "directional and must not be quoted as a ranked claim (EC-INS-8).",
+                    "directional — read it as a hint, not as a ranking.",
                     icon="⚠️")
             dist = json.loads(w["distinctive"] or "[]")
             if dist:
@@ -267,7 +277,7 @@ with tab_seg:
                    "`basis` records which matrix actually carried the judgement — a "
                    "directional read must never be quoted later as a ranked one.")
         st.caption("Segment ① Collectors is absent: it was removed from the addressable "
-                   "population before this table was computed (AC-12).")
+                   "group before this table was computed — they are not a conversion problem.")
 
 # ----------------------------------------------------------------- hypotheses
 with tab_hyp:
@@ -277,7 +287,7 @@ with tab_hyp:
     else:
         st.caption(
             "A hypothesis is a causal claim with a kill condition. Every one below "
-            "carries what would **disprove** it (AC-7) and what already **argues "
+            "carries what would **disprove** it and what already **argues "
             "against** it — and the supporting count, source diversity and verbatims "
             "are computed from the classifications, never written by the model.")
         order = {"high": 0, "medium": 1, "low": 2}
@@ -314,7 +324,7 @@ with tab_hyp:
                                         unsafe_allow_html=True)
                         st.caption("Every quote is verified as an exact substring of the "
                                    "record it cites. A span that is not exact is not "
-                                   "evidence and is never shown (T-6).")
+                                   "evidence and is never shown.")
 
 # -------------------------------------------------------------------- insights
 with tab_ins:
@@ -325,8 +335,8 @@ with tab_ins:
         novel = ins[ins["novelty"] == 1]
         st.subheader(f"Outside the pre-registered hypotheses — {len(novel)} of {len(ins)}")
         st.caption(
-            "AC-6 exists because an engine that returns only its author's priors did not "
-            "mine the corpus, it confirmed a belief at some expense. Each insight was "
+            "An engine that returns only what its author already believed did not mine "
+            "anything — it confirmed a hunch at some expense. So each insight was "
             "embedded against all 28 pre-registered hypotheses (H1–H15 / DH1–DH13); the "
             "similarity line was **calibrated against a control set of deliberate "
             "restatements**, not chosen. The filter produced a shortlist of 10 — the "
