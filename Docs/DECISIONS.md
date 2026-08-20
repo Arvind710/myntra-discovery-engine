@@ -16,7 +16,7 @@
 | 4 | `evals.md` | ✅ v1 — per-stage gates, 13 thresholds |
 | 5 | `implementationplan.md` | ✅ v1 — 6 phases (P0–P5), gate per phase, schema deltas, gold sampling fix |
 | 6 | **P0 — Foundation & Freeze** | ✅ built, gate signed off `evals/reports/gate_P0_20260819.md` — 37/37 checks green; codebook frozen `v1:718e9f3e` |
-| 7 | **P1 — Collection & Data Bank** | ✅ built; `S1-HUM-1` (read 30 random records) outstanding |
+| 7 | **P1 — Collection & Data Bank** | ✅ built; **`S1-HUM-1` answered 2026-08-20 — 19/30, see below** |
 | 8 | **P2 — Analysis** | ✅ **CLOSED 2026-08-20 — PASS WITH RECORDED LIMITATIONS**, `evals/reports/gate_P2_20260820.md` |
 | 9 | **P3 — Insights & Hypotheses** | ✅ **CLOSED 2026-08-20 — PASS**, `evals/reports/gate_P3_20260820.md`. `S3-HUM-1` outstanding |
 | 10 | P4 → P5 | ⬜ **next** — P4 the research analyst. ~$2 plus golden-question sweeps |
@@ -532,6 +532,65 @@ the 19-cluster run.
 
 ---
 
+## S1-HUM-1 answered — 19 of 30, and it is the worst agreement number we have
+
+**2026-08-20. Arvind read a seeded random sample of 30 `retained` records
+(seed 20260820, reproducible via `tools/sample_for_review.py`, sample committed
+at `data/artifacts/s1_hum_1_sample.json`). His verdict on whether the pipeline
+judged each record correctly:**
+
+| | |
+|---|---|
+| pipeline right | **19** |
+| pipeline wrong | **11** |
+| unsure | 0 |
+| **agreement** | **63.3%**, Wilson 95% CI **[45.5%, 78.1%]** |
+
+**What this does and does not establish.**
+
+It is a *single* judgement per record covering two different decisions at once
+— the relevance call and, on the 9 relevant records, the code assigned. A
+"wrong" could mean either. n=30 gives an interval nearly 33 points wide, so
+63% is the point estimate of something between "half" and "four in five".
+
+**One thing it pins down regardless.** Only 9 of the 30 were judged relevant,
+so **at least 2 of the 11 disagreements fall on the 21 NOT-relevant calls.**
+That matters: my own read of the sample was that the rejections looked sound
+and the problems were concentrated in the 9 relevant records. Arvind's count
+says that is wrong — the relevance filter is making errors in the direction
+this project has never measured. T-2 measured recall (relevant records wrongly
+dropped) at ~79%; nothing has measured precision, and this is the first signal
+on it.
+
+**It corroborates rather than contradicts the known failures.** T-4 per-code
+kappa clears 0.60 for only 2 of 5 measurable codes; T-2 recall is an estimate
+below its threshold; Z-99 sits at 12.6%. A 63% end-to-end agreement rate on a
+random draw is roughly what that combination predicts. It is not a new fault —
+it is the first time the compound effect has been put on one number.
+
+**What was NOT captured, and why that is my fault.** The per-record breakdown
+is lost. I built the review as a web page whose buttons held state only in the
+browser, then rebuilt it declaring the artifact persistence capability and
+checked the served HTML: it carries neither the `data-id` stamps nor the
+`artifact-sync` marker a persisting page needs, so those marks would not have
+survived a reload either. Two capture mechanisms, neither capturing. **Only the
+tally survives.** Without knowing WHICH 11, the disagreement cannot be
+attributed to relevance versus coding, and the cheapest fix — re-reading the
+same 30 against a plain numbered list — costs Arvind a second sitting, which
+`myntra-discovery-engine` is explicit he does not owe this project.
+
+**How to carry this into the deck.** As a stated limitation with its interval,
+beside T-2 and T-4, and never as a passing check. The honest sentence is: *on a
+random sample of 30 records a human agreed with the pipeline's judgement 19
+times; the sample is too small to say more than that agreement is somewhere
+between half and four-fifths.*
+
+**The reusable lesson:** if a human review's output is a number, build the
+place it gets written down BEFORE asking for the review. A capture UI that
+loses the input costs more than the review saved.
+
+---
+
 ## Explicitly rejected
 
 Recorded so they don't quietly reappear as "optimisations":
@@ -555,7 +614,7 @@ Recorded so they don't quietly reappear as "optimisations":
 | **OpenAI budget** | **Arvind.** $11.40 spent. P3 came in at $0.43 against its $1–2 estimate, so the top-up was not needed for it — but P4 needs ~$2 plus golden-question sweeps and the hard cap is still to be set (EC-OPS-3) |
 | ~~Gold-set labelling~~ | ✅ **done 2026-08-20 — 108 labels + 5 repeats, 14 skipped.** Arvind has finished and will do no more; **plan nothing that needs further human coding** |
 | Curated research sourcing | ✅ 5 items, URLs verified live per EC-COL-15 |
-| `S1-HUM-1` — read 30 random records | **Arvind** — outstanding from P1 |
+| ~~`S1-HUM-1` — read 30 random records~~ | ✅ **done 2026-08-20 — 19/30 right, 11 wrong.** Per-record detail not captured; see the section above |
 
 ---
 

@@ -203,4 +203,9 @@ with tab_val:
   while saving $2.49. The corpus now has 100% scoring coverage.
 - **Reddit was collected through a third-party service** after its API proved
   unavailable. Disclosed rather than hidden.
+- **A human agreed with the pipeline on 19 of 30 randomly drawn records** (63%, Wilson 95%
+  CI 45–78%). One judgement per record covering both the relevance call and the code, on a
+  seeded sample of 30 — too small to say more than that agreement sits somewhere between
+  half and four-fifths. Reported because it is the only end-to-end check of the pipeline's
+  judgement that exists.
 """)
