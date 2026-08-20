@@ -27,11 +27,19 @@ MIN_N_VISIBLE = 15
 
 def _load(con):
     """Relevant records with their codes and metadata."""
+    # `exclusions` is a marking table ([A.1]) and analysis is supposed to take
+    # its denominator from what survives it. This query previously read
+    # `relevance` directly, so ANY exclusion written after the relevance pass
+    # was silently ignored — the mark was recorded, the analysis kept using the
+    # record, and nothing anywhere disagreed. Found when excluding the
+    # low-yield subreddits; it would have applied to every future exclusion too.
     recs = {r["record_id"]: dict(r) for r in con.execute("""
         SELECT rec.record_id, rec.source, rec.author_hash, rec.created_at,
                v.secondhand, v.myntra_specific
         FROM relevance v JOIN records rec ON rec.record_id = v.record_id
-        WHERE v.is_relevant = 1""")}
+        WHERE v.is_relevant = 1
+          AND NOT EXISTS (SELECT 1 FROM exclusions e
+                          WHERE e.record_id = rec.record_id)""")}
     codes = defaultdict(list)
     for r in con.execute("SELECT record_id, code, confidence, is_blocking FROM classifications"):
         if r["record_id"] in recs:

@@ -130,17 +130,52 @@ def test_dropped_prefilter_leaves_no_exclusion_marks(corpus):
 
 
 @pytest.mark.needs_corpus
-def test_every_classified_record_is_visible_in_retained(corpus):
-    """The property, not a proxy for it: whatever the exclusion table says,
-    a record that was classified must be reachable through the view the app
-    renders from. Otherwise the charts describe a corpus the Data Bank
-    cannot show, and no error is raised anywhere."""
-    hidden = corpus.execute(
-        "SELECT count(DISTINCT record_id) FROM classifications "
+def test_no_record_is_counted_by_analysis_but_hidden_from_the_app(corpus):
+    """The property, not a proxy for it: the analysis and the app must
+    describe the same population.
+
+    This began as "every classified record appears in `retained`", which
+    caught the stale-prefilter bug. That formulation became WRONG once records
+    were deliberately excluded (the low-yield subreddits): a marked exclusion
+    SHOULD hide a classified record. The distinction that matters is
+    accidental versus deliberate, so the test asserts the two halves
+    separately rather than being relaxed until it passes.
+    """
+    # 1. Nothing the analysis counts may be invisible in the app.
+    counted_but_hidden = corpus.execute(
+        "SELECT count(*) FROM segments_v2 "
         "WHERE record_id NOT IN (SELECT record_id FROM retained)").fetchone()[0]
-    assert hidden == 0, (
-        f"{hidden} classified records are excluded from the `retained` view — "
-        "the analysis counts them, the app cannot display them")
+    assert counted_but_hidden == 0, (
+        f"{counted_but_hidden} records are counted by the analysis but cannot be "
+        "shown in the Data Bank — the charts describe a corpus the app denies")
+
+    # 2. A classified record missing from `retained` must be missing ON PURPOSE,
+    #    with a logged reason. That is what separates a decision from a bug.
+    unexplained = corpus.execute(
+        "SELECT count(DISTINCT c.record_id) FROM classifications c "
+        "WHERE c.record_id NOT IN (SELECT record_id FROM retained) "
+        "  AND NOT EXISTS (SELECT 1 FROM exclusions e "
+        "                  WHERE e.record_id = c.record_id)").fetchone()[0]
+    assert unexplained == 0, (
+        f"{unexplained} classified records vanished from `retained` with no "
+        "exclusion row explaining why")
+
+
+@pytest.mark.needs_corpus
+def test_analysis_populations_agree(corpus):
+    """Segments and the barrier ranking are rendered on one screen, so they
+    must be computed over the same records. They disagreed once — segments
+    covered 1,199 while crosstabs used 1,018 — because only one of them
+    honoured `exclusions`, and nothing compared them."""
+    seg = corpus.execute("SELECT count(*) FROM segments_v2").fetchone()[0]
+    pin = corpus.execute("SELECT run_id FROM published WHERE singleton=1").fetchone()[0]
+    denom = corpus.execute(
+        "SELECT max(denominator) FROM analysis_code_prevalence WHERE run_id=?",
+        (pin,)).fetchone()[0]
+    assert denom is not None, "published run has no prevalence rows"
+    assert seg == denom, (
+        f"segments cover {seg} records but the barrier ranking uses {denom}; "
+        "the two are shown side by side and cannot describe different corpora")
 
 
 def test_label_page_is_blind_to_model_output():

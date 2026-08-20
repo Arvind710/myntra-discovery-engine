@@ -69,7 +69,14 @@ def run(con) -> dict:
     codes = defaultdict(set)
     for r in con.execute("SELECT record_id, code FROM classifications"):
         codes[r["record_id"]].add(r["code"])
-    meta = {r["record_id"]: dict(r) for r in con.execute("SELECT * FROM record_meta")}
+    # Must honour `exclusions` for the same reason crosstabs does: segments and
+    # the barrier ranking are rendered side by side, so a population difference
+    # between them is a contradiction on one screen. Before this, segments
+    # covered 1,199 records while crosstabs used 1,018.
+    meta = {r["record_id"]: dict(r) for r in con.execute(
+        """SELECT m.* FROM record_meta m
+           WHERE NOT EXISTS (SELECT 1 FROM exclusions e
+                             WHERE e.record_id = m.record_id)""")}
 
     with rmod.Run(con, "segments", model=None, codebook_version=cb.version_string) as R:
         con.execute("""CREATE TABLE IF NOT EXISTS segments_v2 (
