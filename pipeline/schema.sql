@@ -473,3 +473,53 @@ CREATE TABLE IF NOT EXISTS analysis_subcode (
   below_min_n  INTEGER NOT NULL DEFAULT 0,
   run_id       TEXT NOT NULL,
   PRIMARY KEY (theme, subcode, run_id));
+
+-- ---------------------------------------------------------------------------
+-- P4 additions. Both exist for the same reason: the chatbot's answer contract
+-- (arch §8.6) makes Confidence and Limitations MANDATORY sections, and
+-- S4-INV-5 requires every paragraph to carry a citation or an `Interpretation:`
+-- prefix. Until now the two things those sections must say -- how well the
+-- classifier agreed with a human, and which biases are registered against a
+-- given code -- lived only in prose: printed by `validate/score.py` to a
+-- terminal, and hand-written into `synthesise/packet.py`.
+--
+-- Prose is not citable and is not verifiable. A model asked to state a
+-- limitation it cannot cite will either omit it or recall it from the training
+-- distribution, and the second failure is invisible. Materialising both makes
+-- the caveat a row the answer points at and the verifier can check -- the same
+-- treatment every other number in this project gets.
+
+-- Per-code agreement with the human gold labels (T-3 / T-4 territory).
+-- Derived arithmetic over `gold` and `classifications`; no LLM pass, no new
+-- judgement. `measurable` is the load-bearing column: a code the labeller used
+-- twice has no kappa, and reporting 0.00 there would read as total
+-- disagreement when the truth is no information.
+CREATE TABLE IF NOT EXISTS analysis_gold_agreement (
+  code         TEXT NOT NULL,
+  gold_n       INTEGER NOT NULL,   -- records the human coded with this code
+  model_n      INTEGER NOT NULL,   -- records the classifier coded with it
+  both_n       INTEGER NOT NULL,   -- agreed positives
+  agreement    REAL NOT NULL,      -- presence/absence agreement over the gold pool
+  kappa        REAL,               -- NULL where undefined
+  measurable   INTEGER NOT NULL,   -- 1 = gold_n >= MIN_SUPPORT, kappa interpretable
+  verdict      TEXT NOT NULL,      -- 'reliable' | 'weak' | 'unreliable' | 'not measurable'
+  caveat       TEXT,               -- what an answer citing this code must say
+  gold_pool_n  INTEGER NOT NULL,   -- records both human and model call relevant
+  run_id       TEXT NOT NULL,
+  PRIMARY KEY (code, run_id));
+
+-- Registered bias and method flags -- Channel 4's other half. Authored in
+-- `codebook/method_flags.yaml` and materialised here so an answer can cite the
+-- limitation instead of recalling it. `applies_to` is a JSON list of codes,
+-- stages or the literal "*", and is what makes retrieval targeted: a question
+-- about Stage A must surface the under-detection flag whether or not the model
+-- thinks to mention it.
+CREATE TABLE IF NOT EXISTS analysis_method_flags (
+  flag_id      TEXT NOT NULL,
+  scope        TEXT NOT NULL,      -- 'corpus' | 'stage' | 'code' | 'segment' | 'metric'
+  applies_to   TEXT NOT NULL,      -- JSON list; ["*"] = every answer
+  severity     TEXT NOT NULL,      -- 'binding' | 'important' | 'context'
+  statement    TEXT NOT NULL,      -- the caveat, as it should reach a reader
+  basis        TEXT,               -- where it comes from, for audit
+  run_id       TEXT NOT NULL,
+  PRIMARY KEY (flag_id, run_id));

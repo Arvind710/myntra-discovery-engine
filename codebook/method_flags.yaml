@@ -1,0 +1,155 @@
+# Registered method and bias flags -- retrieval Channel 4 (architecture.md §8.4).
+#
+# WHY THIS IS DATA AND NOT PROMPT TEXT
+# ------------------------------------
+# The answer contract makes Confidence and Limitations mandatory sections. A
+# model asked to produce them from its own reading of the evidence will write
+# whichever caveat sounds most plausible, and the caveats that matter here are
+# not the plausible ones -- "Stage A is under-detected BY CONSTRUCTION because
+# forgetting produces no complaint" is not a caveat anyone reasons their way to
+# from a bar chart. So the flags are retrieved, matched to the codes and stages
+# actually in play, and cited like any other row.
+#
+# NOTHING HERE IS NEW. Every statement is already established in
+# problemstatement.md §8, DECISIONS.md, or the P2 gate report; `basis` names
+# where. Adding a claim here that the project has not earned elsewhere would
+# make this file a hallucination surface rather than a defence against one.
+#
+# applies_to: JSON-ish list. ["*"] fires on every answer. Codes ("C1"), stages
+# ("A"), sources ("play") and metric names ("share") all match.
+# severity: binding  -- an answer touching this MUST carry it
+#           important -- carry it unless the answer is unrelated to the claim
+#           context   -- available if the question asks
+
+flags:
+
+  - flag_id: proxy_not_funnel
+    scope: metric
+    applies_to: ["*"]
+    severity: binding
+    statement: >-
+      Every share in this corpus is a share of DISCUSSION -- how often something
+      is raised by people who chose to post -- and never a drop-off, conversion
+      or abandonment rate. No user-level or funnel data of any kind exists here.
+      A number that reads as "X% of shoppers did Y" is a misreading of the
+      instrument.
+    basis: problemstatement.md §8
+
+  - flag_id: stage_a_underdetection
+    scope: stage
+    applies_to: ["A"]
+    severity: binding
+    statement: >-
+      Stage A (the item is never reconsidered -- forgetting, no re-entry point,
+      no reminder) is under-detected by construction. People complain about what
+      is frustrating, not what is frequent, and silently forgetting a wishlist
+      generates no post. A low Stage A count is NOT evidence that Stage A is
+      small.
+    basis: problemstatement.md §8; architecture.md §7.3
+
+  - flag_id: narrow_relevance_rubric
+    scope: corpus
+    applies_to: ["*"]
+    severity: binding
+    statement: >-
+      The relevance rubric is narrower than an ordinary reading of "relevant to
+      the save-to-purchase decision". On a hand-read sample of 30 retained
+      records the implied recall was near 45%, and the excluded material skews
+      toward price/value and delivery-and-trust subject matter. The barrier
+      ranking is therefore conditional on the rubric: it measures stated
+      barriers under a narrow definition, not all decision-relevant discussion.
+    basis: DECISIONS.md, S1-HUM-1 (2026-08-20)
+
+  - flag_id: gold_thresholds_failed
+    scope: metric
+    applies_to: ["*"]
+    severity: binding
+    statement: >-
+      Two validation thresholds FAIL and are reported as failing. Per-code
+      Cohen's kappa clears 0.60 for only 2 of the 5 codes with enough gold
+      labels to measure (T-4), and relevance recall is an estimate of about 79%
+      against an 85% threshold (T-2), not a measurement. Neither is restated as
+      passing anywhere.
+    basis: evals/reports/gate_P2_20260820.md
+
+  - flag_id: c10_unreliable
+    scope: code
+    applies_to: ["C10"]
+    severity: binding
+    statement: >-
+      C10 is unreliable: agreement with the human coder was kappa 0.10. The
+      labeller read it as app permissions; the codebook defines it as another
+      person's approval. Any claim resting on C10 must carry that caveat, and
+      C10 is the most distinctive barrier of the Stuck Deciders segment -- so
+      this specifically threatens the sharpest claim in the analysis.
+    basis: DECISIONS.md; pipeline/validate/score.py
+
+  - flag_id: myntra_specific_share
+    scope: corpus
+    applies_to: ["*"]
+    severity: important
+    statement: >-
+      Only about 36% of the relevant corpus is Myntra-specific; the rest
+      concerns Indian online fashion shopping generally. Platform-mechanical
+      codes (Stage B, C7, C8, D1-D3) are scored on their Myntra-specific counts
+      for that reason, and any claim about Myntra in particular rests on the
+      smaller pool.
+    basis: architecture.md A-4; pipeline/synthesise/packet.py
+
+  - flag_id: three_independent_source_types
+    scope: corpus
+    applies_to: ["*"]
+    severity: important
+    statement: >-
+      Google Play and the App Store are not independent sources -- both carry
+      app-store review skew (bimodal one-star/five-star, weighted toward
+      transactional failures). With Reddit access rejected and collected via a
+      third-party service, the corpus carries roughly three independent source
+      types, not four. Triangulation across "three sources" must be read against
+      independent TYPES, not raw source labels.
+    basis: implementationplan.md P1-6; DECISIONS.md
+
+  - flag_id: segments_derived_not_observed
+    scope: segment
+    applies_to: ["*"]
+    severity: important
+    statement: >-
+      Segments are DERIVED from the classification, not observed. "Has not
+      decided" is operationalised as an unresolved item-level doubt, so
+      Confidence-phase codes are barred by definition from the segments that
+      require a decision -- their lift into the undecided segment is partly
+      circular and is not evidence of a real association.
+    basis: DECISIONS.md (segment v2 derivation)
+
+  - flag_id: store_scrape_low_yield
+    scope: corpus
+    applies_to: ["play", "appstore"]
+    severity: context
+    statement: >-
+      Untargeted store scraping is 37% of the collected Data Bank at a 7.2%
+      relevance yield, against 27.4% for search-query-targeted collection. It
+      contributes volume disproportionate to its signal, which is why source
+      mix is reported beside every per-source claim.
+    basis: DECISIONS.md
+
+  - flag_id: no_monetary_incentive
+    scope: metric
+    applies_to: ["C6"]
+    severity: important
+    statement: >-
+      Price and value is the largest barrier that the project's own constraint
+      -- no monetary incentives -- forbids solving directly. It must be resolved
+      into transparency, anchoring and timing rather than discounting, so its
+      prevalence should not be read as an argument for price cuts.
+    basis: DECISIONS.md; project constraints
+
+  - flag_id: min_n_floor
+    scope: metric
+    applies_to: ["*"]
+    severity: context
+    statement: >-
+      A count below 30 records is reportable but never rankable, and below 15 it
+      is not shown as a finding at all. The same floor applies to charts and to
+      answers, so a barrier absent from a ranking may be present in the corpus
+      and merely too thin to order.
+    basis: architecture.md §9.4; AR-12

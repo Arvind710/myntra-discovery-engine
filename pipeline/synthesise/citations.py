@@ -40,6 +40,11 @@ CITABLE: dict[str, tuple[str, ...]] = {
     "analysis_cluster_code":          ("space", "cluster_id", "code"),
     "analysis_addressable":           ("bucket",),
     "analysis_subcode":               ("theme", "subcode"),
+    # P4 additions -- Channel 4 evidence. Same contract as everything
+    # else: an answer that states a kappa or a bias caveat must name the
+    # row it read it from, or the caveat is the model's recollection.
+    "analysis_gold_agreement":        ("code",),
+    "analysis_method_flags":          ("flag_id",),
     "cluster_labels":                 ("space", "cluster_id"),
 }
 
