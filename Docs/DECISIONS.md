@@ -605,25 +605,61 @@ relevant post). **The collection unit is the thread or video; the record unit
 is the comment.** On-topic containers produce off-topic records, and nothing in
 the pipeline accounts for that.
 
-**INTERPRETATION PENDING — the two readings give opposite conclusions, and my
-button labels caused the ambiguity.** The control said "Pipeline got this
-wrong", which on a rejected record can mean either:
+**RESOLVED 2026-08-20: the 11 are records Arvind reads as RELEVANT that the
+filter rejected.** They are false negatives, not collection noise. And they
+split into two different faults.
 
-- **(a) these records ARE relevant and the filter dropped them.** Then relevance
-  *precision* is far worse than anything measured, the corpus should be
-  substantially larger, and every prevalence denominator is wrong. Note this
-  reading is hard to sustain for record 26 (a joke about cars falling off
-  cliffs) and 29 ("Is this kimadi?").
-- **(b) these records should not be in the Data Bank at all.** Then the
-  relevance filter is working *correctly* — it caught all 11 — and the finding
-  is a Stage-1 collection-targeting problem, which is what S1-HUM-1 is
-  actually chartered to test.
+**Six are the rubric working as written.** `prompts/relevance_v1.md` excludes
+"post-purchase satisfaction with no bearing on a future decision" and "refunds,
+cancellations, order-status complaints". That covers **11, 14, 17, 20** (store
+praise), **25** (a quality complaint) and **02** (cancellation fees) exactly.
+On these the classifier obeyed its instructions. **The disagreement is with the
+rubric, not with the pipeline applying it.**
 
-The evidence leans hard to (b): all 11 are junk for this question, the filter
-rejected all 11, and the yield table shows exactly where the junk enters. But
-(a) is not impossible for 02 (cancellation fees deterring an order), 11
-(authenticity vs competitors) and 25 (quality-for-price), so this is recorded
-as open rather than assumed.
+**Five look like genuine misses on the rubric's own terms.** **04** ("how much
+is the second black salwar"), **15** ("high waist jeans link"), **23** ("can you
+share the link"), **29** ("is this kimadi?") are all people with live interest
+trying to price or identify an item — and the rubric already lists "price/value
+doubt" as relevant. Plus **26**.
+
+**On 26, specifically: I misread it and Arvind corrected me.** *"Aisa mat kro
+yar, wo bechare jo car mai ja rahe they might fall from cliffs"* is Hinglish for
+*she looks stunning* — a compliment, not a joke about road safety. It is social
+validation of a completed purchase, under a thread about finally wearing a dress
+after a long wait: the supply side of the C4.5 approval-seeking that the corpus
+measures the demand side of. **I read the idiom literally and dismissed the
+record.** Worth remembering when judging a corpus that is 27% Hinglish and
+Devanagari.
+
+## DECISION: the rubric stands. Not fixed — accepted, with the cost stated
+
+**Arvind's call, 2026-08-20:** *"we are too far ahead to make a major change.
+I think we are good as we are now."*
+
+Widening the rubric would mean re-running relevance over 8,639 records (the
+original pass cost **$5.36** against $11.40 spent), re-running classification
+over whatever it added, and **re-opening P2 — every prevalence denominator
+moves.** With the submission on 2026-09-04 and P4 unbuilt, that is the right
+call. It is recorded here as a deliberate scope decision, not as a resolved
+fault.
+
+**What it costs, stated so it is never quietly dropped:**
+
+- **The corpus measures a NARROWER population than "discussion bearing on the
+  save-to-purchase decision".** It measures *stated barriers* under a rubric
+  that excludes post-purchase evidence. On a 30-record sample the reviewer read
+  20 records as relevant where the filter kept 9 — **an implied recall near
+  45%, against T-2's ~79% estimate and an 85% threshold.** n=30 and one
+  reviewer, so treat it as a signal, not a measurement.
+- **The shortfall is NOT topically neutral, and this is the part that could
+  touch the ranking.** The excluded material is concentrated in post-purchase
+  quality praise and complaints — exactly the C2 and C7 subject matter. If those
+  records were admitted, C2 and C7 would gain more than C1 or C3 would. The
+  ranking is therefore conditional on the rubric, and **C2's 99.6% weight
+  robustness says nothing about robustness to this.**
+- **Precision, by contrast, looks sound.** All 9 records the filter accepted
+  were confirmed, and no disagreement fell on a relevant call. **What is in the
+  corpus belongs there; the question is what is missing.**
 
 **How to carry this into the deck.** As a stated limitation with its interval,
 beside T-2 and T-4, and never as a passing check. The honest sentence is: *on a
@@ -678,6 +714,8 @@ Recorded so they don't quietly reappear as "optimisations":
 - **C10 is unreliable (κ 0.10)** — read as *app* permissions by the labeller, defined as **another person's** approval. C10 maps to framework **C4.5**, the Stuck Deciders' most distinctive barrier, so this specifically threatens the sharpest claim in the analysis. Worth re-checking before it reaches the deck.
 - **C6 (price/value) rose to #2** after the Z-99 remediation and is the largest barrier that the no-monetary-incentives constraint forbids solving directly. It must be resolved into transparency, anchoring and timing.
 - **The 5 low-yield subreddits are excluded but not deleted.** Reversible by removing the `exclusions` rows written by `pipeline/collect/exclude_subreddits.py`.
+- **The relevance rubric is narrower than Arvind's own reading of relevance, and stays that way by decision (2026-08-20).** S1-HUM-1 put implied recall near 45% on n=30. The corpus therefore measures *stated barriers under a narrow definition*, not all decision-relevant discussion. **The excluded material skews to C2/C7 subject matter, so the barrier ranking is conditional on the rubric** — say so wherever the ranking is presented, including the deck and the P4 chatbot's Limitations section.
+- **Untargeted store scraping is 37% of the Data Bank at 7.2% yield** (`play/*`, `appstore/*` = 1,881 records, 136 relevant), against 27.4% for search-query-targeted collection. Not acted on — the corpus is frozen — but it is the first thing to fix if collection is ever re-run.
 
 ---
 

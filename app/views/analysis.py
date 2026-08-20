@@ -204,8 +204,13 @@ with tab_val:
 - **Reddit was collected through a third-party service** after its API proved
   unavailable. Disclosed rather than hidden.
 - **A human agreed with the pipeline on 19 of 30 randomly drawn records** (63%, Wilson 95%
-  CI 45–78%). One judgement per record covering both the relevance call and the code, on a
-  seeded sample of 30 — too small to say more than that agreement sits somewhere between
-  half and four-fifths. Reported because it is the only end-to-end check of the pipeline's
-  judgement that exists.
+  CI 45–78%). Every one of the 11 disagreements fell on a record the filter **rejected** —
+  all 9 records it accepted were confirmed. So what is in this corpus belongs here; the
+  open question is what is missing.
+- **The relevance rubric is deliberately narrow, and that is a scope choice, not an
+  oversight.** It excludes post-purchase satisfaction and order/refund complaints. Six of
+  those 11 are that exclusion working as written. Admitting them would raise the
+  material/quality (C2) and returns-trust (C7) counts more than the others, so **the
+  ranking is conditional on the rubric** — the weight-robustness figure on the Insights
+  page tests the scoring, not this.
 """)
