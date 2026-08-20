@@ -112,8 +112,15 @@ def _describe_key(table: str, key: str) -> str:
     parts = [p.strip() for p in str(key).split("|")]
     named = []
     for p in parts:
-        n = S.name(p) if re.fullmatch(r"[A-DZ]\d+(\.\d+)?|Z-99", p) else None
-        named.append(n if n and n != p else p)
+        if re.fullmatch(r"[A-DZ]\d+(\.\d+)?|Z-99", p):
+            named.append(S.name(p) or p)
+        elif "_" in p:
+            # Flag ids and bucket names are snake_case internals. Left as-is
+            # they put `proxy_not_funnel` in front of a reader, which is the
+            # same mistake the readability pass removed from the other pages.
+            named.append(p.replace("_", " "))
+        else:
+            named.append(p)
     return " · ".join(named)
 
 

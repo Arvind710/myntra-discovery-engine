@@ -55,7 +55,9 @@ if pop:
                         f"{int(r['n'])} records")
             st.caption(S.plain(r["code"]))
         st.caption("Full ranking, the weights behind it, and how much it moves when you "
-                   "change them — on the **Insights** page.")
+                   "change them — on the **Insights** page. To interrogate any of it in "
+                   "your own words, including the questions this corpus *cannot* answer, "
+                   "use **Ask**.")
 
     st.divider()
     m = db.query("""SELECT (SELECT count(*) FROM records)                        AS collected,
@@ -117,7 +119,7 @@ with st.sidebar:
                    f"barriers, frozen {fz['frozen_at'][:10]} — before any scoring")
     if pop:
         st.caption("**Phases**  \nP0 foundation ✅  \nP1 data bank ✅  \nP2 analysis ✅  \n"
-                   "P3 insights ✅  \nP4 ask ⬜")
+                   "P3 insights ✅  \nP4 ask ✅  \nP5 release ⬜")
 
 st.divider()
 st.caption("Public data only · authors pseudonymised · no personal information in outputs.")

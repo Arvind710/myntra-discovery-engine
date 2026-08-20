@@ -112,7 +112,7 @@ def run(questions: list[dict], *, dry_run: bool = False) -> dict:
                 v = R.gate(plan, got, q["question"])
                 results.append({"id": q["id"], "category": q["category"],
                                 "route": v.route, "dry_run": True})
-                print(f"[{i}/{len(questions)}] {q['id']:8} {v.route}")
+                print(f"[{i}/{len(questions)}] {q['id']:8} {v.route}", flush=True)
                 continue
 
             a = A.ask(client, con, q["question"], history=history,
@@ -156,7 +156,7 @@ def run(questions: list[dict], *, dry_run: bool = False) -> dict:
             ok = "ok " if a.route in expected_routes(q["expect_route"]) else "ROUTE"
             vf = "" if (rep and rep.ok) else f"  [{len(rep.problems()) if rep else '?'} problems]"
             print(f"[{i}/{len(questions)}] {q['id']:8} {ok} {a.route:8} "
-                  f"${a.cost_usd:.4f} {time.time() - t0:.0f}s{vf}")
+                  f"${a.cost_usd:.4f} {time.time() - t0:.0f}s{vf}", flush=True)
             if a.error:
                 print(f"           ERROR: {a.error}")
 

@@ -754,6 +754,151 @@ commit, or say plainly that nothing has changed yet.**
 
 ---
 
+## P4 session — the research analyst (2026-08-21)
+
+### The design claim, and what makes it true
+
+The chatbot's whole claim is that it behaves like a research analyst rather
+than a search box: it works out what is really being asked, decides what
+evidence *would* settle it before looking, gathers from several angles,
+**actively looks for evidence against its own emerging answer**, quantifies
+with a denominator, and says plainly when it cannot answer.
+
+None of that is a prompt. Steps 2, 3 and 5 of the five-step loop are ordinary
+Python:
+
+| Step | What it does | LLM? |
+|---|---|---|
+| 1 Plan | intent, restatement, sub-questions, evidence plan | yes |
+| 2 Retrieve | five channels — facts, verbatim, **disconfirming**, method, external | **no** |
+| 3 Gate | compares the evidence plan against what came back → FULL/PARTIAL/NONE | **no** |
+| 4 Synthesise | writes under the answer contract | yes |
+| 5 Verify | every numeral and quote matched against what was retrieved | **no** |
+
+The consequence is the point. "Refuses when it should" is a fact about the
+retrieval rather than a matter of prompt compliance, which is why AC-4 is
+testable and why T-10 and T-11 can be **absolute** thresholds instead of
+metrics with a tolerance band. 45 of the 64 P4 tests need no API key at all.
+
+**Channels 3 and 4 are unconditional, not the planner's choice.** A plan that
+has decided what the answer is will not request the evidence that spoils it,
+and a plan focused on a number will not request the caveat that qualifies it.
+Making them mandatory is how "a researcher looks for disconfirming evidence"
+becomes a property of the system instead of a habit of the prompt.
+
+### Two schema additions, for one reason
+
+The answer contract makes **Confidence** and **Limitations** mandatory
+sections, and S4-INV-5 requires every claim to carry a citation. But the two
+things those sections must say — how well the classifier agreed with a human,
+and which biases are registered against a given code — existed only as prose:
+printed to a terminal by `validate/score.py`, hand-written into
+`synthesise/packet.py`. **Prose is not citable and not verifiable**, and a
+model asked to state a limitation it cannot cite will recall one from the
+training distribution, where the failure is invisible.
+
+`analysis_gold_agreement` and `analysis_method_flags` make the caveat a row the
+answer points at and the verifier can check. Nothing in `method_flags.yaml` is
+a new claim; every statement is already in `problemstatement.md` §8,
+`DECISIONS.md` or the P2 gate report, and each carries a `basis` naming where.
+
+### Six defects found by RUNNING it, not by reading it
+
+Recorded because in each case the failure is more instructive than the fix.
+
+**1. The answer invented code names.** A question about reviews described C6 as
+"returns/friction", C3 as "price/value", C7 as "delivery/dispatch" — every one
+wrong. The brief handed the model bare code ids, and a model handed an
+unlabelled index infers a label from its neighbours. **The counts were correct
+and the answer was still false to a reader**, which is the most dangerous shape
+an error can take here. The brief now carries the glossary from
+`plain_language.yaml`, so the chatbot speaks the same vocabulary as the rest of
+the app.
+
+**2. The route was non-deterministic.** "Do users trust influencer reviews?"
+came back PARTIAL, then FULL, because one plan happened to request a sub-theme
+breakdown and the next did not. Both answers named the gap, so the *behaviour*
+was right both times — but `architecture.md` §8.5 rests on the route not
+moving, and T-9 cannot assert a route that does. The cuts this corpus does not
+have (influencer, brand, geography, demographics, time series, revenue, gifts,
+per-user follow-up) are now **registered as data** and applied after the plan.
+What the corpus lacks is a fact about the corpus; it should not depend on what
+a model thought to ask for.
+
+**3. The gate spoke engine jargon to the reader.** A PARTIAL answer opened
+"no subcode rows retrieved". The gap has to be nameable in the answer, and it
+cannot be named in words the reader does not have — the reasons are now written
+in a reader's words at source.
+
+**4. The gate failed a whole requirement when any one named code was thin.** A
+broad question naming twenty codes was downgraded to PARTIAL because the
+twentieth had four records, while the evidence for the question actually asked
+was complete. A requirement is now unmet only when *nothing* it names clears
+the floor; thin codes become a stated caveat. This was wrong in the direction
+that matters — it **manufactured a gap**.
+
+**5. Three verifier false positives, all of which would have made the answer
+worse.** A hex record id (`653385bf…`) read as an invented statistic. Parent
+bullets in a nested list demanded citations for labels that assert nothing. And
+the funnel-language check fired on the answer contract's **own mandatory
+caveat** — "these are shares of discussion, never a drop-off rate" — where the
+cheapest way to satisfy the checker was to delete the disclaimer. *A rule that
+makes the answer worse is broken, not strict.*
+
+**6. The injection fence and the quote check had drifted apart.** Records are
+shown to the model with delimiter-like markup neutralised, so `</record>`
+arrives as `[tag]`. The `tool_injection` probe quoted that neutralised text
+faithfully and was reported as **fabricating** it. Both now live in
+`verify.py`, together: what the model was shown is what a quote must match.
+Separately, a probe could silently skip retrieval when the planner read its
+question as methodological — so a probe now forces the retrieval path. **A
+probe that can quietly not run is worse than no probe.**
+
+### Model choice, measured rather than assumed
+
+Same brief, one comparative question:
+
+| | cost | latency | quality |
+|---|---|---|---|
+| gpt-5, medium reasoning | $0.0593 | 84s | no gain a checker or a reader could see |
+| **gpt-5, low reasoning** | **$0.0349** | **31s** | **chosen** |
+| gpt-5-mini, low | $0.0051 | 21s | correct but flat |
+
+Mini's answer was structurally fine and reported both counts; gpt-5 also
+observed that price tends to **end** the decision while fit **delays** it —
+which is the analyst behaviour the whole design exists to produce. Planning is
+a different job (extraction into a fixed schema), where mini is
+indistinguishable and 25× cheaper, so the planner runs on `gpt-5-mini`.
+
+### Design decisions worth not undoing
+
+- **Citations render as numbered references, not inline keys.**
+  `[[analysis_code_prevalence|C1]]` mid-sentence is machinery, and a reader who
+  has to step over it stops reading. Numbered markers keep the prose readable
+  and put the row and the source link one click away (AC-2).
+- **The restatement prints above the answer.** A misread question answered
+  confidently is the worst output this engine can produce, because nothing
+  about it looks wrong. This is the only moment it can be caught.
+- **The verification banner shows only when verification failed.** A green tick
+  on every answer trains a reader to ignore it.
+- **A refusal carries no numbers, no citations and no quotation marks.** An
+  almost-answer to an unanswerable question is worse than a refusal, because it
+  reads as an answer.
+- **The minimum-n floor is imported from `lib.charts`, never redeclared.** Two
+  constants that agree today can disagree after one edit, and the failure would
+  surface as a chart and an answer quietly disagreeing about what is rankable.
+
+### The known hole in numeric verification, stated
+
+Bare integers 0–5 are exempt from T-10 as ordinals and quantifiers ("the top
+three"), along with a short list of structural constants (codebook size, the
+two reporting floors, the kappa threshold). **So a fabricated "3 sources"
+passes.** It is narrow, it is inherited from the P3 insight verifier where the
+same trade-off was taken deliberately, and widening it would reject ordinary
+English and push generation toward vaguer prose — the checker making the answer
+worse. Claims of that shape are also checked by citation shape.
+
+
 ## Explicitly rejected
 
 Recorded so they don't quietly reappear as "optimisations":
