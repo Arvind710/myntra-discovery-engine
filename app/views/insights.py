@@ -93,9 +93,8 @@ with tab_opp:
         if bucket in addr.index:
             r = addr.loc[bucket]
             col.metric(PLAIN_BUCKET.get(bucket, str(r["label"]).split(" — ")[0]),
-                       f"{int(r['n']):,}",
-                       f"{float(r['share_of_corpus']):.1%} of corpus",
-                       delta_color="off", help=str(r["reason"]))
+                       f"{int(r['n']):,}", help=str(r["reason"]))
+            col.caption(f"{float(r['share_of_corpus']):.0%} of everyone we heard from")
     st.caption(f"Removed together: {int(addr.loc['corpus','n']) - int(addr.loc['addressable','n'])} "
                f"records. The two exclusions overlap by {int(addr.loc['overlap','n'])}, so they "
                "are not additive.")

@@ -62,8 +62,8 @@ for col, s in zip(cols, S.STAGE_ORDER):
         st.markdown(f"<div style='border-top:4px solid {S.STAGE_COLOUR[s]};padding-top:.6rem'>"
                     f"<b>{spec['title']}</b></div>", unsafe_allow_html=True)
         st.caption(spec["user_situation"])
-        st.metric("records", f"{stage_n.get(s,0):,}",
-                  f"{stage_n.get(s,0)/denom:.0%} of the corpus", delta_color="off")
+        st.metric("records", f"{stage_n.get(s,0):,}")
+        st.caption(f"{stage_n.get(s,0)/denom:.0%} of all relevant records")
         if spec.get("note"):
             st.caption(f"⚠️ {' '.join(spec['note'].split())}")
 
@@ -160,8 +160,8 @@ with tab_who:
                 a, b = st.columns([3, 1])
                 a.markdown(f"**{S.segment_label(sid)}**{star}")
                 a.caption(S.segment_blurb(sid))
-                b.metric("people", f"{int(r['n']):,}", f"{int(r['n'])/denom:.0%}",
-                         delta_color="off")
+                b.metric("people", f"{int(r['n']):,}")
+                b.caption(f"{int(r['n'])/denom:.0%} of everyone")
 
         st.divider()
         st.markdown(f"#### What stops **{S.segment_label(F.TARGET_SEGMENT)}** specifically")
