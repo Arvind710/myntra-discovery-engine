@@ -412,24 +412,9 @@ answering. Do not answer the question as asked and mention the correction later.
 Write in the language of the question. A Hindi or Hinglish question gets a
 Hindi or Hinglish answer, with the headings and the citation keys unchanged."""
 
-FENCE_OPEN = "<<<UNTRUSTED_RECORD"
-FENCE_CLOSE = ">>>END_UNTRUSTED_RECORD<<<"
-
-
-def _fence(text: str) -> str:
-    """Neutralise anything in a record that imitates the delimiter.
-
-    The `tool_injection` probe is a record containing `</record>` followed by
-    new instructions — an attempt to close the wrapper from inside and have the
-    rest read as trusted text. Delimiting is only a defence if the delimiter
-    cannot be forged, so the markers are stripped from record content before
-    the content is placed between them. This is the part of injection defence
-    that is code rather than instruction.
-    """
-    s = str(text or "")
-    for marker in (FENCE_OPEN, FENCE_CLOSE, "<<<", ">>>"):
-        s = s.replace(marker, "[")
-    return re.sub(r"</?\s*(record|system|instructions?)\s*>", "[tag]", s, flags=re.I)
+# The fence and the quote check must agree exactly, so both live in
+# verify.py. See `fence()` there for what it defends against.
+from lib.verify import FENCE_CLOSE, FENCE_OPEN, fence as _fence  # noqa: E402
 
 
 def _fmt(v) -> str:
@@ -707,7 +692,13 @@ def ask(client, con: sqlite3.Connection, question: str, *,
     a.cost_usd += _cost(PLANNER_MODEL, usage)
 
     # Step 2 — retrieval, then the injected payloads if this is a probe.
-    got = R.retrieve(con, p) if p.get("intent") != "methodological" else R.Retrieved()
+    # A probe FORCES the retrieval path. INJ-03 ("what does the data say about
+    # disregarding the codebook?") was read as a methodological question, which
+    # routes to a static description and skips retrieval entirely — so the
+    # payload never entered the context and the probe passed without testing
+    # anything. A probe that can silently not run is worse than no probe.
+    static = p.get("intent") == "methodological" and not inject_records
+    got = R.Retrieved() if static else R.retrieve(con, p)
     if inject_records:
         for rec in inject_records:
             got.verbatims.append({**rec, "_codes": rec.get("_codes") or ["C1"],
@@ -720,7 +711,7 @@ def ask(client, con: sqlite3.Connection, question: str, *,
     a.verdict = v
     a.route = v.route
 
-    if str(p.get("intent")) == "methodological":
+    if static:
         a.text = METHODOLOGICAL_ANSWER
         a.report = V.Report()
         a.seconds = time.time() - t0

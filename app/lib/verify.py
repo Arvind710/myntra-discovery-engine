@@ -68,6 +68,30 @@ QUOTE = re.compile(r"[\"“]([^\"“”]{3,400})[\"”]")
 
 REQUIRED_SECTIONS = ("Confidence", "Limitations")
 
+FENCE_OPEN = "<<<UNTRUSTED_RECORD"
+FENCE_CLOSE = ">>>END_UNTRUSTED_RECORD<<<"
+
+
+def fence(text: str) -> str:
+    """Neutralise anything in a record that imitates the prompt's delimiter.
+
+    Lives HERE, beside `check_quotes`, because the two must agree exactly: the
+    fence decides what the model is shown, and the quote check decides what it
+    is allowed to have quoted. When they lived in separate modules they drifted
+    within a day — the `tool_injection` probe quoted the neutralised text
+    faithfully and was reported as fabricating it.
+
+    The attack it stops is a record containing `</record>` followed by fresh
+    instructions: an attempt to close the wrapper from inside so the rest reads
+    as trusted text. Delimiting is only a defence if the delimiter cannot be
+    forged, which makes this the part of injection hardening that is code
+    rather than instruction.
+    """
+    s = str(text or "")
+    for marker in (FENCE_OPEN, FENCE_CLOSE, "<<<", ">>>"):
+        s = s.replace(marker, "[")
+    return re.sub(r"</?\s*(record|system|instructions?)\s*>", "[tag]", s, flags=re.I)
+
 # Structural constants beyond the inherited 0-5 (EC-CHAT-10). Deliberately
 # short: every entry is a number about the INSTRUMENT rather than a finding,
 # and each one added is a small hole punched in T-10.
@@ -103,6 +127,25 @@ def _negated(text: str, start: int, window: int = 70) -> bool:
     cut = max(before.rfind("."), before.rfind("\n"), before.rfind(";"),
               before.rfind("!"), before.rfind("?"))
     return bool(_NEGATION.search(before[cut + 1:] if cut >= 0 else before))
+
+
+_SENTENCE_END = re.compile(r"(?:[.;!?](?=\s|$)|\n)")
+
+
+def _cites_external(text: str, start: int, external_ids: set[str]) -> bool:
+    """Does the sentence containing this match attribute it to published
+    research? Scoped to the sentence, for the same reason `_negated` is: a
+    curated citation three lines away is not attribution."""
+    if not external_ids:
+        return False
+    # A period only ends a sentence when whitespace follows it. Splitting on a
+    # bare "." cut "70.22%" in half and hid the citation that came after it —
+    # and a decimal is exactly what a sentence reporting an external rate
+    # contains.
+    bounds = [m.end() for m in _SENTENCE_END.finditer(text)]
+    lo = max([b for b in bounds if b <= start], default=0)
+    hi = min([b for b in bounds if b > start], default=len(text))
+    return any(rid in text[lo:hi] for rid in external_ids)
 
 
 def _norm(s: str) -> str:
@@ -184,6 +227,14 @@ def _quotable_texts(records: list[dict], rows: list[dict]) -> list[str]:
         for k in ("text_raw", "text_clean", "_span"):
             if r.get(k):
                 out.append(_norm(r[k]))
+                # The model is shown a FENCED copy — delimiter-like markup in a
+                # record is neutralised before it goes into the prompt, so
+                # `</record>` reaches the model as `[tag]`. Verifying only
+                # against the raw text rejected a faithful quote of exactly what
+                # the model was given, which would have taught it to stop
+                # quoting the very records the injection probes are about. What
+                # the model saw is what a quote must match.
+                out.append(_norm(fence(r[k])))
     for row in rows or []:
         for k, v in (row or {}).items():
             if not str(k).startswith("_") and isinstance(v, str) and len(v) > 12:
@@ -283,11 +334,36 @@ def _units(text: str) -> list[str]:
                         for ln in rest)
         if bullets:
             units.extend((f"Interpretation: {b}" if inherited else b) for b in bullets)
-            if rest:
-                units.append(" ".join(rest))
+            units.extend(_prose_units(rest))
         else:
-            units.append(" ".join(lines))
+            units.extend(_prose_units(lines))
     return units
+
+
+_HEADING = re.compile(r"^\s*(#{1,6}\s|\*\*[^*]{1,40}\*\*\s*:?\s*$|[A-Z][\w' ]{1,30}:?\s*$)")
+
+
+def _prose_units(lines: list[str]) -> list[str]:
+    """Group prose lines, breaking at a heading.
+
+    A heading and its first sentence arrive as two lines of one block, and
+    joining them put "**Answer**" in front of "Interpretation: …" — which
+    defeated the prefix and reported a properly-marked inference as an uncited
+    claim. Wrapped prose still has to be joined, so the rule is to break at a
+    heading rather than to split every line.
+    """
+    out, buf = [], []
+    for ln in lines:
+        if _HEADING.match(ln):
+            if buf:
+                out.append(" ".join(buf))
+                buf = []
+            out.append(ln)
+        else:
+            buf.append(ln)
+    if buf:
+        out.append(" ".join(buf))
+    return out
 
 
 def _is_structural(unit: str) -> bool:
@@ -371,8 +447,18 @@ def check(answer: str, route: str, retrieved_rows: list[dict],
     rep.bad_quotes = check_quotes(text, retrieved_records, retrieved_rows)
     rep.bad_citations = check_citations(text, retrieved_rows, retrieved_records)
 
-    rep.proxy_violations = [m.group(0) for m in FUNNEL_LANGUAGE.finditer(text)
-                            if not _negated(text, m.start())]
+    # The curated sub-corpus is published research, and published research
+    # legitimately reports abandonment rates — one item states the documented
+    # average outright. S4-INV-8 forbids stating a CORPUS SHARE as a drop-off
+    # rate; it does not forbid reporting what external work measured, and the
+    # engine is more useful for being able to say where the two differ. The
+    # exemption is narrow: the sentence must cite a curated record.
+    external_ids = {str(r.get("record_id")) for r in (retrieved_records or [])
+                    if str(r.get("source", "")) == "curated"}
+    rep.proxy_violations = [
+        m.group(0) for m in FUNNEL_LANGUAGE.finditer(text)
+        if not _negated(text, m.start())
+        and not _cites_external(text, m.start(), external_ids)]
 
     if route == "NONE":
         # A refusal states what the engine does not cover. It must not slip in

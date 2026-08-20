@@ -31,6 +31,7 @@ SECTIONS = [
     ("views/data_bank.py", "Data Bank"),
     ("views/analysis.py", "Analysis"),
     ("views/insights.py", "Insights"),
+    ("views/ask.py", "Ask"),
 ]
 
 
