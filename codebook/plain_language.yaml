@@ -1,0 +1,168 @@
+# Plain-language layer for the app. KEYED ON ENGINE CODE IDS (what the database
+# stores); the framework code is applied for display by app/lib/framework.py.
+#
+# WHY THIS IS A FILE AND NOT STRINGS IN A VIEW
+# --------------------------------------------
+# Every page previously led with "C2" and expected the reader to know what that
+# meant. A code id is an index, not a description — it is meaningful to whoever
+# wrote the codebook and to nobody else. This file gives every barrier the two
+# things a first-time reader needs before any number is worth showing:
+#
+#   voice  — the barrier in the user's own words, first person. This is what
+#            goes on the chart. It is the label a reader can act on.
+#   plain  — one line on what is actually going wrong, mechanism not symptom.
+#
+# Sources: the "barrier in the user's words" columns of problemstatement.md
+# §5.3-§5.6, and each code's `question` and `boundary_note` in codebook_v1.yaml.
+# Nothing here introduces a claim the codebook does not already make.
+
+version: v1
+keyed_on: engine_code
+
+stages:
+  A:
+    title: Coming back
+    user_situation: They saved something and never returned to the list.
+    question: Does anything bring them back?
+    metric: Share of wishlist-adders who open the wishlist within 30 days
+    note: >
+      Under-detected by construction. Forgetting produces no complaint, so a low
+      count here is not evidence that this stage is small.
+  B:
+    title: Finding it again
+    user_situation: They opened the list but could not get to the item.
+    question: Is the list usable once you are in it?
+    metric: Share of wishlist-openers who click into the item they came for
+    note: >
+      Also quiet. People rarely post about a list being hard to scroll; they just
+      search for the item again instead.
+  C:
+    title: Deciding on the item
+    user_situation: They found the item, opened it, and did not add it to the bag.
+    question: What doubt is left unresolved?
+    metric: Share of item-viewers who add to bag
+    note: >
+      Where almost all the conversation lives, and where the segments come from —
+      whether a person has resolved their doubts is what separates one segment
+      from another.
+  D:
+    title: Checking out
+    user_situation: They added it to the bag and did not pay.
+    question: What broke between the bag and the payment?
+    metric: Share of add-to-bag users who complete the purchase
+
+codes:
+
+  # ---------------------------------------------------------------- Stage A
+  A1.1:
+    voice: I forgot I even had a wishlist.
+    plain: The list never reaches back out, so nothing reminds them it exists.
+  A1.2:
+    voice: Nothing told me anything had changed.
+    plain: No signal when a saved item drops in price or runs low on stock.
+  A1.3:
+    voice: It was one tap while scrolling.
+    plain: The save was a reflex, never encoded as a decision to come back to.
+  A2.1:
+    voice: I don't know where the wishlist lives.
+    plain: The entry point is buried in the navigation.
+  A2.2:
+    voice: I saved it on my phone, but I shop on my laptop.
+    plain: Saves do not follow the person across devices or a logged-out session.
+  A3.1:
+    voice: It's the same list as last time.
+    plain: Nothing about the list changes, so there is no reason to reopen it.
+  A3.2:
+    voice: I just search for it again.
+    plain: People re-enter through search or the feed and route around the list.
+
+  # ---------------------------------------------------------------- Stage B
+  B1.1:
+    voice: I can't find the kurta I saved last month.
+    plain: No search, filter or sort inside the wishlist.
+  B1.2:
+    voice: Old stuff is at the bottom forever.
+    plain: Reverse-chronological only, so older intent sinks out of reach.
+  B1.3:
+    voice: It's one long undifferentiated grid.
+    plain: No grouping by category, occasion or intent.
+  B2.1:
+    voice: Half of it is sold out.
+    plain: Out-of-stock items still take up space in the grid.
+  B2.2:
+    voice: This one just vanished.
+    plain: Products get delisted or brands exit, leaving holes in the list.
+  B2.3:
+    voice: I've saved the same thing three times.
+    plain: No duplicate detection.
+  B3.1:
+    voice: I don't remember why I saved this.
+    plain: A thumbnail with no record of the context the save was made in.
+  B3.2:
+    voice: Which colour did I want?
+    plain: The specific variant chosen at save time is not preserved on the tile.
+
+  # ---------------------------------------------------------------- Stage C
+  C1:
+    voice: Which size, when every brand runs different?
+    plain: They cannot pick a size with confidence, so they put the decision off.
+  C2:
+    voice: Will the fabric and colour actually look like the photos?
+    plain: Photographs cannot carry weight, drape, texture or true colour.
+  C3:
+    voice: Will it look good on me, with what I already own?
+    plain: They cannot picture it on their own body or in their own wardrobe.
+  C4:
+    voice: What did people who actually received it say?
+    plain: On-platform review evidence is too thin, stale or photo-less to settle it.
+  C5:
+    voice: Which of these five do I actually pick?
+    plain: A shortlist with no way to separate the options, so none gets chosen.
+  C6:
+    voice: Is this the right price, and is now the right time?
+    plain: No price history or anchor, so any price could be the wrong one.
+  C7:
+    voice: If it's wrong, how painful is sending it back?
+    plain: The effort of a return is priced into the decision before it is made.
+  C8:
+    voice: My size isn't there right now.
+    plain: A supply problem, not a doubt — the decision cannot be made at all.
+  C9:
+    voice: I was never going to buy this.
+    plain: Saved as reference or aspiration. Correct behaviour, not a barrier.
+  C10:
+    voice: I need to check with my partner before I buy this.
+    plain: The decision is handed to another person, and the reply does not arrive.
+  C11:
+    voice: I already bought something like it somewhere else.
+    plain: The need was met elsewhere; the saved item is now redundant.
+  C12:
+    voice: Do I still actually want this?
+    plain: The impulse that drove the save has cooled on its own.
+  C13:
+    voice: What makes today different from tomorrow?
+    plain: Nothing forces a decision now, so it is deferred indefinitely.
+  C14:
+    voice: Let me go check this properly somewhere else.
+    plain: They leave the platform to verify, and the session does not survive it.
+
+  # ---------------------------------------------------------------- Stage D
+  D1:
+    voice: Why is the total higher than the price?
+    plain: Shipping, fees or tax appear only at the last step.
+  D2:
+    voice: The payment just didn't go through.
+    plain: Payment failure, a missing method, a dropped OTP, a rejected pincode.
+  D3:
+    voice: It won't arrive in time, and I can't send it back.
+    plain: Delivery date or a non-returnable flag revealed too late to matter.
+  D4:
+    voice: Do I want all of this, at this total?
+    plain: The basket total triggers second thoughts; the bag was a holding pen.
+
+  # -------------------------------------------------------------- residual
+  Z-99:
+    voice: Something else entirely.
+    plain: >
+      Relevant to the decision but not matching any pre-registered barrier. Kept
+      as a measure of how complete the codebook is, not as a barrier itself.
