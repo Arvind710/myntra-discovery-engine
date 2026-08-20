@@ -83,14 +83,16 @@ def journey(stage_rows, *, height: int = 200):
         fig.add_trace(go.Bar(
             x=[r["n"]], y=["conversation"], orientation="h",
             name=r["title"], marker_color=r["colour"],
-            text=[f"<b>{r['title']}</b><br>{share:.0%} · n={r['n']:,}"],
-            textposition="inside", insidetextanchor="middle",
-            # Horizontal or not at all. Plotly rotates a label that will not fit,
-            # and a 3% segment rendered its title vertically down a 30px column —
-            # unreadable, and worse than absent because it still draws the eye.
-            # uniformtext below drops anything that cannot be set at 10px; the
-            # stage cards underneath carry the same numbers for those.
-            textangle=0, constraintext="inside",
+            # Horizontal or not at all. Plotly rotates a label that will not fit
+            # and IGNORES textangle=0 when it decides the segment is too narrow —
+            # a 5% segment rendered its title vertically down a 40px column,
+            # unreadable and worse than absent because it still draws the eye.
+            # So the decision is made here rather than delegated: below 10% the
+            # segment carries no text and the stage cards underneath carry its
+            # numbers instead.
+            text=[f"<b>{r['title']}</b><br>{share:.0%} · n={r['n']:,}"
+                  if share >= 0.10 else ""],
+            textposition="inside", insidetextanchor="middle", textangle=0,
             hovertemplate=f"<b>{r['title']}</b><br>{r['n']:,} records"
                           f"<br>{share:.1%} of coded conversation<extra></extra>",
         ))
