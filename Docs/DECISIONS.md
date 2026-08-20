@@ -568,16 +568,62 @@ below its threshold; Z-99 sits at 12.6%. A 63% end-to-end agreement rate on a
 random draw is roughly what that combination predicts. It is not a new fault —
 it is the first time the compound effect has been put on one number.
 
-**What was NOT captured, and why that is my fault.** The per-record breakdown
-is lost. I built the review as a web page whose buttons held state only in the
-browser, then rebuilt it declaring the artifact persistence capability and
-checked the served HTML: it carries neither the `data-id` stamps nor the
-`artifact-sync` marker a persisting page needs, so those marks would not have
-survived a reload either. Two capture mechanisms, neither capturing. **Only the
-tally survives.** Without knowing WHICH 11, the disagreement cannot be
-attributed to relevance versus coding, and the cheapest fix — re-reading the
-same 30 against a plain numbered list — costs Arvind a second sitting, which
-`myntra-discovery-engine` is explicit he does not owe this project.
+**The per-record detail — recovered from screenshots, and it changes the reading.**
+
+Arvind screenshotted the 11 he marked wrong (`Docs/ss/`). They are records
+**02, 04, 11, 14, 15, 17, 20, 23, 25, 26, 29**, now written into
+`data/artifacts/s1_hum_1_sample.json` as `human_verdict`.
+
+**Every one of the 11 is a record the pipeline judged NOT RELEVANT. Not one
+disagreement falls on a relevant call.** He agreed with **9 of 9** relevance
+decisions, including records 16 and 18 — the two I had flagged as miscoded
+(B3.2 for a haul-video comment, A1.1 for a colour question). My own read of the
+sample was the exact inverse: I thought the rejections were sound and the
+problems sat in the relevant records. That was wrong.
+
+So the disagreement is not spread across the pipeline. It is concentrated
+entirely in one decision: **what gets thrown away. 11 of 21 rejections, 52%.**
+
+**The collection targeting is implicated regardless of interpretation.** The
+queries behind the 11 are visible in the sample, and the pattern holds corpus-wide:
+
+| how the record was collected | retained | relevant | yield |
+|---|---|---|---|
+| search-query targeted | 3,218 | 882 | **27.4%** |
+| untargeted store scrape (`play/*`, `appstore/*`) | 1,881 | 136 | **7.2%** |
+
+**37% of the Data Bank is app-store and Play-store reviews pulled with no query
+at all** — just "newest" — and they yield 7%. Four of the 11 come from there.
+The worst single query is `myntra return experience` at **4.9%** (122 records,
+6 relevant): a query that by construction retrieves post-purchase content,
+which is out of scope by definition.
+
+Two more of the 11 come from `saved for later never bought`, a well-aimed
+query — but it lands on Reddit *threads*, and a thread that is on-topic
+contributes comments that are not ("Aisa mat kro yar…" is banter under a
+relevant post). **The collection unit is the thread or video; the record unit
+is the comment.** On-topic containers produce off-topic records, and nothing in
+the pipeline accounts for that.
+
+**INTERPRETATION PENDING — the two readings give opposite conclusions, and my
+button labels caused the ambiguity.** The control said "Pipeline got this
+wrong", which on a rejected record can mean either:
+
+- **(a) these records ARE relevant and the filter dropped them.** Then relevance
+  *precision* is far worse than anything measured, the corpus should be
+  substantially larger, and every prevalence denominator is wrong. Note this
+  reading is hard to sustain for record 26 (a joke about cars falling off
+  cliffs) and 29 ("Is this kimadi?").
+- **(b) these records should not be in the Data Bank at all.** Then the
+  relevance filter is working *correctly* — it caught all 11 — and the finding
+  is a Stage-1 collection-targeting problem, which is what S1-HUM-1 is
+  actually chartered to test.
+
+The evidence leans hard to (b): all 11 are junk for this question, the filter
+rejected all 11, and the yield table shows exactly where the junk enters. But
+(a) is not impossible for 02 (cancellation fees deterring an order), 11
+(authenticity vs competitors) and 25 (quality-for-price), so this is recorded
+as open rather than assumed.
 
 **How to carry this into the deck.** As a stated limitation with its interval,
 beside T-2 and T-4, and never as a passing check. The honest sentence is: *on a
@@ -585,9 +631,13 @@ random sample of 30 records a human agreed with the pipeline's judgement 19
 times; the sample is too small to say more than that agreement is somewhere
 between half and four-fifths.*
 
-**The reusable lesson:** if a human review's output is a number, build the
-place it gets written down BEFORE asking for the review. A capture UI that
-loses the input costs more than the review saved.
+**Two reusable lessons.** First: if a human review's output is a number, build
+the place it gets written down BEFORE asking for the review — a capture UI that
+loses the input costs more than the review saved. Second, and worse: **the
+review asked one question that conflated two decisions.** "Did the pipeline get
+this right?" on a rejected record has two incompatible meanings, and the answer
+cannot be interpreted without going back to the reviewer. Ask about one decision
+per control.
 
 ---
 

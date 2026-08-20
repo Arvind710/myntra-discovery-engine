@@ -26,7 +26,9 @@
       "codes": [],
       "meta": null,
       "segment": null,
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "right",
+      "draw_index": 1
     },
     {
       "record_id": "ed8576667965c567a9d661132bb3eb6703f6edfa",
@@ -49,7 +51,9 @@
       "codes": [],
       "meta": null,
       "segment": null,
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "wrong",
+      "draw_index": 2
     },
     {
       "record_id": "65fac87c9ee4c67834abb9e796fe00de5f6baa26",
@@ -72,7 +76,9 @@
       "codes": [],
       "meta": null,
       "segment": null,
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "right",
+      "draw_index": 3
     },
     {
       "record_id": "b0af8c4fd446b598bec82c615fa3686d456d97fc",
@@ -95,7 +101,9 @@
       "codes": [],
       "meta": null,
       "segment": null,
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "wrong",
+      "draw_index": 4
     },
     {
       "record_id": "fbd4260a2ba2cbba4929f62c280a22dc578c0c8d",
@@ -138,7 +146,9 @@
         "segment_id": 1,
         "segment_name": "Collectors"
       },
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "right",
+      "draw_index": 5
     },
     {
       "record_id": "b0f3eedc92e67b656f10f8fabc3884f7903541ef",
@@ -161,7 +171,9 @@
       "codes": [],
       "meta": null,
       "segment": null,
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "right",
+      "draw_index": 6
     },
     {
       "record_id": "bc641339fe6a1068ca753ad8f0fa104b44377180",
@@ -184,7 +196,9 @@
       "codes": [],
       "meta": null,
       "segment": null,
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "right",
+      "draw_index": 7
     },
     {
       "record_id": "9f0f3773ef75efc979b240d97b1ddd3d7f8701ce",
@@ -207,7 +221,9 @@
       "codes": [],
       "meta": null,
       "segment": null,
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "right",
+      "draw_index": 8
     },
     {
       "record_id": "eaadbed84b66d70daacaf6685e5c4594a06a1560",
@@ -250,7 +266,9 @@
         "segment_id": 1,
         "segment_name": "Collectors"
       },
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "right",
+      "draw_index": 9
     },
     {
       "record_id": "d8470f243c012a58e6cc382a294ba7aee9ae6c62",
@@ -293,7 +311,9 @@
         "segment_id": 4,
         "segment_name": "Stuck Deciders"
       },
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "right",
+      "draw_index": 10
     },
     {
       "record_id": "1dd43bcfcb5472a82e1310ff58b206b1d6de1c13",
@@ -316,7 +336,9 @@
       "codes": [],
       "meta": null,
       "segment": null,
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "wrong",
+      "draw_index": 11
     },
     {
       "record_id": "aa723a9320d15ba7b86a1cc16524b3d465129ca5",
@@ -339,7 +361,9 @@
       "codes": [],
       "meta": null,
       "segment": null,
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "right",
+      "draw_index": 12
     },
     {
       "record_id": "4e9a3abb8cdea7af0b2f517fd968845f55e1d02e",
@@ -382,7 +406,9 @@
         "segment_id": 5,
         "segment_name": "Committed Waiters"
       },
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "right",
+      "draw_index": 13
     },
     {
       "record_id": "9fc79beb0f52dad64df41f8bfbb5fa9e8fc4b682",
@@ -405,7 +431,9 @@
       "codes": [],
       "meta": null,
       "segment": null,
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "wrong",
+      "draw_index": 14
     },
     {
       "record_id": "ee48662f4a24d24566b2648b1ba1cf7bd762bd14",
@@ -428,7 +456,9 @@
       "codes": [],
       "meta": null,
       "segment": null,
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "wrong",
+      "draw_index": 15
     },
     {
       "record_id": "88d771509daeb61e1dcfebfebc77457612428cf7",
@@ -479,7 +509,9 @@
         "segment_id": 4,
         "segment_name": "Stuck Deciders"
       },
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "right",
+      "draw_index": 16
     },
     {
       "record_id": "c517dcaaf772c88ab203e15c66ca9dac61718755",
@@ -502,7 +534,9 @@
       "codes": [],
       "meta": null,
       "segment": null,
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "wrong",
+      "draw_index": 17
     },
     {
       "record_id": "a87e2fec171823c1113a52de070b89ea71b1ea3c",
@@ -545,7 +579,9 @@
         "segment_id": 3,
         "segment_name": "Ready Buyers"
       },
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "right",
+      "draw_index": 18
     },
     {
       "record_id": "1cfa0284bb0bc1ac1f45489da7f91c67ab8700eb",
@@ -596,7 +632,9 @@
         "segment_id": 4,
         "segment_name": "Stuck Deciders"
       },
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "right",
+      "draw_index": 19
     },
     {
       "record_id": "f62096fb3951ffa86ef22d7c9595afc34a76adbd",
@@ -619,7 +657,9 @@
       "codes": [],
       "meta": null,
       "segment": null,
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "wrong",
+      "draw_index": 20
     },
     {
       "record_id": "d3d8f8ed93a2a36d10d96167915a68848fce4ac5",
@@ -642,7 +682,9 @@
       "codes": [],
       "meta": null,
       "segment": null,
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "right",
+      "draw_index": 21
     },
     {
       "record_id": "ef78d7c8756e5d5010ea5d56fe7ec206c5c11eaf",
@@ -685,7 +727,9 @@
         "segment_id": 4,
         "segment_name": "Stuck Deciders"
       },
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "right",
+      "draw_index": 22
     },
     {
       "record_id": "8651aac87ad63674fd44ce72cd6c658291f0eb40",
@@ -708,7 +752,9 @@
       "codes": [],
       "meta": null,
       "segment": null,
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "wrong",
+      "draw_index": 23
     },
     {
       "record_id": "d665ddae95d6d921f4dff89b9bc04b21002b4056",
@@ -731,7 +777,9 @@
       "codes": [],
       "meta": null,
       "segment": null,
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "right",
+      "draw_index": 24
     },
     {
       "record_id": "e32a3b6a8177c7a261175c0ba0c5d374aba65a2b",
@@ -754,7 +802,9 @@
       "codes": [],
       "meta": null,
       "segment": null,
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "wrong",
+      "draw_index": 25
     },
     {
       "record_id": "a6cda5905f09eace6a21b9ea8d3ace6b3fec4efa",
@@ -777,7 +827,9 @@
       "codes": [],
       "meta": null,
       "segment": null,
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "wrong",
+      "draw_index": 26
     },
     {
       "record_id": "dfa05612f19f10aebe007e95e2ffc3d0bc486190",
@@ -800,7 +852,9 @@
       "codes": [],
       "meta": null,
       "segment": null,
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "right",
+      "draw_index": 27
     },
     {
       "record_id": "b1ac1ff51c6522742fec528bda0f2bda44accf72",
@@ -843,7 +897,9 @@
         "segment_id": 1,
         "segment_name": "Collectors"
       },
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "right",
+      "draw_index": 28
     },
     {
       "record_id": "aa7f83f1fb3aa3a106dfff012680edbacf72b4fc",
@@ -866,7 +922,9 @@
       "codes": [],
       "meta": null,
       "segment": null,
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "wrong",
+      "draw_index": 29
     },
     {
       "record_id": "13ee5adba5debb5bf1c9fcbacddc807c063d78ed",
@@ -889,7 +947,21 @@
       "codes": [],
       "meta": null,
       "segment": null,
-      "in_gold": false
+      "in_gold": false,
+      "human_verdict": "right",
+      "draw_index": 30
     }
-  ]
+  ],
+  "human_review": {
+    "check": "S1-HUM-1",
+    "reviewer": "Arvind",
+    "reviewed_on": "2026-08-20",
+    "right": 19,
+    "wrong": 11,
+    "unsure": 0,
+    "captured_from": "screenshots in Docs/ss/ — the review UI did not persist marks",
+    "all_disagreements_on": "records the pipeline judged NOT relevant",
+    "agreement_on_relevant_calls": "9 of 9",
+    "interpretation": "PENDING — see DECISIONS.md; 'wrong' may mean the record IS relevant, or that it should not be in the Data Bank at all"
+  }
 }
