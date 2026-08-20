@@ -109,9 +109,43 @@ def _in_clause(col: str, values: list[str]) -> tuple[str, list]:
     return (f"{col} IN ({','.join('?' * len(vals))})", vals)
 
 
+# One normaliser for every path a code string can arrive by — the planner's
+# entities, the planner's query arguments, and the auto-fulfilled queries.
+# When only `plan_codes` parsed labels, the gate knew the question was about C1
+# while the SQL still looked up "C1 (fit & size uncertainty)" and found nothing.
+_CODE_TOKEN = re.compile(r"\s*(Z-?99|[A-D]\d+(?:\.\d+)?|[A-D])\b", re.I)
+
+
+def norm_code(raw) -> str | None:
+    """"C1 (fit & size uncertainty)" -> "C1". A bare stage letter -> None."""
+    m = _CODE_TOKEN.match(str(raw).strip())
+    if not m:
+        return None
+    code = m.group(1).upper()
+    if re.fullmatch(r"[A-D]", code):
+        return None
+    return "Z-99" if code.replace("-", "") == "Z99" else code
+
+
 def _codes(a: dict) -> list[str]:
-    v = a.get("codes") or []
-    return [str(c).strip().upper() for c in v if str(c).strip()]
+    out = [norm_code(c) for c in (a.get("codes") or [])]
+    return list(dict.fromkeys(c for c in out if c))
+
+
+def _code_filter(a: dict) -> tuple[str, list]:
+    """The WHERE clause for a code argument.
+
+    Distinguishes "no codes requested" from "codes requested, none of them
+    valid". `_in_clause` alone treats both as no filter, so a request for
+    specific codes whose values normalised to nothing came back as ALL
+    thirty-four — a question about one barrier answered with the whole
+    codebook. Asking for nothing valid must return nothing.
+    """
+    requested = a.get("codes") or []
+    codes = _codes(a)
+    if requested and not codes:
+        return ("1=0", [])
+    return _in_clause("code", codes)
 
 
 def _limit(a: dict, default: int = 10, cap: int = 34) -> int:
@@ -137,7 +171,7 @@ QUERIES: dict[str, Spec] = {
         args=("codes",), table="analysis_code_prevalence", kinds=("prevalence",),
         build=lambda a: (
             (lambda w: (f"SELECT * FROM analysis_code_prevalence WHERE {w[0]} "
-                        "ORDER BY n DESC", tuple(w[1])))(_in_clause("code", _codes(a))))),
+                        "ORDER BY n DESC", tuple(w[1])))(_code_filter(a)))),
 
     "top_codes": Spec(
         describe=("The barriers ranked by how much of the relevant discussion they "
@@ -171,7 +205,7 @@ QUERIES: dict[str, Spec] = {
         args=("codes",), table="analysis_source_code", kinds=("source_breakdown",),
         build=lambda a: (
             (lambda w: (f"SELECT * FROM analysis_source_code WHERE {w[0]} "
-                        "ORDER BY code, n DESC", tuple(w[1])))(_in_clause("code", _codes(a))))),
+                        "ORDER BY code, n DESC", tuple(w[1])))(_code_filter(a)))),
 
     "segment_breakdown": Spec(
         describe=("Barrier prevalence within each user segment. Segments are a "
@@ -187,7 +221,7 @@ QUERIES: dict[str, Spec] = {
                         if str(a.get("segment_id", "")).strip() not in ("", "None")
                         else (f"SELECT * FROM analysis_segment_code_v2 WHERE {w[0]} "
                               "ORDER BY segment_id, n DESC", tuple(w[1])))
-             )(_in_clause("code", _codes(a))))),
+             )(_code_filter(a)))),
 
     "segment_recommendation": Spec(
         describe=("The segments with size, share, the barriers most distinctive to "
@@ -224,7 +258,7 @@ QUERIES: dict[str, Spec] = {
             (lambda w, cs: (f"SELECT * FROM analysis_opportunity WHERE {w[0]} "
                             "ORDER BY score DESC" + ("" if cs else " LIMIT ?"),
                             tuple(w[1]) if cs else (_limit(a),))
-             )(_in_clause("code", _codes(a)), _codes(a)))),
+             )(_code_filter(a), _codes(a)))),
 
     "evidence_strength": Spec(
         describe=("How well-supported each barrier is, decomposed into prevalence, "
@@ -234,7 +268,7 @@ QUERIES: dict[str, Spec] = {
         args=("codes",), table="analysis_evidence_strength", kinds=("confidence",),
         build=lambda a: (
             (lambda w: (f"SELECT * FROM analysis_evidence_strength WHERE {w[0]} "
-                        "ORDER BY composite DESC", tuple(w[1])))(_in_clause("code", _codes(a))))),
+                        "ORDER BY composite DESC", tuple(w[1])))(_code_filter(a)))),
 
     "counterfactuals": Spec(
         describe=("How often people state they WOULD have bought if the barrier were "
@@ -244,7 +278,7 @@ QUERIES: dict[str, Spec] = {
         args=("codes",), table="analysis_counterfactuals", kinds=("counterfactual",),
         build=lambda a: (
             (lambda w: (f"SELECT * FROM analysis_counterfactuals WHERE {w[0]} "
-                        "ORDER BY share DESC", tuple(w[1])))(_in_clause("code", _codes(a))))),
+                        "ORDER BY share DESC", tuple(w[1])))(_code_filter(a)))),
 
     "workaround": Spec(
         describe=("How often people describe doing extra work to get around a "
@@ -254,7 +288,7 @@ QUERIES: dict[str, Spec] = {
         args=("codes",), table="analysis_workaround", kinds=("intensity",),
         build=lambda a: (
             (lambda w: (f"SELECT * FROM analysis_workaround WHERE {w[0]} "
-                        "ORDER BY share DESC", tuple(w[1])))(_in_clause("code", _codes(a))))),
+                        "ORDER BY share DESC", tuple(w[1])))(_code_filter(a)))),
 
     "addressable": Spec(
         describe=("The sizing of what was deliberately EXCLUDED from the addressable "
@@ -291,7 +325,7 @@ QUERIES: dict[str, Spec] = {
         args=("codes",), table="analysis_cluster_code", kinds=("cluster", "novelty"),
         build=lambda a: (
             (lambda w: (f"SELECT * FROM analysis_cluster_code WHERE {w[0]} "
-                        "ORDER BY n DESC LIMIT 20", tuple(w[1])))(_in_clause("code", _codes(a))))),
+                        "ORDER BY n DESC LIMIT 20", tuple(w[1])))(_code_filter(a)))),
 
     "cluster_labels": Spec(
         describe=("The labels given to the machine-discovered clusters by a model "
@@ -333,7 +367,7 @@ QUERIES: dict[str, Spec] = {
         args=("codes",), table="analysis_weight_sensitivity", kinds=("robustness",),
         build=lambda a: (
             (lambda w: (f"SELECT * FROM analysis_weight_sensitivity WHERE {w[0]} "
-                        "ORDER BY top_share DESC", tuple(w[1])))(_in_clause("code", _codes(a))))),
+                        "ORDER BY top_share DESC", tuple(w[1])))(_code_filter(a)))),
 
     "gold_agreement": Spec(
         describe=("How well the classifier agreed with the human coder on each "
@@ -344,7 +378,7 @@ QUERIES: dict[str, Spec] = {
         args=("codes",), table="analysis_gold_agreement", kinds=("reliability",),
         build=lambda a: (
             (lambda w: (f"SELECT * FROM analysis_gold_agreement WHERE {w[0]} "
-                        "ORDER BY gold_n DESC", tuple(w[1])))(_in_clause("code", _codes(a))))),
+                        "ORDER BY gold_n DESC", tuple(w[1])))(_code_filter(a)))),
 
     "method_flags": Spec(
         describe=("The registered method and bias flags -- what this corpus "
@@ -404,6 +438,69 @@ def run_query(con: sqlite3.Connection, name: str, args: dict | None = None) -> l
         if cite:
             r["_cite"] = cite
     return rows
+
+
+def _default_query_for(kind: str) -> str | None:
+    """The registry query that supplies a given evidence kind.
+
+    Derived from the specs rather than written out, so a query added to the
+    registry cannot fall out of sync with this. Declaration order in `QUERIES`
+    decides ties, and it is ordered so the general query wins: `prevalence`
+    resolves to `code_prevalence` rather than `top_codes`, `stage` to
+    `stage_outcome` rather than `stage_inversion`.
+    """
+    for name, spec in QUERIES.items():
+        if kind in spec.kinds:
+            return name
+    return None
+
+
+def plan_codes(plan: dict) -> list[str]:
+    """The codes a plan names, with bare stage letters removed.
+
+    The planner writes "A" meaning the journey stage. Left in the code list it
+    is looked up as a code, found missing, and reported as "too few records for
+    A" — a fabricated shortage that downgraded a correctly-answerable question.
+    Stripped in one place so retrieval and the gate cannot disagree about what
+    the question is about.
+    """
+    return _codes({"codes": (plan.get("entities") or {}).get("codes") or []})
+
+
+def fulfil_plan(plan: dict) -> list[dict]:
+    """Ensure every declared evidence kind actually gets queried.
+
+    THE BUG THIS FIXES WAS THE WORST ONE IN THE PHASE. The planner declares
+    `evidence_needed` and separately picks `queries`, and the two drift: NUM-03
+    ("how many records raise fit and size uncertainty?") declared it needed
+    source mix and journey stage, then queried neither. The gate duly reported
+    "the corpus holds nothing on where the records came from" — which is FALSE.
+    The corpus has all of it.
+
+    A gate that invents a limitation is the mirror image of a model that
+    invents a finding, and it is arguably worse here, because false modesty
+    reads as rigour and nobody challenges it. Fifteen of the twenty-two
+    misroutes in the first full sweep were this.
+
+    The division of labour is now the sensible one: the planner says WHAT
+    evidence would settle the question, and the system knows WHICH query
+    supplies it. Anything the planner asked for on top is still honoured.
+    """
+    queries = list(plan.get("queries") or [])
+    have = {str(q.get("query")) for q in queries}
+    codes = plan_codes(plan)
+
+    for kind in dict.fromkeys(str(k).lower() for k in (plan.get("evidence_needed") or [])):
+        name = _default_query_for(kind)
+        if not name or name in have:
+            continue
+        spec = QUERIES[name]
+        args: dict = {}
+        if "codes" in spec.args and codes:
+            args["codes"] = codes
+        queries.append({"query": name, "args": args})
+        have.add(name)
+    return queries
 
 
 def channel1(con: sqlite3.Connection, plan_queries: list[dict]) -> list[dict]:
@@ -831,6 +928,21 @@ def _satisfied(kind: str, codes: list[str], got: Retrieved) -> tuple[bool, str]:
             # question actually asked was complete. A requirement is unmet only
             # when NOTHING it names clears the floor. The thin ones are carried
             # forward as a caveat instead — reported, not silently dropped.
+            # The FIRST code the planner names is the question's subject; the
+            # rest are comparison anchors and context. That distinction is what
+            # separates "how big is cost surprise?" (subject D1, n=14 — must
+            # not answer as though supported) from "what stops people buying?"
+            # (subject C2, n=241, with one thin code named in passing).
+            #
+            # Failing on ANY thin code manufactured gaps on broad questions;
+            # failing on NONE let a genuine low-n question answer as FULL,
+            # which defeats the minimum-n floor entirely. Both were observed in
+            # the first sweep, in opposite directions.
+            subject = codes[0] if codes else None
+            if subject and subject in thin:
+                return (False, f"too few records for {_phrase(kind)} — {subject} is "
+                               f"under the {floor} needed"
+                               f"{' to put them in order' if kind == 'ranking' else ''}")
             if thin and len(thin) == len(codes):
                 return (False, f"too few records for {_phrase(kind)} — under the {floor} "
                                f"needed, for {', '.join(thin)}")
@@ -900,12 +1012,60 @@ def missing_cuts(question: str) -> list[str]:
     return [why for pattern, why in MISSING_CUTS if re.search(pattern, q)]
 
 
+# Questions ASKING FOR A METRIC this corpus structurally cannot produce. These
+# refuse deterministically, whatever the plan says.
+#
+# Relaxing the out-of-scope rule — so that a planner's doubt could be overruled
+# by the evidence — resurrected the single most important refusal in the whole
+# set: "what is Myntra's conversion rate from wishlist to purchase?" came back
+# PARTIAL. That is the project's central methodological claim breaking in
+# public, and it must not depend on a model's label.
+#
+# The pattern targets the REQUEST FOR THE VALUE, not the vocabulary. "What is
+# the conversion rate?" is unanswerable; "your data shows 40% drop off — what
+# causes that?" is a false premise about checkout barriers the corpus does
+# cover, and it must still be answered with the premise corrected.
+HARD_OUT_OF_SCOPE = re.compile(
+    r"\b(what(?:'s| is| are)?|how (?:much|many|big|large)|give me|tell me|show me|"
+    r"calculate|estimate)\b[^?.]{0,60}?\b("
+    r"conversion rate|drop[- ]?off rate|abandonment rate|retention rate|churn rate|"
+    r"click[- ]?through|revenue|turnover|gmv|profit|valuation|market share|"
+    r"daily active|monthly active|active users|share price|net promoter)\b", re.I)
+
+
+def hard_out_of_scope(question: str) -> bool:
+    return bool(HARD_OUT_OF_SCOPE.search(str(question or "")))
+
+
 def gate(plan: dict, got: Retrieved, question: str = "") -> Verdict:
     """FULL / PARTIAL / NONE, decided by comparing the plan against what came
     back. No model involvement, so the same question always routes the same way
     and `evals.md` can assert it (AC-4)."""
     intent = str(plan.get("intent", "")).lower()
-    if intent == "out_of_scope" or str(plan.get("answerable", "")).lower() == "no":
+    disowned = intent == "out_of_scope" or str(plan.get("answerable", "")).lower() == "no"
+
+    if hard_out_of_scope(question):
+        return Verdict("NONE", [], list(plan.get("evidence_needed") or []),
+                       ["this corpus measures what people say, not what they do — "
+                        "it holds no funnel, transaction or company data, so a rate "
+                        "of this kind cannot be produced from it at all"])
+
+    # A plan that calls a question out of scope AND requests seven queries
+    # against the corpus is contradicting itself. Five of the twenty-two
+    # misroutes in the first sweep were this: "what do Bangalore shoppers think
+    # about wishlist pricing?" was labelled out_of_scope while the same plan
+    # asked for prevalence, source mix and counterfactuals — and the label won,
+    # discarding a well-evidenced half-answer.
+    #
+    # The label loses when the evidence contradicts it, for the same reason the
+    # absent cuts are registered as data: a model's opinion about what the
+    # corpus holds should not override what the corpus actually returns. It
+    # never wins outright either — a question the planner doubted is capped at
+    # PARTIAL, never FULL, because that doubt is itself a signal.
+    if disowned and not (plan.get("queries") or []):
+        return Verdict("NONE", [], list(plan.get("evidence_needed") or []),
+                       ["the question falls outside what this corpus covers"])
+    if disowned and not got.facts:
         return Verdict("NONE", [], list(plan.get("evidence_needed") or []),
                        ["the question falls outside what this corpus covers"])
     if intent == "methodological":
@@ -918,7 +1078,7 @@ def gate(plan: dict, got: Retrieved, question: str = "") -> Verdict:
              if str(k).lower() in REQUIREMENT_KINDS]
     if not needs:
         needs = ["prevalence"]
-    codes = [str(c).upper() for c in ((plan.get("entities") or {}).get("codes") or [])]
+    codes = plan_codes(plan)
 
     # Applied to the question AND the restatement: the user may name the absent
     # cut in words the planner then paraphrases away.
@@ -942,7 +1102,9 @@ def gate(plan: dict, got: Retrieved, question: str = "") -> Verdict:
     if not met:
         return Verdict("NONE", met, unmet,
                        reasons or ["nothing relevant was retrieved"], caveats)
-    if unmet:
+    if unmet or disowned:
+        if disowned and not reasons:
+            reasons = ["parts of this question reach past what the corpus covers"]
         return Verdict("PARTIAL", met, unmet, reasons, caveats)
     return Verdict("FULL", met, unmet, [], caveats)
 
@@ -970,7 +1132,7 @@ def retrieve(con: sqlite3.Connection, plan: dict) -> Retrieved:
     ])))
 
     got = Retrieved()
-    got.facts = channel1(con, plan.get("queries") or [])
+    got.facts = channel1(con, fulfil_plan(plan))
     needs = {str(k).lower() for k in (plan.get("evidence_needed") or [])}
     if "verbatim" in needs or codes:
         got.verbatims = channel2(con, codes, terms)

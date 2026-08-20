@@ -198,12 +198,26 @@ YOUR OUTPUT
   believing an answer — sample sizes, whether the ordering survives per source,
   segment variation, what would contradict it. Two to five.
 - entities: the codes, stages, segments and sources the question is ACTUALLY
-  ABOUT. Use code ids, and name AT MOST SIX. If the question names a concept,
-  map it to the codes that carry it. Do not list the codebook: a broad question
-  such as "what stops people buying?" is about the leading barriers, and
-  `top_codes` returns the whole ranking without you naming any code. Every code
-  you name is one the answer is then held to having evidence for, so naming
-  twenty makes a well-evidenced answer look incomplete.
+  ABOUT. Use bare code ids — "C1", never "C1 (fit & size uncertainty)" — and
+  name AT MOST SIX.
+
+  **PUT THE SUBJECT FIRST.** The first code you list is treated as what the
+  question is about, and the answer is held to having enough evidence for it;
+  the rest are read as comparison anchors and context. "How big a problem is
+  cost surprise?" is D1 first, whatever else you add.
+
+  **Map to the most SPECIFIC code, not to its stage.** A question about
+  duplicate saves is B2.3; about reverse-chronological ordering, B1.2; about
+  items vanishing, B2.2. Answering with the stage instead hides a thin code
+  behind a healthy one and produces a confident answer about the wrong thing.
+  If the right code is one with very few records, name it anyway — reporting
+  that a barrier is barely discussed is a real finding, and inventing coverage
+  for it is not.
+
+  Do not list the codebook: a broad question such as "what stops people
+  buying?" is about the leading barriers, and `top_codes` returns the whole
+  ranking without you naming any code. Every code you name is one the answer is
+  held to having evidence for.
 - evidence_needed: which kinds of evidence would settle this. Ask for what you
   genuinely need — this list is checked mechanically against what retrieval
   returns, and asking for evidence that does not exist downgrades the answer to

@@ -62,7 +62,12 @@ FUNNEL_LANGUAGE = re.compile(
 
 # `[[table|key]]` for an analysis row, `[[rec|record_id]]` for a record.
 # Double brackets so the form cannot collide with a markdown link.
-CITATION = re.compile(r"\[\[([a-z_]+)\|([^\]]+)\]\]")
+# `[a-z0-9_]+`, not `[a-z_]+`: `analysis_segment_code_v2` has a digit in it, and
+# with the digit excluded EVERY segment citation was invisible. The verifier
+# counted those claims as uncited, `check_citations` never validated them, and
+# the Ask page never rendered them as references — one character, three
+# failures, all of them silent.
+CITATION = re.compile(r"\[\[([a-z0-9_]+)\|([^\]]+)\]\]")
 
 QUOTE = re.compile(r"[\"“]([^\"“”]{3,400})[\"”]")
 
@@ -194,12 +199,28 @@ def strip_citations(text: str) -> str:
     return CITATION.sub(" ", text or "")
 
 
+def strip_quotes(text: str) -> str:
+    """Remove quoted spans before reading the prose for numbers.
+
+    A number inside a quotation is the model REPORTING what someone said, not
+    asserting it. The injection probe that plants "78% of wishlist items are
+    never purchased" in a record produced the best answer in the sweep — the
+    engine quoted it and called it an unsourced claim — and the numeral check
+    then reported that as a fabricated statistic.
+
+    T-10 stays absolute for everything the answer asserts in its own voice,
+    which is what it is for. The quotes themselves are not unchecked: they go
+    through `check_quotes` against the record they are attributed to.
+    """
+    return QUOTE.sub(" ", text or "")
+
+
 def check_numerals(text: str, rows: list[dict], n_codes: int = 34) -> list[str]:
-    """Numbers in `text` that no retrieved row supports. Empty list = clean."""
+    """Numbers the answer ASSERTS that no retrieved row supports."""
     allow = structural_constants(n_codes)
     cands = _candidate_numbers(rows)
     bad = []
-    for value, suffix in numerals(strip_citations(text)):
+    for value, suffix in numerals(strip_quotes(strip_citations(text))):
         if not suffix and value in allow:
             continue
         if 1900 <= value <= 2100 and not suffix and value == int(value):
@@ -243,30 +264,51 @@ def _quotable_texts(records: list[dict], rows: list[dict]) -> list[str]:
 
 
 def check_quotes(text: str, records: list[dict], rows: list[dict]) -> list[str]:
-    """Quoted strings that are not an exact (normalised) substring of anything
-    retrieved. T-11 / S4-INV-3, absolute.
+    """Invented TESTIMONY. T-11 / S4-INV-3, absolute.
 
-    Quotes shorter than three words are exempt: they are terminology
-    ("wishlist", "Defer") rather than testimony, and rejecting them would
-    forbid the answer from naming its own vocabulary.
+    WHAT CHANGED, AND WHY IT IS STRICTER RATHER THAN LOOSER
+    -------------------------------------------------------
+    The first version checked every quoted string in the answer against every
+    retrieved text. Over a 64-question sweep that produced 26 "violations",
+    and almost none were invented testimony: they were the model using
+    quotation marks the way English uses them — naming a concept ("I would have
+    bought if X were fixed"), or echoing a label from the brief ("records by
+    source"). Meanwhile the check was LENIENT where it mattered, because a
+    quote attributed to record A passed if it happened to appear in record B.
+
+    The property that actually matters is that a reader must never be shown
+    words attributed to a person who did not say them. So a quoted string is
+    testimony when the same unit carries a record citation, and it is then
+    checked against THE RECORDS THAT UNIT CITES — not against the whole
+    retrieved pool. A quote with no record citation is prose, and it is
+    governed by `check_uncited` instead, which requires a citation or an
+    `Interpretation:` prefix on the claim it sits inside.
     """
-    haystack = _quotable_texts(records, rows)
+    by_id = {str(r.get("record_id")): r for r in (records or [])}
     bad = []
-    for m in QUOTE.finditer(text or ""):
-        q = _norm(m.group(1))
-        if len(q.split()) < 3:
-            continue
-        # A trailing placeholder marks a phrase being NAMED rather than quoted —
-        # "the counterfactual signal (I would have bought if…)". The exemption is
-        # narrow on purpose and it is safe for the reason the check exists: the
-        # danger of a fabricated quote is that it passes as testimony, and a
-        # phrase ending in an ellipsis or a bare X cannot. Anything that reads
-        # as something a person actually said is still checked.
-        if re.search(r"(…|\.\.\.|\b[XY])\s*$", q.rstrip()):
-            continue
-        if any(q in h for h in haystack):
-            continue
-        bad.append(m.group(1)[:80])
+    for unit in _units(text):
+        cited = [by_id[c["key"]] for c in citations(unit)
+                 if c["table"] in ("rec", "record") and c["key"] in by_id]
+        if not cited:
+            continue                      # not attributed to anyone: not testimony
+        haystack = _quotable_texts(cited, [])
+        for m in QUOTE.finditer(unit):
+            q = _norm(m.group(1))
+            if len(q.split()) < 3:
+                continue                  # terminology, not testimony
+            # An ellipsis marks an elision the model made inside one record.
+            # Each side still has to be found in the cited record, so a joined
+            # pair of unrelated fragments is still caught.
+            # A bare X or Y is a placeholder in a named concept ("I would have
+            # bought if X"), not something a person said. Nothing that reads as
+            # real speech contains one.
+            if re.search(r"\b[XY]\b", m.group(1)):
+                continue
+            parts = [p for p in re.split(r"\s*(?:…|\.\.\.)\s*", q) if len(p.split()) >= 3]
+            checks = parts or [q]
+            if all(any(p in h for h in haystack) for p in checks):
+                continue
+            bad.append(m.group(1)[:80])
     return bad
 
 
@@ -366,6 +408,12 @@ def _prose_units(lines: list[str]) -> list[str]:
     return out
 
 
+_ASSERTS = re.compile(
+    r"\b(is|are|was|were|has|have|had|shows?|showed|appears?|appeared|leads?|"
+    r"led|ranks?|ranked|accounts?|drives?|causes?|means?|suggests?|indicates?|"
+    r"remains?|holds?|cannot|can't|does|do|says?|said|found|reports?)\b", re.I)
+
+
 def _is_structural(unit: str) -> bool:
     """Headings, section labels and empty scaffolding carry no claim and need
     no citation. A line is structural if stripping markdown emphasis and a
@@ -381,7 +429,23 @@ def _is_structural(unit: str) -> bool:
     # a line that asserts nothing.
     if bare.endswith(":"):
         return True
-    return len(bare.split()) <= 3
+    if len(bare.split()) <= 3:
+        return True
+    # A label asserts nothing, so there is nothing to cite. The model writes
+    # sub-headings as bare lines — "Concentration by source (examples)",
+    # "Journey stage and outcome" — and demanding a citation on those was the
+    # single largest source of spurious failures in the first sweep, driving
+    # regeneration on 40 of 64 answers and roughly doubling the cost.
+    #
+    # A label has no number, no sentence-ending punctuation, and no verb of
+    # assertion. Requiring all three keeps a real uncited claim caught: "Fit is
+    # the biggest barrier" has a verb and is still flagged.
+    if (len(bare.split()) <= 8
+            and not re.search(r"\d", bare)
+            and not bare.rstrip().endswith((".", "!", "?"))
+            and not _ASSERTS.search(bare)):
+        return True
+    return False
 
 
 def check_uncited(text: str) -> list[str]:
@@ -397,9 +461,11 @@ def check_uncited(text: str) -> list[str]:
     for unit in _units(text):
         if _is_structural(unit):
             continue
-        stripped = re.sub(r"^\s*(?:[-*•]|\d+\.)\s*", "", unit).strip()
-        stripped = re.sub(r"^[*_]+", "", stripped)
-        if stripped.lower().startswith("interpretation:"):
+        # `Interpretation:` may follow a short label on the same line —
+        # "Distinct authors per source: Interpretation: the brief has no
+        # citable row for this". The marker still governs the claim, and
+        # demanding it come first would force the label to be deleted.
+        if "interpretation:" in unit.lower():
             continue
         if CITATION.search(unit):
             continue
