@@ -1,6 +1,6 @@
 # Decisions & Status — Myntra AI Discovery Engine
 
-**Last updated:** 2026-08-19
+**Last updated:** 2026-08-20 (end of the P3 session)
 **Deadline:** 2026-09-04
 **Purpose:** the decisions log and current position. The *rationale* for choices that are stated as facts elsewhere in `Docs/`.
 
@@ -18,7 +18,10 @@
 | 6 | **P0 — Foundation & Freeze** | ✅ built, gate signed off `evals/reports/gate_P0_20260819.md` — 37/37 checks green; codebook frozen `v1:718e9f3e` |
 | 7 | **P1 — Collection & Data Bank** | ✅ built; `S1-HUM-1` (read 30 random records) outstanding |
 | 8 | **P2 — Analysis** | ✅ **CLOSED 2026-08-20 — PASS WITH RECORDED LIMITATIONS**, `evals/reports/gate_P2_20260820.md` |
-| 9 | P3 → P5 | ⬜ **next** — P3 Insights. **Blocked on an OpenAI top-up:** $10.97 spent, ~$1.55 left; P3 needs $1–2 and P4 ~$2 |
+| 9 | **P3 — Insights & Hypotheses** | ✅ **CLOSED 2026-08-20 — PASS**, `evals/reports/gate_P3_20260820.md`. `S3-HUM-1` outstanding |
+| 10 | P4 → P5 | ⬜ **next** — P4 the research analyst. ~$2 plus golden-question sweeps |
+
+**P3 is closed.** Addressable population **892 of 1,018** after sizing and excluding C9 (n=21) and segment ① Collectors (n=126). Ranked opportunity **C2 · C1 · C3 · C4 · C4.5**; C2 holds first place in **99.6%** of 1,000 weightings perturbed ±30%. Stage A inversion threshold **6.6×** — the stage ranking is safe. Segment recommendation **④ Stuck Deciders** (392, 43.9%) on a segment × code basis. **AC-6 met: 5 insights confirmed novel by hand**, the headline being that fit uncertainty and approval-seeking are one event rather than two. P3 cost **$0.43** against a $1–2 estimate; running total **$11.40**.
 
 **P2 is closed.** Corpus 12,002 collected → 1,199 relevant → **1,018 analysed** after excluding five low-yield subreddits. Final ranking **C2 13.7% · C6 11.8% · C1 10.8% · C3 8.8% · C7 8.0%**; **Stuck Deciders 38.5%**; Z-99 **12.6%**. Gold set **108 labels + 5 repeats**; Arvind has finished labelling and will not do more, so nothing downstream may assume further human coding. App live: https://myntra-discovery-engine-p62azqwfs4r93yn2rx7qgx.streamlit.app
 
@@ -416,6 +419,119 @@ record before quoting an LLM batch cost.**
 
 ---
 
+## P3 session — what was decided and found (2026-08-20)
+
+### 1. The novelty filter was broken and reported a flattering result
+
+The first AC-6 run flagged **14 of 14 insights as novel** at a hand-picked
+similarity threshold of 0.62. That is not a discovery, it is a scale error —
+the maximum similarity across all fourteen was 0.476, and the insight that
+merely restates the barrier ranking scored the *lowest* of the set with its
+nearest prior on an unrelated code.
+
+**Shipping 14/14 would have satisfied AC-6 by broken measurement**, which is
+EC-INS-7's failure mode inverted: not manufacturing a novel insight, but
+manufacturing the *measurement* that certifies one. Two causes:
+
+- **The priors were four or five words each** — code names, nothing to embed
+  against. They now carry name, unresolved question, boundary note and
+  observable workarounds.
+- **The threshold was chosen rather than measured.** It is now the 5th
+  percentile of a control set of 15 deliberate restatements, non-novel by
+  construction: they score min 0.402, median 0.681, max 0.750, so the line
+  is **0.519**. "Is 0.62 right?" becomes a number anyone can re-run.
+
+The recalibrated filter shortlists 10 of 14; the verdicts are then made **by
+hand** and committed to `codebook/novelty_verdicts.yaml` — four of the ten
+flagged are recorded there as NOT novel, because similarity separates a
+methodological claim from a barrier hypothesis by form regardless of content.
+
+**The general lesson: a filter that fires on everything is not evidence, and
+when it fires in the direction you wanted, that is when to check it.**
+
+### 2. AC-6 is met — and the strongest finding rests on the weakest code
+
+**Fit uncertainty and approval-seeking are one event, not two.** C1 and C10
+co-occur at lift 2.93 (n_joint 37). The blueprint carries them as separate
+entries; nothing in the prior list says a shopper who cannot resolve a size
+question outsources the decision to another person, and that the wait for a
+reply *is* the deferral. The product consequence inverts what an "approval
+barrier" implies — the fix is not a share-and-approve feature, it is removing
+the need to ask.
+
+It is corroborated from a direction that never touched the C10 label. Cluster
+`all|2` was formed by embedding similarity with no codebook present and named
+blind as *"Sizing and measurements questions"*; that one conversation space
+holds **113 C1 and 37 C10 records**. Users describe asking-someone as part of
+the sizing question. The split is the codebook's, not theirs.
+
+That corroboration is load-bearing, because **C10 is the least reliable code in
+the corpus at κ 0.10**. The claim is worth five interviews, not worth building
+on — HYP-08 exists to kill it and has the sharpest falsifier of the eight.
+
+### 3. Sub-code shares were double-counted across two pipeline runs
+
+The new roll-up first reported **C2.4 at 120% of C2**. `subcodes` keys on
+`run_id`; C2 and C3 were each sub-coded twice after a prompt fix, and the two
+runs covered *different populations* (C3: 151 records against 188), so mixing
+them is two analyses added together, not a smaller version of the same error.
+
+**Two previously-quoted figures move and the old ones must not be repeated:**
+
+| | previously quoted | corrected |
+|---|---|---|
+| C2.4 as a share of C2 | 71.5% | **60.6%** |
+| C3.1 as a share of C3 | 84.6% | **77.3%** |
+
+Both claims survive; the numbers do not. The Analysis page had the same fault
+and now reads the materialised roll-up instead of aggregating the raw table.
+
+### 4. The pipeline reproduced bit-for-bit — an unplanned NFR-3 result
+
+Adding the roll-up meant re-running `crosstabs.py`, recomputing every analysis
+table the P2 gate was signed against. All eight reproduced **identical**.
+Determinism is measured, not merely intended.
+
+The re-run also made the `published` pin stale, and `test_analysis_populations_agree`
+caught it on the next test run. The pin now names every synthesis run behind
+the deployed numbers.
+
+### 5. B-5 was being asserted rather than met
+
+The P2 write-up said the gate report was "published to the app's Validation
+tab". It was not — the tab held a hard-coded limitations list, and an evaluator
+could not read what any gate actually found without cloning the repository. The
+Validation tab now renders every `gate_P*.md`, with a test asserting it.
+
+**My recurring failure mode again: asserting a proxy instead of the property.**
+A tab existing is not a report being readable.
+
+### 6. Cost, measured rather than estimated
+
+**$0.43 against a $1–2 estimate**, running total $11.40. Breakdown: cluster
+labelling $0.153 (21 clusters, gpt-5), insights $0.182 across two passes,
+hypotheses $0.092, novelty embeddings $0.0002. The one-record-first discipline
+held: the 2-cluster z99 space was labelled first at $0.011 before committing to
+the 19-cluster run.
+
+### What P3 leaves as stated limitations
+
+- **`segment_fit` is partly circular.** Segments are derived from the
+  classification and "not decided" *is* the presence of a Confidence-phase
+  code, so those codes are barred from three of six segments by definition. The
+  ranking does not depend on it — the leave-one-out check confirms — and the
+  app's slider goes to zero.
+- **C6 is over-represented in Play Store reviews**: 52.6% share there against
+  20.3% corpus-wide, JS divergence 0.398.
+- **The priors are a reconstruction**, not a transcription — the blueprint's
+  H/DH prose is not in this repository. Each prior is the union of the claims
+  made by the codes that absorbed it, which makes novelty *harder* to claim,
+  never easier.
+- **Two denominators on adjacent pages.** Analysis uses 1,018; Insights uses
+  the addressable 892. Both are labelled, but a reader could conflate them.
+
+---
+
 ## Explicitly rejected
 
 Recorded so they don't quietly reappear as "optimisations":
@@ -436,7 +552,7 @@ Recorded so they don't quietly reappear as "optimisations":
 |---|---|
 | ~~Reddit app registration~~ | ⛔ **Rejected by Reddit — de-configured, see above** |
 | YouTube Data API v3 key | ✅ **verified 2026-08-19** — search + commentThreads both working |
-| **OpenAI top-up — THE CURRENT BLOCKER** | **Arvind.** $10.97 spent, ~$1.55 left. P3 needs $1–2, P4 ~$2 plus sweeps; ~$10 clears both. Hard cap still to be set (EC-OPS-3) |
+| **OpenAI budget** | **Arvind.** $11.40 spent. P3 came in at $0.43 against its $1–2 estimate, so the top-up was not needed for it — but P4 needs ~$2 plus golden-question sweeps and the hard cap is still to be set (EC-OPS-3) |
 | ~~Gold-set labelling~~ | ✅ **done 2026-08-20 — 108 labels + 5 repeats, 14 skipped.** Arvind has finished and will do no more; **plan nothing that needs further human coding** |
 | Curated research sourcing | ✅ 5 items, URLs verified live per EC-COL-15 |
 | `S1-HUM-1` — read 30 random records | **Arvind** — outstanding from P1 |
@@ -447,7 +563,8 @@ Recorded so they don't quietly reappear as "optimisations":
 
 - ~~A-1 unverified~~ — **resolved**, yields measured per source and per subreddit.
 - ~~Segment coverage too low~~ — **resolved** by the v2 derivation: 100% coverage, Stuck Deciders 38.5%.
-- **AC-6 (novel insight) is OPEN and unclaimed.** Track B clusters exist (19 in the `all` space) but were never LLM-labelled, for budget. Until they are, the honest position is that novelty has not been looked for — not that none was found. **Do not let AC-6 be quietly reported as satisfied.**
+- ~~**AC-6 is OPEN and unclaimed**~~ — **resolved 2026-08-20.** The 19 `all`-space and 2 `z99` clusters were labelled ($0.153) and reconciled against the codes in `analysis_cluster_code`; **5 insights are confirmed novel by hand**. The filter that certified them was broken first and recalibrated — see the P3 session notes above, because the way it was nearly wrong matters more than the result.
+- **The headline novel insight rests on C10, κ 0.10.** It survives on independent blind-cluster corroboration. Treat it as a lead for the interviews, never as a settled finding.
 - **T-4 and T-2 fail** and are recorded as failing in the P2 gate report and the app's Validation tab. Do not restate them as passing anywhere downstream.
 - **C10 is unreliable (κ 0.10)** — read as *app* permissions by the labeller, defined as **another person's** approval. C10 maps to framework **C4.5**, the Stuck Deciders' most distinctive barrier, so this specifically threatens the sharpest claim in the analysis. Worth re-checking before it reaches the deck.
 - **C6 (price/value) rose to #2** after the Z-99 remediation and is the largest barrier that the no-monetary-incentives constraint forbids solving directly. It must be resolved into transparency, anchoring and timing.

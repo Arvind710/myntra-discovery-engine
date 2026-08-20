@@ -1,0 +1,168 @@
+# AC-6 / S3-MET-1 — THE BY-HAND VERDICT.
+#
+# The embedding filter in pipeline/synthesise/novelty.py produces a SHORTLIST.
+# evals.md is explicit that semantic similarity is a filter and not a verdict,
+# so this file is where a person reads each candidate against its nearest prior
+# and decides. It is committed so the judgement is auditable rather than
+# implied, and `novelty.py --verdicts` refuses to apply it if the insights have
+# been regenerated underneath it.
+#
+# `novel: true` means: this claim is not stated by any of H1-H15 / DH1-DH13.
+# Being flagged by the filter is not sufficient. Four of the ten flagged
+# candidates are recorded here as NOT novel, because the filter separates them
+# from the priors by FORM — a methodological or ranking claim is unlike a
+# barrier hypothesis whatever it says — and not by content.
+
+reviewed_by: Claude (build agent), for review by Arvind at S3-HUM-1
+reviewed_on: 2026-08-20
+filter_run: control-calibrated, line 0.519 (5th percentile of 15 deliberate restatements)
+
+verdicts:
+
+  - id: INS-02
+    novel: true
+    headline: true
+    statement_prefix: "Fit uncertainty often sits alongside needing permission"
+    note: >
+      THE STRONGEST NOVEL CLAIM, and the one worth taking to interviews. The
+      blueprint carries fit uncertainty (DH5/H6/H11) and approval-and-permission
+      (DH10) as two independent barriers on the same list. Nothing in the prior
+      list says they are the SAME EVENT — that a shopper who cannot resolve a
+      size question outsources the decision to another person, and the wait for
+      a reply is what the deferral actually consists of. The corpus says they
+      co-occur at lift 2.93 (n_joint 37), and the framework-v2 segment analysis
+      independently puts C10 (framework C4.5) as the Stuck Deciders' most
+      distinctive barrier at 2.18x. The product consequence is the opposite of
+      what an approval barrier implies: the fix is not a share-and-approve
+      feature, it is removing the need to ask.
+
+      CARRIES A MANDATORY CAVEAT. C10's agreement with the human coder is
+      kappa 0.10 — the labeller read it as APP permissions where the codebook
+      means another person's approval. The claim survives only because INS-08
+      corroborates it from a direction that never touched the C10 label.
+
+  - id: INS-08
+    novel: true
+    headline: true
+    statement_prefix: "BLIND Track B shows sizing is a multi-code situation"
+    note: >
+      The corroboration that makes INS-02 usable. Cluster all|2 was formed by
+      embedding similarity with no codebook present, and named by a model that
+      was blocked from seeing any code name or definition (S2-CLU-4, enforced at
+      run time). It named the cluster "Sizing and measurements questions" — and
+      that single conversation space contains 113 C1 records AND 37 C10 records.
+      Users describe asking-someone as part of the sizing question. The codebook
+      splits it into two barriers with two different solves; that split is the
+      codebook's, not the users'.
+
+  - id: INS-12
+    novel: true
+    headline: false
+    statement_prefix: "Two kinds of hesitation separate"
+    note: >
+      A negative relational finding, and negatives are exactly what a
+      pre-registered list cannot contain. The prior list treats returns trust
+      (H8/DH3) and price/value (H7/H9/H10/DH2) as separate entries but implies
+      nothing about their relationship; the intuitive read — that risk-averse
+      shoppers are also the price-sensitive ones — is contradicted at lift 0.738.
+      Returns trust travels with MATERIAL doubt instead (lift 1.961, n_joint 65),
+      which reframes it as "if the fabric is wrong, how painful is sending it
+      back" rather than as a standalone policy complaint.
+
+  - id: INS-01
+    novel: true
+    headline: false
+    statement_prefix: "Value/quality doubt and real-buyer evidence travel together"
+    note: >
+      H5 and DH7 both concern insufficient real-buyer evidence; DH6 concerns the
+      physical-digital gap. Neither says the second is largely a demand for the
+      first. Combined with C2.4 being 60.6% of C2 — the dominant doubt is
+      "is this worth the price", not "is it see-through" — this reads as a
+      proof problem rather than an imagery problem, which points at a different
+      build.
+
+  - id: INS-10
+    novel: true
+    headline: false
+    statement_prefix: "Some hypothesised wishlist mechanics are absent"
+    note: >
+      An absence is a finding a hypothesis list cannot contain by construction.
+      B1.2 (reverse-chronological only) and A1.2 (no change signal) are both
+      pre-registered and both sit at n=0 across 1,018 records. Reported as
+      UNDER-EVIDENCED, never as absent: Stage A and B are under-detected by
+      construction, and a wishlist-UI complaint is exactly the kind of thing
+      people do not post about.
+
+  - id: INS-09
+    novel: false
+    headline: false
+    statement_prefix: "BLIND Track B also ties quality, price, fit, and risk"
+    note: >
+      Flagged by the filter, rejected on reading. A cluster that touches six
+      codes at entropy 0.77 is close to "this cluster is about shopping" —
+      it does not isolate a claim. Kept in the app as context for INS-08, not
+      counted towards AC-6.
+
+  - id: INS-03
+    novel: false
+    headline: false
+    statement_prefix: "Among Stuck Deciders"
+    note: >
+      Composition of a segment the framework already defines and already
+      nominates as the target. The numbers are new; the claim is not.
+
+  - id: INS-04
+    novel: false
+    headline: false
+    statement_prefix: "Hesitant Waiters"
+    note: >
+      Same as INS-03. Derivative of the segment derivation rule.
+
+  - id: INS-07
+    novel: false
+    headline: false
+    statement_prefix: "Price/value uncertainty is over-represented in app-store reviews"
+    note: >
+      A true and important finding about the INSTRUMENT — C6 at 0.526 share on
+      Play against 0.203 corpus-wide is a source-composition warning that should
+      qualify every C6 claim. But AC-6 asks for an insight about the problem
+      that the hypothesis list does not contain, and this is a statement about
+      the corpus. Recorded as a method limitation, not as novelty.
+
+  - id: INS-11
+    novel: false
+    headline: false
+    statement_prefix: "Stage C's dominance is robust"
+    note: >
+      A sensitivity result (S3-MET-3), not a claim about users. The filter
+      separates it from the priors by kind, not by content.
+
+  - id: INS-13
+    novel: false
+    headline: false
+    statement_prefix: "C2 is the consistently top opportunity"
+    note: >
+      Restates the ranking with its robustness attached. The filter scored it
+      0.354 — its LOWEST score of all fourteen — which is the clearest single
+      demonstration that this instrument measures form as much as content, and
+      why the by-hand pass exists.
+
+  - id: INS-14
+    novel: false
+    headline: false
+    statement_prefix: "Intent is largely intact"
+    note: >
+      Below the calibrated line was not reached; not flagged, and not novel.
+      Defer against exit is the codebook's own outcome attribute.
+
+  - id: INS-05
+    novel: false
+    headline: false
+    statement_prefix: "Shoppers actively work around off-platform verification"
+    note: "Not flagged. DH8 covers off-platform exit directly."
+
+  - id: INS-06
+    novel: false
+    headline: false
+    statement_prefix: "Post-checkout blockers are named as direct unblocks"
+    note: "Not flagged. DH13 covers cost surprise and mechanical friction."

@@ -30,6 +30,7 @@ SECTIONS = [
     ("views/home.py", "Home"),
     ("views/data_bank.py", "Data Bank"),
     ("views/analysis.py", "Analysis"),
+    ("views/insights.py", "Insights"),
 ]
 
 
@@ -133,3 +134,17 @@ def test_wrong_password_says_so_rather_than_doing_nothing(at_repo_root):
     at.button[0].click().run()
     assert not _unlocked(at)
     assert at.error, "a wrong password must produce a visible message"
+
+
+def test_gate_reports_are_published_in_the_app(at_repo_root):
+    """B-5: the exit-gate report must be readable IN THE APP, not only in the
+    repository. This shipped as a claim rather than a feature — the P2 write-up
+    said the report was "published to the Validation tab" when that tab held a
+    hard-coded limitations list and nothing else. Asserting the proxy (a tab
+    exists) instead of the property (the report is readable there)."""
+    reports = sorted((ROOT / "evals" / "reports").glob("gate_P*.md"))
+    assert reports, "no gate reports exist to publish"
+    src = (ROOT / "app" / "views" / "analysis.py").read_text()
+    assert 'glob("gate_P*.md")' in src, (
+        "the app does not read the gate reports — a reader cannot see what the "
+        "gate found without cloning the repo")

@@ -26,13 +26,15 @@ VIEWS = HERE / "views"
 st.set_page_config(page_title="Myntra Discovery Engine", page_icon="🔎",
                    layout="wide", initial_sidebar_state="expanded")
 
-# The four project sections pinned by implementationplan.md §0.5. Insights and
-# Ask are absent rather than stubbed — a nav entry that leads nowhere tells an
-# evaluator the section exists. Home states their status instead.
+# The project sections pinned by implementationplan.md §0.5. A section appears
+# here only once it is built: Ask is absent rather than stubbed, because a nav
+# entry that leads nowhere tells an evaluator the section exists. Home states
+# its status instead.
 SECTIONS = [
     st.Page(VIEWS / "home.py", title="Home", icon="🔎", default=True),
     st.Page(VIEWS / "data_bank.py", title="Data Bank", icon="🗄️"),
     st.Page(VIEWS / "analysis.py", title="Analysis", icon="📊"),
+    st.Page(VIEWS / "insights.py", title="Insights", icon="💡"),
 ]
 
 st.navigation(SECTIONS).run()

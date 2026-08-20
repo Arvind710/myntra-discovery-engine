@@ -100,18 +100,19 @@ with right:
 |---|---|---|
 | P0 | Foundation & freeze | ✅ gate passed |
 | P1 | Data Bank | ✅ gate passed |
-| P2 | Analysis | ⚠️ page live, **gate open** |
-| P3 | Insights | ⬜ |
-| P4 | Ask | ⬜ |
+| P2 | Analysis | ✅ gate passed, **with recorded limitations** |
+| P3 | Insights & Hypotheses | ✅ gate passed |
+| P4 | Ask (research analyst) | ⬜ |
 """)
     st.warning(
-        "**The P2 numbers are not yet validated.** A tick here means the exit gate "
-        "passed, not that the page exists. P2 is open on three counts: the gold set "
-        "is unlabelled, so per-code agreement against a human (T-3/T-4, AC-9) is "
-        "unmeasured; unclassifiable records sit at 31.7% against a 15% ceiling "
-        "(AC-11 fails), so the codebook is formally incomplete; and Track B "
-        "clustering — the check against codebook blindness — is not built. "
-        "Read every figure on the Analysis page as provisional until this clears.",
+        "**Two validation thresholds are failing, and are reported as failing rather "
+        "than tuned away.** Per-code agreement with a human coder clears 0.60 for only "
+        "2 of the 5 codes with enough gold labels to measure (C1 0.66, C6 0.64; C3 0.52, "
+        "C2 0.43, **C10 0.10**), and relevance recall is an *estimate* of ~79% against "
+        "an 85% threshold. C10 is specifically unreliable — the human labeller read it "
+        "as app permissions where the codebook means another person's approval — so "
+        "every C10 claim carries that caveat, including the novel one on the Insights "
+        "page. Details on the Analysis page's Validation tab.",
         icon="⚠️")
 
 st.divider()

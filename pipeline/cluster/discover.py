@@ -140,7 +140,8 @@ def exemplars(ids: list[str], labels: np.ndarray, probs: np.ndarray,
 
 
 def label_clusters(con, space: str, ids: list[str], labels: np.ndarray,
-                   probs: np.ndarray, run_id: str, model: str) -> None:
+                   probs: np.ndarray, run_id: str, model: str,
+                   usage_sink: 'rmod.Run | None' = None) -> None:
     from openai import OpenAI
     client = OpenAI(api_key=envm.load()["OPENAI_API_KEY"], timeout=180.0)
 
@@ -158,6 +159,9 @@ def label_clusters(con, space: str, ids: list[str], labels: np.ndarray,
             model=model, response_format={"type": "json_object"},
             messages=[{"role": "system", "content": LABEL_SYSTEM},
                       {"role": "user", "content": prompt}])
+        if usage_sink is not None and resp.usage:
+            usage_sink.add_usage(input_tokens=resp.usage.prompt_tokens,
+                                 output_tokens=resp.usage.completion_tokens)
         out = json.loads(resp.choices[0].message.content)
         con.execute(
             "INSERT OR REPLACE INTO cluster_labels (cluster_id, space, label,"
@@ -168,6 +172,43 @@ def label_clusters(con, space: str, ids: list[str], labels: np.ndarray,
         flag = "" if out.get("coherent", True) else "   [labeller: not coherent]"
         print(f"    c{cid:<3} n={int((labels == cid).sum()):<4} {out.get('label','')}{flag}")
     con.commit()
+
+
+def label_existing(con, space: str, model: str) -> dict:
+    """Label the clusters ALREADY IN THE DATABASE, without re-clustering.
+
+    P2 ran the clustering with `--no-label` (budget) and the run_id it wrote is
+    the one the P2 gate was signed against. Re-running `run_space` to get
+    labels would DELETE and re-insert every cluster row under a new run_id —
+    reproducing the same assignments, since the pipeline is seeded and T-12
+    measured determinism at 100%, but invalidating `analysis_cluster_code` and
+    detaching the deployed app from the signed-off run for no gain.
+
+    So labelling is separated from clustering: this path touches only
+    `cluster_labels`, and the assignments stay exactly as the gate saw them.
+    """
+    rows = [dict(r) for r in con.execute(
+        "SELECT record_id, cluster_id, probability, run_id FROM clusters"
+        " WHERE space = ? AND cluster_id >= 0", (space,))]
+    if not rows:
+        print(f"  {space}: no stored clusters — run the clustering first")
+        return {}
+    run_id = rows[0]["run_id"]
+    ids = [r["record_id"] for r in rows]
+    labels = np.array([r["cluster_id"] for r in rows])
+    probs = np.array([r["probability"] if r["probability"] is not None else 1.0 for r in rows])
+    n_clusters = len(set(labels.tolist()))
+    print(f"\n=== space '{space}' — labelling {n_clusters} stored clusters "
+          f"({len(ids)} records, run {run_id}) ===")
+
+    with rmod.Run(con, f"cluster-label-{space}", model=model, seed=SEED,
+                  clusters_run_id=run_id, n=len(ids)) as run:
+        run.n_input = n_clusters
+        con.execute("DELETE FROM cluster_labels WHERE space=?", (space,))
+        label_clusters(con, space, ids, labels, probs, run_id, model, usage_sink=run)
+        run.n_output = n_clusters
+        print(f"  cost ${run.cost_usd() or 0:.3f}")
+    return {"space": space, "clusters": n_clusters}
 
 
 def run_space(con, space: str, model: str, do_label: bool) -> dict:
@@ -213,6 +254,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Track B clustering")
     ap.add_argument("--space", choices=["all", "z99", "both"], default="both")
     ap.add_argument("--no-label", action="store_true", help="cluster only, no LLM calls")
+    ap.add_argument("--label-only", action="store_true",
+                    help="label the clusters already stored, without re-clustering")
     ap.add_argument("--model", default=rmod.CLASSIFIER_MODEL)
     ap.add_argument("--determinism", action="store_true",
                     help="S2-CLU-2 / T-12: cluster twice and compare assignments")
@@ -233,7 +276,10 @@ def main() -> int:
         return 0 if same == 1.0 else 1
 
     for s in spaces:
-        run_space(con, s, a.model, not a.no_label)
+        if a.label_only:
+            label_existing(con, s, a.model)
+        else:
+            run_space(con, s, a.model, not a.no_label)
     return 0
 
 

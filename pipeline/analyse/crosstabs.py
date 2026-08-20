@@ -60,7 +60,8 @@ def run(con) -> dict:
         R.n_input = denom
         for t in ("analysis_code_prevalence", "analysis_segment_code", "analysis_cooccurrence",
                   "analysis_source_code", "analysis_stage_outcome", "analysis_workaround",
-                  "analysis_counterfactuals", "analysis_evidence_strength"):
+                  "analysis_counterfactuals", "analysis_evidence_strength",
+                  "analysis_subcode"):
             con.execute(f"DELETE FROM {t}")
 
         # ---- code prevalence -----------------------------------------
@@ -222,6 +223,41 @@ def run(con) -> dict:
                 " n, run_id) VALUES (?,?,?,?,?,?,?,?,?,?)",
                 (cid, prev, div, cf / n if n else 0, wk / n if n else 0, mc, None,
                  composite, n, rid))
+
+        # ---- sub-code roll-up ----------------------------------------
+        # A theme's headline number does not say what to build; the sub-code
+        # does. C2 at 24% is "photos mislead"; C2.4 at 72% OF C2 is "is this
+        # worth the price" — a pricing-transparency problem wearing a quality
+        # complaint's clothes. Rolled up here so it is a citable row rather
+        # than an aggregation performed at render time.
+        #
+        # Sub-coding ran twice for C2 and C3 (a re-run after a prompt fix), and
+        # `subcodes` keys on run_id, so a naive GROUP BY counted the same
+        # record under both runs and produced a 120% share. Take the LATEST run
+        # PER THEME — a theme's two runs used different populations, so mixing
+        # them is not a smaller version of the same error, it is two different
+        # analyses added together.
+        latest = {r["theme"]: r["run_id"] for r in con.execute(
+            "SELECT theme, run_id, max(rowid) FROM subcodes GROUP BY theme")}
+        sub = defaultdict(lambda: defaultdict(list))
+        seen: set[tuple[str, str, str]] = set()
+        for r in con.execute("SELECT record_id, theme, subcode, confidence, run_id FROM subcodes"):
+            key = (r["record_id"], r["theme"], r["subcode"])
+            if (r["record_id"] in recs and latest.get(r["theme"]) == r["run_id"]
+                    and key not in seen):
+                seen.add(key)
+                sub[r["theme"]][r["subcode"]].append(r["confidence"] or 0.0)
+        for theme, kinds in sub.items():
+            n_theme = len({i for i in recs
+                           if any(c["code"] == theme for c in codes.get(i, []))})
+            for scode, confs in kinds.items():
+                con.execute(
+                    "INSERT INTO analysis_subcode (theme, subcode, n, n_theme, share,"
+                    " mean_confidence, below_min_n, run_id) VALUES (?,?,?,?,?,?,?,?)",
+                    (theme, scode, len(confs), n_theme,
+                     len(confs) / n_theme if n_theme else None,
+                     sum(confs) / len(confs) if confs else None,
+                     int(len(confs) < MIN_N_VISIBLE), rid))
 
         con.commit()
         R.n_output = denom

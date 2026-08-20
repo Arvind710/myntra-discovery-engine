@@ -322,10 +322,17 @@ CREATE TABLE IF NOT EXISTS analysis_opportunity (
 CREATE TABLE IF NOT EXISTS insights (
   insight_id   TEXT PRIMARY KEY,
   statement    TEXT NOT NULL,
+  so_what      TEXT,                 -- the consequence. A finding with no consequence is a cell
+  kind         TEXT,                 -- prevalence|structure|segment|method|absence|contradiction
   cites        TEXT NOT NULL,        -- JSON array of {table, key} — S3-INV-1: must resolve
   n            INTEGER,
   novelty      INTEGER DEFAULT 0,    -- outside H1-H15 / DH1-DH13 (AC-6)
   novelty_note TEXT,
+  -- S3-MET-1 is a FILTER, not a verdict (evals.md). Storing the score and the
+  -- nearest prior beside the flag is what lets the by-hand confirmation be
+  -- audited later instead of taken on trust.
+  nearest_prior      TEXT,
+  nearest_similarity REAL,
   run_id       TEXT NOT NULL
 );
 
@@ -375,3 +382,94 @@ CREATE TABLE IF NOT EXISTS gold_skip (
   skipped_at TEXT NOT NULL,
   PRIMARY KEY (record_id, pass_no)
 );
+
+-- ---------------------------------------------------------------------
+-- 9. PHASE 3 — OPPORTUNITY, SENSITIVITY, SEGMENT RECOMMENDATION
+-- ---------------------------------------------------------------------
+
+-- AC-12 / EC-INS-3, made auditable. "Sized, then excluded" is two claims and
+-- only one of them is visible in `analysis_opportunity.excluded`. Without the
+-- size stored, an exclusion is indistinguishable from an omission — and the
+-- size IS the finding: if a fifth of the corpus turns out to have no purchase
+-- intent, "much wishlisting is not intent" is the honest headline, not a
+-- footnote. Every bucket is written, including the ones that stay in.
+CREATE TABLE IF NOT EXISTS analysis_addressable (
+  bucket          TEXT NOT NULL,     -- corpus | c9_no_live_intent | collectors | addressable
+  label           TEXT NOT NULL,
+  n               INTEGER NOT NULL,
+  share_of_corpus REAL,
+  excluded        INTEGER NOT NULL DEFAULT 0,
+  reason          TEXT,
+  run_id          TEXT NOT NULL,
+  PRIMARY KEY (bucket, run_id));
+
+-- S3-MET-2. A single ranking asserted from one set of weights invites "why
+-- those weights?". This table answers it before it is asked: the share of
+-- 1,000 perturbed weightings in which each code holds the top rank. A code
+-- that leads 87% of plausible weightings is a claim; one that leads 40% is a
+-- tie, and the honest report says the interviews are the tiebreak.
+CREATE TABLE IF NOT EXISTS analysis_weight_sensitivity (
+  code         TEXT NOT NULL,
+  top_share    REAL NOT NULL,        -- share of draws where this code ranks #1
+  top3_share   REAL,
+  mean_rank    REAL,
+  p05_rank     INTEGER,
+  p95_rank     INTEGER,
+  n_draws      INTEGER NOT NULL,
+  perturbation REAL NOT NULL,        -- ±fraction applied to each weight
+  seed         INTEGER,
+  run_id       TEXT NOT NULL,
+  PRIMARY KEY (code, run_id));
+
+-- S3-MET-3 / arch §7.3. Stage A is under-detected BY CONSTRUCTION — forgetting
+-- produces no complaint — so a low A-count is not evidence that A is small.
+-- This stores the multiplier by which each stage's count would have to be
+-- under-reported to overtake the leader, turning an acknowledged bias into a
+-- number that can be argued with.
+CREATE TABLE IF NOT EXISTS analysis_stage_inversion (
+  stage            TEXT NOT NULL,
+  n                INTEGER NOT NULL,
+  share            REAL,
+  leader           TEXT,
+  leader_n         INTEGER,
+  inversion_factor REAL,             -- NULL where the stage IS the leader
+  fragile          INTEGER NOT NULL DEFAULT 0,  -- factor <= 3 => conclusion is fragile
+  run_id           TEXT NOT NULL,
+  PRIMARY KEY (stage, run_id));
+
+-- AC-12 / EC-INS-8. `basis` records WHICH matrix carried the recommendation.
+-- segment × code is the sharper claim and is expected to be too sparse at this
+-- corpus size; the pre-planned fallback is segment × stage. Storing the basis
+-- stops a directional read being quoted later as a ranked one.
+CREATE TABLE IF NOT EXISTS analysis_segment_recommendation (
+  segment_id     INTEGER NOT NULL,
+  segment_name   TEXT NOT NULL,
+  n              INTEGER NOT NULL,
+  share          REAL,
+  basis          TEXT NOT NULL,      -- 'segment x code' | 'segment x stage'
+  rankable_cells INTEGER,
+  addressable_n  INTEGER,
+  solvable_n     INTEGER,
+  top_codes      TEXT,               -- JSON [{code, n, share, lift}]
+  distinctive    TEXT,               -- JSON, highest-lift codes
+  score          REAL,
+  recommended    INTEGER NOT NULL DEFAULT 0,
+  rationale      TEXT,
+  run_id         TEXT NOT NULL,
+  PRIMARY KEY (segment_id, run_id));
+
+-- Sub-code roll-up. Sub-coding writes one row per RECORD, and arch §4.2 forbids
+-- the app (and the synthesis step, and the chatbot) aggregating over records —
+-- so without this table the sharpest result in the analysis, that C2.4 "doubts
+-- build quality at this price" is most of C2, is not citable by anything that
+-- has to cite a materialised row.
+CREATE TABLE IF NOT EXISTS analysis_subcode (
+  theme        TEXT NOT NULL,
+  subcode      TEXT NOT NULL,
+  n            INTEGER NOT NULL,
+  n_theme      INTEGER NOT NULL,
+  share        REAL,
+  mean_confidence REAL,
+  below_min_n  INTEGER NOT NULL DEFAULT 0,
+  run_id       TEXT NOT NULL,
+  PRIMARY KEY (theme, subcode, run_id));

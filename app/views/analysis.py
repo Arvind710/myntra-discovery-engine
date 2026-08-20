@@ -119,20 +119,25 @@ with tab_seg:
 
 # ------------------------------------------------------------ sub-codes
 with tab_sub:
-    subs = db.query("SELECT theme, subcode, count(DISTINCT record_id) AS n FROM subcodes"
-                    " GROUP BY theme, subcode ORDER BY theme, n DESC")
+    # Reads the materialised roll-up, not `subcodes` directly. The raw table
+    # holds TWO runs for C2 and C3 (a re-run after a prompt fix) over different
+    # populations, and aggregating it here unioned them — which put C2.4 above
+    # 100% of C2 once the counts were done properly. The roll-up takes the
+    # latest run per theme and honours the corpus exclusions.
+    subs = db.query("SELECT * FROM analysis_subcode ORDER BY theme, n DESC")
     if subs.empty:
         st.info("Sub-coding has not run yet.")
     else:
-        st.caption("A theme's headline number does not say what to build. The sub-code does.")
+        st.caption("A theme's headline number does not say what to build. The sub-code does. "
+                   "Sub-coding is multi-label, so shares within a theme sum above 100%.")
         for theme in subs["theme"].unique():
             d = subs[subs["theme"] == theme].copy()
-            tot = int(db.query("SELECT count(DISTINCT record_id) AS n FROM subcodes"
-                               " WHERE theme = ?", (theme,)).iloc[0]["n"])
-            st.markdown(f"**{theme} — {F.name_of(theme)}**  ·  n = {tot}")
+            tot = int(d["n_theme"].iloc[0])
+            st.markdown(f"**{F.to_framework(theme)} — {F.name_of(theme)}**  ·  n = {tot}")
             d["what it is"] = d.apply(lambda r: F.subcode_label(theme, r["subcode"]), axis=1)
-            d["share of theme"] = d["n"] / tot
-            st.dataframe(d[["subcode", "what it is", "n", "share of theme"]],
+            st.dataframe(d[["subcode", "what it is", "n", "share", "mean_confidence"]]
+                         .rename(columns={"share": "share of theme",
+                                          "mean_confidence": "confidence"}),
                          width="stretch", hide_index=True)
 
 # ------------------------------------------------------- co-occurrence
@@ -171,6 +176,22 @@ with tab_val:
         st.metric("Evidence spans verified as exact quotes", f"{ok/n:.1%}",
                   help="A span that is not an exact substring of the record is not "
                        "evidence and is never rendered as a quote (T-6).")
+
+    # B-5 requires the gate reports to be published IN THE APP, and they were
+    # not — the P2 write-up said "published to the Validation tab" when the tab
+    # only held a hard-coded limitations list. An evaluator could not read what
+    # the gate actually found without cloning the repository.
+    from pathlib import Path as _P
+    REPORTS = _P(__file__).resolve().parents[2] / "evals" / "reports"
+    gates = sorted(REPORTS.glob("gate_P*.md"), reverse=True)
+    if gates:
+        st.markdown("**Exit gate reports** — what each phase's gate actually found, "
+                    "including what it found failing")
+        st.caption("A tick on Home means the gate passed, not that the page exists. "
+                   "These are the documents behind the ticks.")
+        for g in gates:
+            with st.expander(g.stem.replace("_", " ").replace("gate ", "Gate ")):
+                st.markdown(g.read_text())
 
     st.markdown("**Known limitations, stated rather than discovered**")
     st.markdown("""
