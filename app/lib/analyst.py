@@ -218,6 +218,14 @@ YOUR OUTPUT
   buying?" is about the leading barriers, and `top_codes` returns the whole
   ranking without you naming any code. Every code you name is one the answer is
   held to having evidence for.
+
+  NOT EVERY KIND OF EVIDENCE EXISTS FOR EVERY CODE. Sub-theme breakdowns
+  (`subcode`) exist ONLY for C1, C2 and C3 — asking for one about any other
+  code correctly reports that the corpus does not have it, and downgrades an
+  otherwise complete answer. Ask for `subcode` only when the question asks what
+  SPECIFICALLY or what KIND of doubt, and only about C1, C2 or C3. The same
+  restraint applies to `robustness`, `cluster` and `novelty`: request them when
+  the question is about them, not as routine extras.
 - evidence_needed: which kinds of evidence would settle this. Ask for what you
   genuinely need — this list is checked mechanically against what retrieval
   returns, and asking for evidence that does not exist downgrades the answer to

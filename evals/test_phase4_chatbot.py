@@ -53,7 +53,24 @@ def sweep() -> dict:
     if len(d.get("results", [])) < 60:
         pytest.skip(f"sweep covers only {len(d.get('results', []))} questions; "
                     "the gate needs the full set")
+    # An incomplete sweep is not a failing gate, it is an UNTAKEN one. Letting
+    # the per-answer tests run over blank answers produced fifteen confusing
+    # failures that all meant the same thing. `test_sweep_had_no_errors` states
+    # it once, loudly; everything else stands down.
+    errored = [r["id"] for r in d["results"] if r.get("error")]
+    if errored:
+        pytest.skip(f"the sweep did not complete — {len(errored)} of "
+                    f"{len(d['results'])} questions errored (first: {errored[0]}). "
+                    "The gate has not been taken; re-run `python evals/sweep.py`.")
     return d
+
+
+@pytest.fixture(scope="module")
+def sweep_raw() -> dict:
+    """The artefact as written, complete or not."""
+    if not SWEEP.exists():
+        pytest.skip("no sweep yet — run `python evals/sweep.py` to take the P4 gate")
+    return json.loads(SWEEP.read_text())
 
 
 @pytest.fixture(scope="module")
@@ -222,6 +239,31 @@ def test_missing_cuts_are_detected_deterministically(question, expected):
     the next, which T-9 cannot assert against."""
     from lib import retrieval as R
     assert bool(R.missing_cuts(question)) is expected
+
+
+@pytest.mark.parametrize("question,refuse", [
+    ("What is Myntra's conversion rate from wishlist to purchase?", True),
+    ("Which brand has the highest return rate on Myntra?", True),
+    ("What is the return policy on Myntra right now?", True),
+    ("What is Myntra's annual revenue?", True),
+    ("How many daily active users does the Myntra app have?", True),
+    ("Your data shows 40% of users drop off at checkout — what causes that?", False),
+    ("Which barrier comes up most often?", False),
+    ("What stops people from buying the things they have saved?", False),
+])
+def test_metric_requests_the_corpus_cannot_produce_refuse_deterministically(question, refuse):
+    """AC-4's hardest cases, pinned in code rather than left to the planner.
+
+    Relaxing the out-of-scope rule so evidence could overrule a planner's label
+    let two genuine refusals through as half-answers — including a request for
+    a conversion rate, which is the project's central methodological claim
+    breaking in public. The pattern targets asking FOR the value: "what is the
+    conversion rate?" is unanswerable, while "your data shows 40% drop off —
+    what causes that?" is a false premise about barriers the corpus does cover
+    and must still be answered with the premise corrected.
+    """
+    from lib import retrieval as R
+    assert R.hard_out_of_scope(question) is refuse
 
 
 def test_disconfirming_and_method_channels_always_run(app_con):
@@ -450,9 +492,15 @@ def test_records_are_fenced_against_delimiter_forgery():
 # Against the sweep — the gate proper
 # ---------------------------------------------------------------------------
 
-def test_sweep_had_no_errors(results):
-    errored = [r["id"] for r in results if r.get("error")]
-    assert not errored, f"questions that failed to complete: {errored}"
+def test_sweep_completed(sweep_raw):
+    """The gate is taken against a COMPLETE run. This is the one test that
+    speaks when the sweep was cut short; the rest skip, because a blank answer
+    failing an invariant says nothing about the engine."""
+    errored = [r["id"] for r in sweep_raw["results"] if r.get("error")]
+    assert not errored, (
+        f"{len(errored)}/{len(sweep_raw['results'])} questions did not complete — "
+        f"the P4 gate has NOT been taken. First failure: "
+        f"{next(r['error'] for r in sweep_raw['results'] if r.get('error'))[:160]}")
 
 
 def test_T9_route_accuracy(results):

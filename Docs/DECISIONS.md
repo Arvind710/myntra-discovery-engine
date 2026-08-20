@@ -899,6 +899,52 @@ English and push generation toward vaguer prose — the checker making the answe
 worse. Claims of that shape are also checked by citation shape.
 
 
+## P4 gate — NOT taken, blocked on credit (2026-08-21)
+
+The engine is built, deployed and reachable in the app's nav. **The gate is not
+signed off**, and the reason is not a finding: credit ran out 29 questions into
+a 64-question sweep. Full detail in `evals/reports/gate_P4_20260821.md`, which
+publishes in the app's Validation tab.
+
+**Nothing from the partial run may be restated as a passing threshold.** On the
+29 that completed: route accuracy 82.8% (below the 90% bar), T-10 clean, one
+T-11 violation, zero proxy-discipline violations.
+
+### The first sweep failed at 65.6%, and every cause was mine
+
+Recorded because the failures transfer and the fixes do not.
+
+**The gate invented limitations.** Asked "how many records raise fit and size
+uncertainty?", it answered *"the corpus holds nothing on where the records came
+from"* — which is FALSE. The planner declared it needed source mix and never
+queried for it, and the gate reported the planner's omission as a property of
+the corpus. Fifteen of twenty-two misroutes. This is the mirror image of a
+model inventing a finding and worse in one way: **false modesty reads as
+rigour**, so nobody challenges it. Watch for this class specifically — the
+project's whole posture is toward under-claiming, which is exactly the cover
+this bug hides under.
+
+**T-11 was wrong in both directions at once.** It reported three injection
+compliances; all three were wrong — two were the engine *quoting* a payload
+with attribution, which is the required behaviour, and one matched "OK" inside
+the word "looks". Simultaneously it *passed* quotes attributed to record A that
+existed only in record B. A check can be too strict and too lenient in the same
+breath, and the strictness is what gets noticed first.
+
+**One character, three silent failures.** The citation regex was `[a-z_]+`;
+`analysis_segment_code_v2` has a digit. Every segment citation was invisible to
+the verifier, unvalidated, and unrendered in the app.
+
+### The process lesson worth keeping
+
+The sweep stores each question's PLAN, so a gate or retrieval change can be
+**replayed against the saved plans for free** — no API calls. That turned a
+$3-per-attempt debugging loop into a zero-cost one and is how T-9 went
+65.6% → 96.9% before spending anything. It cannot test a prompt change, so it
+is a decision aid for whether a re-sweep is worth buying, not a substitute for
+one. Build this into any future phase that grades generated output.
+
+
 ## Explicitly rejected
 
 Recorded so they don't quietly reappear as "optimisations":
@@ -919,7 +965,7 @@ Recorded so they don't quietly reappear as "optimisations":
 |---|---|
 | ~~Reddit app registration~~ | ⛔ **Rejected by Reddit — de-configured, see above** |
 | YouTube Data API v3 key | ✅ **verified 2026-08-19** — search + commentThreads both working |
-| **OpenAI budget** | **Arvind.** $11.40 spent. P3 came in at $0.43 against its $1–2 estimate, so the top-up was not needed for it — but P4 needs ~$2 plus golden-question sweeps and the hard cap is still to be set (EC-OPS-3) |
+| **⛔ OpenAI credit EXHAUSTED** | **Arvind — this blocks the P4 gate.** The balance ran out 29 questions into a 64-question sweep (`429 insufficient_quota`). $18.09 logged in `runs` project-wide, $6.70 of it P4. Add credit, then re-run `python evals/sweep.py`. **And set the $30 hard cap (EC-OPS-3)** — it is now also the precondition for putting `OPENAI_API_KEY` into Streamlit secrets, which is what makes Ask answer at all |
 | ~~Gold-set labelling~~ | ✅ **done 2026-08-20 — 108 labels + 5 repeats, 14 skipped.** Arvind has finished and will do no more; **plan nothing that needs further human coding** |
 | Curated research sourcing | ✅ 5 items, URLs verified live per EC-COL-15 |
 | ~~`S1-HUM-1` — read 30 random records~~ | ✅ **done 2026-08-20 — 19/30 right, 11 wrong.** Per-record detail not captured; see the section above |

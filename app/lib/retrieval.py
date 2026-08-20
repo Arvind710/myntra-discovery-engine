@@ -1026,15 +1026,26 @@ def missing_cuts(question: str) -> list[str]:
 # causes that?" is a false premise about checkout barriers the corpus does
 # cover, and it must still be answered with the premise corrected.
 HARD_OUT_OF_SCOPE = re.compile(
-    r"\b(what(?:'s| is| are)?|how (?:much|many|big|large)|give me|tell me|show me|"
-    r"calculate|estimate)\b[^?.]{0,60}?\b("
+    r"\b(what(?:'s| is| are)?|which|who|how (?:much|many|big|large)|give me|"
+    r"tell me|show me|calculate|estimate)\b[^?.]{0,60}?\b("
     r"conversion rate|drop[- ]?off rate|abandonment rate|retention rate|churn rate|"
-    r"click[- ]?through|revenue|turnover|gmv|profit|valuation|market share|"
+    r"return rate|click[- ]?through|revenue|turnover|gmv|profit|valuation|market share|"
     r"daily active|monthly active|active users|share price|net promoter)\b", re.I)
+
+# Questions about the CURRENT state of the platform. The corpus holds people's
+# EXPERIENCE of returns and delivery, which is a different thing from the policy
+# in force today — answering one with the other states an out-of-date operational
+# fact as current, and it is the kind of wrong answer that looks well-sourced.
+CURRENT_STATE = re.compile(
+    r"\b(what|which|how)\b[^?.]{0,50}\b(policy|policies|charge|fee|price list|"
+    r"terms|rules?)\b[^?.]{0,40}\b(right now|currently|today|at the moment|now)\b"
+    r"|\bcurrent\s+(return|refund|delivery|shipping|exchange)\s+(policy|terms|rules?)\b",
+    re.I)
 
 
 def hard_out_of_scope(question: str) -> bool:
-    return bool(HARD_OUT_OF_SCOPE.search(str(question or "")))
+    q = str(question or "")
+    return bool(HARD_OUT_OF_SCOPE.search(q) or CURRENT_STATE.search(q))
 
 
 def gate(plan: dict, got: Retrieved, question: str = "") -> Verdict:
@@ -1068,6 +1079,14 @@ def gate(plan: dict, got: Retrieved, question: str = "") -> Verdict:
     if disowned and not got.facts:
         return Verdict("NONE", [], list(plan.get("evidence_needed") or []),
                        ["the question falls outside what this corpus covers"])
+    # The planner's doubt alone does not settle it, and a registered missing cut
+    # alone only downgrades to PARTIAL. Both together are two independent
+    # signals agreeing, and that is a refusal: "which brand has the highest
+    # return rate?" has no brand dimension AND was disowned, yet came back as a
+    # half-answer about barriers nobody asked about.
+    if disowned and missing_cuts(f"{question} {plan.get('restated', '')}"):
+        return Verdict("NONE", [], list(plan.get("evidence_needed") or []),
+                       missing_cuts(f"{question} {plan.get('restated', '')}"))
     if intent == "methodological":
         # Routed to a static description of the pipeline, not to retrieval
         # (EC-CHAT-6). It is FULL because the answer is fully supported — by the
