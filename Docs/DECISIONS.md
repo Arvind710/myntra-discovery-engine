@@ -677,6 +677,83 @@ per control.
 
 ---
 
+## The app was rewritten for a first-time reader (2026-08-20)
+
+**Arvind's brief:** *"A person who is looking at it for the first time would
+barely understand what is going on. You have mentioned code numbers like C1, C2
+everywhere but the user doesn't know which is which, describe the concepts
+visually as much as you can rather than stating numbers."*
+
+He was right, and the diagnosis was precise: the app was written for an auditor
+who already knew the codebook. It opened with `C2 · 241 · 0.237`. A code id is
+an INDEX, not a description — meaningful to whoever wrote the codebook and to
+nobody else — and a share with no stated denominator is a number a reader
+cannot argue with, which is the opposite of what this project claims to be for.
+
+### What was built
+
+**`codebook/plain_language.yaml`** — the readability layer, kept as data because
+it is content rather than layout. Every one of the 34 codes gets `voice` (the
+barrier in the user's own words: *"I forgot I even had a wishlist"*) and `plain`
+(one line on the mechanism). Each stage gets a plain title, the user's
+situation, and the question it answers. Sourced from `problemstatement.md`'s
+"barrier in the user's words" columns and each code's `question` and
+`boundary_note` — **nothing in it adds a claim the codebook does not already
+make.** To change a word anywhere in the app, change it here.
+
+**`app/lib/story.py`** — one module owns how the app says things, so the same
+metric is described the same way on every page. `chart_label()` puts the user's
+words on the axis with the code appended small. `explain()` gives every number a
+gloss that says what it is NOT before what it is, because this corpus is
+unusually easy to misread as a funnel.
+
+### Structure: the journey, not the codebook
+
+Stages A-D are not four buckets, they are four things that must go right in
+sequence, and the codes are the ways each one fails. Presenting them as a flat
+ranked list threw away the only thing that made them interpretable. Every page
+now teaches that model before showing a number.
+
+**The segments were re-framed as a re-cut of Stage C**, which is what Arvind
+pointed out and what makes them read as derived rather than arbitrary: "have
+they decided" is operationalised as whether an item-level doubt is unresolved,
+so the groups fall out of the item-decision stage rather than sitting beside it.
+
+### Design decisions worth not undoing
+
+- **The journey band is drawn to scale but is NOT a funnel.** A taper asserts
+  drop-off between stages. These are shares of *conversation*, and two of the
+  four stages are under-detected by construction, so a funnel would put a false
+  claim in the most eye-catching element on the page. **Open question for the
+  deck: Arvind may still want a funnel shape there.**
+- **Labels below 10% width are suppressed, not rotated.** Plotly ignores
+  `textangle=0` when it decides a segment is narrow and renders the title
+  vertically down a 40px column — unreadable, and worse than absent because it
+  still draws the eye. The decision is now made in our code; the stage cards
+  carry those numbers.
+- **Shares are never rendered in Streamlit's `delta` slot.** It draws an arrow,
+  so "↑ 2.1%" asserts growth that never happened. Shares go in captions that
+  name their denominator in words.
+- **Zero internal requirement ids on screen.** `AC-12`, `EC-INS-8`, `T-6`,
+  `AR-12` were cited straight at the reader. They are an audit trail for this
+  repo and noise on a page someone reads once — replaced by the reasoning they
+  stood for. The ids remain in the docs, the tests and the gate reports.
+- **The framework code stays in brackets beside each barrier** (`C4.5`, `S14`)
+  for cross-referencing the deck. **Open question: Arvind may want it dropped.**
+
+### A process failure worth remembering
+
+The first commit of this work built `plain_language.yaml` and `story.py`,
+committed them, and reported the foundation as done — **with no view importing
+either.** Arvind checked the deployed app and said *"I don't think these are
+visible in the UI. app hasn't changed at all. Check it yourself."* He was right;
+`grep -c story app/views/*.py` returned 0 for all four files. Scaffolding that
+nothing consumes is not progress on a UI task, and reporting it as a step
+forward invited exactly that reply. **Wire it to something visible in the same
+commit, or say plainly that nothing has changed yet.**
+
+---
+
 ## Explicitly rejected
 
 Recorded so they don't quietly reappear as "optimisations":
