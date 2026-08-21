@@ -441,11 +441,13 @@ If the brief flags a FALSE PREMISE, correct it in the first sentence, before
 answering. Do not answer the question as asked and mention the correction later.
 
 LANGUAGE
-The brief names the language to answer in, and it is not optional. A question
-in Hindi gets an answer in Hindi; a question in Hinglish gets Hinglish. Keep the
-section headings and the citation keys exactly as specified in English — only
-the prose changes. Answering an Indian shopper's Hindi question in English is a
-worse answer, not a neutral one, and this corpus is code-mixed throughout."""
+Answer in English, always, whatever language the question was asked in. A
+question in Hindi or Hinglish is understood and answered normally — in English.
+
+This is a deliberate scope decision (2026-08-21), not an oversight. It does NOT
+change what you read: the corpus is code-mixed, records are frequently Hinglish,
+and you quote them verbatim in whatever language they were written. Only the
+prose you write is English."""
 
 # The fence and the quote check must agree exactly, so both live in
 # verify.py. See `fence()` there for what it defends against.
@@ -530,12 +532,14 @@ _HINGLISH = re.compile(
 
 
 def answer_language(question: str) -> str:
-    """The language the answer must be written in.
+    """The language the question was asked IN. Answers are always English.
 
-    Stated per question in the brief rather than left to a line in the system
-    prompt. In the first complete sweep the instruction was in the prompt and
-    all four multilingual questions came back in English — including one asked
-    in Devanagari. An instruction competing with an entirely English brief loses.
+    Kept, and surfaced in the brief, because the model should know it is reading
+    a Hinglish question — that helps it resolve the question correctly and pick
+    the right records. It is no longer an instruction about the output:
+    multilingual ANSWERS were descoped on 2026-08-21 (DECISIONS.md). The engine
+    understands the question and replies in English, which is strictly better
+    for the asker than refusing it.
     """
     q = str(question or "")
     if _DEVANAGARI.search(q):
@@ -552,8 +556,7 @@ def brief(plan_d: dict, got: R.Retrieved, verdict: R.Verdict,
     parts = [
         "# RESEARCH BRIEF",
         f"**Question as understood:** {plan_d.get('restated', '')}",
-        f"**WRITE THE ANSWER IN: {answer_language(question)}** "
-        "(headings and citation keys stay in English)",
+        f"**Question language: {answer_language(question)}. Answer in English.**",
         f"**Intent:** {plan_d.get('intent', '')}",
         f"**Route (decided by code, not by you): {verdict.route}**",
     ]

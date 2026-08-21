@@ -945,6 +945,45 @@ is a decision aid for whether a re-sweep is worth buying, not a substitute for
 one. Build this into any future phase that grades generated output.
 
 
+## DESCOPED: multilingual answers — English out, any language in (2026-08-21)
+
+**Arvind's call, and it is a scope decision rather than a bug being tolerated.**
+
+The gate found the engine answering Hindi and Hinglish questions in English —
+0 of 4 — against EC-CHAT-1, which asks for an answer "in kind". Arvind's
+response: *"if you ask a question in hindi/hinglish you [get an] English
+answer. If that's so, it's fine. We want the engine to take only english
+questions."*
+
+**What was actually happening, and why it is acceptable.** The failure was
+narrow. The planner read the Devanagari and Hinglish questions correctly, mapped
+them to the right codes, retrieved the right evidence and produced the right
+numbers. Only the prose came back in English. A Hindi speaker was getting a
+correct, cited, well-grounded answer — in the wrong language.
+
+**What was implemented.** The engine still ACCEPTS any language and answers in
+English. It does not refuse non-English input, because refusing is strictly
+worse for someone who would otherwise get a correct answer. The synthesis
+prompt previously promised to answer in kind; that promise is removed, because
+a stated promise the system does not keep is worse than a stated limit.
+
+**What did NOT change: the engine still READS Hinglish.** The corpus is
+code-mixed, many records are Hinglish, and they are still retrieved and quoted
+verbatim in whatever language they were written. Only the generated prose is
+English.
+
+**The eval was rescoped, not deleted.** The category now tests COMPREHENSION —
+a non-English question must still be routed correctly, restated substantively,
+and answered with citations on the thing actually asked. Dropping the language
+requirement must not become permission to answer a Hindi question badly, and
+the four questions stay in the golden set to hold that line.
+
+**The cost, stated:** an Indian shopper asking in their own register gets an
+answer in English. For a research instrument read by a PM that is a fair trade;
+for a shipped consumer product it would not be, and Part 5's MVP should not
+inherit this decision without re-examining it.
+
+
 ## Explicitly rejected
 
 Recorded so they don't quietly reappear as "optimisations":

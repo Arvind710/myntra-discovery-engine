@@ -608,25 +608,38 @@ questions:
       mentions_codes: [C10]
 
 # ---------------------------------------------------------------------------
-# MULTILINGUAL — EC-CHAT-1. The corpus is code-mixed, so the questions are too.
+# NON-ENGLISH INPUT — EC-CHAT-1, RESCOPED 2026-08-21.
+#
+# The engine answers in ENGLISH whatever language it is asked in. Multilingual
+# OUTPUT was descoped by Arvind: a Hindi question already gets a correct answer
+# with the right numbers and the right records, in English, and that is deemed
+# sufficient. What is still tested here — and still matters, because the corpus
+# is code-mixed and so are its users — is that a non-English question is
+# UNDERSTOOD: routed correctly, mapped to the right codes, and answered on the
+# thing that was actually asked. Accepting the question and replying in English
+# is strictly better for the asker than refusing it.
 # ---------------------------------------------------------------------------
 
   - id: MUL-01
     category: multilingual
     question: Log wishlist mein item save karke kyun nahi khareedte?
     expect_route: FULL
-    why: Hinglish, the corpus's own register. Must answer in kind.
+    why: >-
+      Hinglish, the corpus's own register. Must be understood and answered on
+      the barrier actually asked about.
     assertions:
-      language: hinglish
+      answered_in_english: true
       states_n: true
 
   - id: MUL-02
     category: multilingual
     question: क्या साइज़ को लेकर अनिश्चितता सबसे बड़ी वजह है?
     expect_route: FULL
-    why: Devanagari Hindi. A comparative question in a non-Latin script.
+    why: >-
+      Devanagari Hindi. A comparative question in a non-Latin script — the
+      script must not stop the question being read correctly.
     assertions:
-      language: hindi
+      answered_in_english: true
       mentions_codes: [C1]
 
   - id: MUL-03
@@ -635,7 +648,7 @@ questions:
     expect_route: FULL
     why: Hinglish comparative — C6 against C2, both large enough to compare.
     assertions:
-      language: hinglish
+      answered_in_english: true
       mentions_codes: [C6, C2]
 
   - id: MUL-04
@@ -646,7 +659,7 @@ questions:
       Hinglish asking explicitly for a count — the answer must carry the number
       through the language switch rather than going vague.
     assertions:
-      language: hinglish
+      answered_in_english: true
       states_n: true
 
 # ---------------------------------------------------------------------------

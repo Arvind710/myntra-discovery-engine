@@ -726,19 +726,24 @@ def test_followups_resolve_their_reference_in_the_restatement(results):
     assert not bad, bad
 
 
-def test_multilingual_questions_are_answered_in_kind(results):
-    """EC-CHAT-1. The corpus is code-mixed; an English-only answer to a Hindi
-    question is a worse answer, not a neutral one."""
+def test_non_english_questions_are_understood(results):
+    """EC-CHAT-1, rescoped 2026-08-21: answers are always in English, so what is
+    tested is COMPREHENSION rather than output language.
+
+    A non-English question must still be read correctly — restated
+    substantively, grounded in retrieved evidence, and answered on the thing
+    asked. Dropping the language requirement must not quietly become permission
+    to answer a Hindi question badly.
+    """
     bad = []
     for r in by_category(results, "multilingual"):
-        want = (r["assertions"] or {}).get("language")
-        text = r["answer"] or ""
-        if want == "hindi" and not re.search(r"[ऀ-ॿ]", text):
-            bad.append(f"{r['id']}: Devanagari question answered without Devanagari")
-        if want == "hinglish" and not re.search(
-                r"\b(hai|hain|nahi|nahin|kya|karke|log|zyada|bada|ka|ki|ke|se|"
-                r"aur|lekin|par|matlab|wale|bolte)\b", text, re.I):
-            bad.append(f"{r['id']}: Hinglish question answered with no Hinglish")
+        if r["route"] == "NONE":
+            bad.append(f"{r['id']}: a legible question was refused")
+            continue
+        if len((r["restated"] or "").split()) < 6:
+            bad.append(f"{r['id']}: restatement too thin to show it was understood")
+        if not re.search(r"\[\[[a-z0-9_]+\|", r["answer"] or ""):
+            bad.append(f"{r['id']}: answered with no citation at all")
     assert not bad, bad
 
 
