@@ -191,21 +191,40 @@ if status != "ok":
 def _find_api_key() -> tuple[str, str]:
     """(key, where-it-came-from)."""
     import os
-    names = ("OPENAI_API_KEY", "OPENAI_KEY", "openai_api_key", "api_key")
+    # Match on a NORMALISED name: lowercased, with punctuation removed. The key
+    # was added to the deployment as `OpenAIAPI_Key` and an exact-spelling
+    # lookup missed it, so a correctly-configured app reported itself
+    # unconfigured. Capitalisation and underscores are not a meaningful part of
+    # what someone typed into a secrets box, and treating them as significant
+    # only creates this failure.
+    def norm(name: str) -> str:
+        return re.sub(r"[^a-z0-9]", "", str(name).lower())
+
+    wanted = {"openaiapikey", "openaikey", "apikey", "openai"}
+
+    def scan(mapping, path: str) -> tuple[str, str] | None:
+        try:
+            keys = list(mapping.keys())
+        except Exception:                                      # noqa: BLE001
+            return None
+        for k in keys:
+            v = mapping.get(k)
+            if isinstance(v, str) and v.strip() and norm(k) in wanted:
+                return (v.strip(), f"{path}[{k}]")
+        return None
+
     try:
         sec = st.secrets
-        for n in names:
-            v = sec.get(n)
-            if isinstance(v, str) and v.strip():
-                return (v.strip(), f"secrets[{n}]")
+        hit = scan(sec, "secrets")
+        if hit:
+            return hit
         # a nested section, e.g.  [openai]\n api_key = "sk-..."
-        for section in ("openai", "OPENAI"):
-            block = sec.get(section)
-            if hasattr(block, "get"):
-                for n in names:
-                    v = block.get(n)
-                    if isinstance(v, str) and v.strip():
-                        return (v.strip(), f"secrets[{section}][{n}]")
+        for k in list(sec.keys()):
+            block = sec.get(k)
+            if hasattr(block, "keys"):
+                hit = scan(block, f"secrets[{k}]")
+                if hit:
+                    return hit
     except Exception:                                          # noqa: BLE001
         pass
     v = os.environ.get("OPENAI_API_KEY", "")
