@@ -1,0 +1,30 @@
+{
+  "run_id": "p4-sweep-20260821-125321-877fa6",
+  "written": "2026-08-21T12:53:21+00:00",
+  "planner_model": "gpt-5-mini",
+  "synthesis_model": "gpt-5",
+  "synthesis_effort": "low",
+  "prompt_version": "analyst_v1",
+  "n": 3,
+  "cost_usd": 0,
+  "results": [
+    {
+      "id": "CAN-01",
+      "category": "canonical",
+      "route": "FULL",
+      "dry_run": true
+    },
+    {
+      "id": "CAN-02",
+      "category": "canonical",
+      "route": "FULL",
+      "dry_run": true
+    },
+    {
+      "id": "CAN-03",
+      "category": "canonical",
+      "route": "FULL",
+      "dry_run": true
+    }
+  ]
+}

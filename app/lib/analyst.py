@@ -189,8 +189,17 @@ who chose to post — never a rate at which shoppers do something.
 
 YOUR OUTPUT
 - intent: out_of_scope when the question needs data the corpus does not hold at
-  all; methodological when it asks how this engine was built rather than what it
-  found.
+  all.
+
+  `methodological` is NARROW: it means "how was this engine built", "what method
+  did you use", "how do you know your classifier works". It does NOT cover
+  questions about what the corpus CONTAINS or how much of it there is. "How many
+  barriers were checked and how many came back empty?" is a question about the
+  data and must be answered from the data. "Is that reliable?" about a specific
+  code is answered from the agreement rows for THAT code, not from a description
+  of the pipeline. When in doubt it is not methodological: a wrong
+  `methodological` returns a canned description of the method to someone who
+  asked about the findings.
 - restated: the question as you understand it, in one sentence, with any
   pronoun or reference from earlier turns RESOLVED to the thing it names. This
   is shown to the user, so it must read as a question, not as a plan.
@@ -431,8 +440,12 @@ NONE — do not answer, and be BRIEF: three or four sentences, no headings, no
 If the brief flags a FALSE PREMISE, correct it in the first sentence, before
 answering. Do not answer the question as asked and mention the correction later.
 
-Write in the language of the question. A Hindi or Hinglish question gets a
-Hindi or Hinglish answer, with the headings and the citation keys unchanged."""
+LANGUAGE
+The brief names the language to answer in, and it is not optional. A question
+in Hindi gets an answer in Hindi; a question in Hinglish gets Hinglish. Keep the
+section headings and the citation keys exactly as specified in English — only
+the prose changes. Answering an Indian shopper's Hindi question in English is a
+worse answer, not a neutral one, and this corpus is code-mixed throughout."""
 
 # The fence and the quote check must agree exactly, so both live in
 # verify.py. See `fence()` there for what it defends against.
@@ -509,12 +522,38 @@ def _records_block(title: str, note: str, records: list[dict], limit: int = 8) -
     return "\n\n".join(x for x in out if x) + "\n"
 
 
-def brief(plan_d: dict, got: R.Retrieved, verdict: R.Verdict) -> str:
+_DEVANAGARI = re.compile(r"[\u0900-\u097F]")
+_HINGLISH = re.compile(
+    r"\b(kyun|kyu|kaise|kya|hai|hain|nahi|nahin|karke|karte|karta|log|zyada|"
+    r"bada|bade|sabse|mein|main|ka|ki|ke|se|aur|lekin|par|matlab|wale|bolte|"
+    r"chahiye|acha|accha|thoda|bhi|toh|kitne|kitna)\b", re.I)
+
+
+def answer_language(question: str) -> str:
+    """The language the answer must be written in.
+
+    Stated per question in the brief rather than left to a line in the system
+    prompt. In the first complete sweep the instruction was in the prompt and
+    all four multilingual questions came back in English — including one asked
+    in Devanagari. An instruction competing with an entirely English brief loses.
+    """
+    q = str(question or "")
+    if _DEVANAGARI.search(q):
+        return "Hindi (Devanagari script, as the question was asked)"
+    if len(_HINGLISH.findall(q)) >= 2:
+        return "Hinglish — romanised Hindi mixed with English, as the question was asked"
+    return "English"
+
+
+def brief(plan_d: dict, got: R.Retrieved, verdict: R.Verdict,
+          question: str = "") -> str:
     """Everything the synthesis call is given. Assembled here rather than in the
     prompt so that what the model saw is reconstructable from the record."""
     parts = [
         "# RESEARCH BRIEF",
         f"**Question as understood:** {plan_d.get('restated', '')}",
+        f"**WRITE THE ANSWER IN: {answer_language(question)}** "
+        "(headings and citation keys stay in English)",
         f"**Intent:** {plan_d.get('intent', '')}",
         f"**Route (decided by code, not by you): {verdict.route}**",
     ]
@@ -741,7 +780,7 @@ def ask(client, con: sqlite3.Connection, question: str, *,
 
     # Step 4 — synthesis.
     try:
-        text, usage = synthesise(client, brief(p, got, v))
+        text, usage = synthesise(client, brief(p, got, v, question))
     except Exception as exc:                                   # noqa: BLE001
         a.error = f"The answer could not be generated: {exc}"
         a.seconds = time.time() - t0
@@ -755,7 +794,7 @@ def ask(client, con: sqlite3.Connection, question: str, *,
         a.regenerated = True
         problems = "\n".join(f"- {x}" for x in rep.problems())
         try:
-            text2, usage2 = synthesise(client, brief(p, got, v),
+            text2, usage2 = synthesise(client, brief(p, got, v, question),
                                        repair=REPAIR.format(problems=problems))
             a.usage.append(("repair", SYNTHESIS_MODEL, usage2))
             a.cost_usd += _cost(SYNTHESIS_MODEL, usage2)

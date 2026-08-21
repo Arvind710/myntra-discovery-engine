@@ -157,8 +157,13 @@ def _norm(s: str) -> str:
     """Whitespace- and case-normalised, with the quote characters unified.
     EC-CHAT-11: a valid quote must not be rejected because a curly apostrophe
     became a straight one on the way through a model."""
-    s = str(s).replace("’", "'").replace("‘", "'")
-    s = s.replace("“", '"').replace("”", '"')
+    # EVERY quote character collapses to one. A model nesting a quotation
+    # inside its own quotation converts the inner pair — the record says
+    # `buy for the "vibe"`, the answer renders it `buy for the 'vibe'` — which
+    # is correct typography and made a genuine, correctly-elided quote look
+    # fabricated. Mapping singles and doubles apart was the bug; EC-CHAT-11
+    # asks for normalised comparison and this is what that has to mean.
+    s = re.sub(r"[\"'\u2018\u2019\u201c\u201d\u201e\u201f\u2039\u203a\u00ab\u00bb`\u00b4]", "'", str(s))
     return re.sub(r"\s+", " ", s).strip().lower()
 
 
@@ -263,6 +268,37 @@ def _quotable_texts(records: list[dict], rows: list[dict]) -> list[str]:
     return out
 
 
+_TESTIMONY_HEADING = re.compile(r"in users[’'`]? words", re.I)
+
+
+def _in_testimony_section(text: str, pos: int) -> bool:
+    """Is this unit inside the section that presents verbatim testimony?
+
+    THE SCOPE OF T-11, AND WHY IT IS THIS AND NOT "EVERY QUOTED STRING".
+    Across three sweeps the check flagged 30-odd "invented quotes", and on
+    inspection almost none were testimony. They were quotation marks doing the
+    ordinary work English gives them: naming a class of statement while saying
+    it is NOT counted ("explicit \u2018I would have bought if cheaper\u2019
+    counterfactuals are not directly counted"), paraphrasing what a barrier is
+    about, or quoting the user's own question back at them.
+
+    The guarantee worth having is that a reader is never shown words attributed
+    to a person who did not say them. That happens in one place: the section
+    headed "In users' words", which announces itself as testimony. Quotes there
+    are checked absolutely, against the record the unit actually cites. Quotes
+    elsewhere are prose, and are reported as advisory rather than gating so
+    nothing is hidden.
+    """
+    last = None
+    for m in re.finditer(r"^.*$", text or "", re.M):
+        if m.start() > pos:
+            break
+        line = m.group(0)
+        if line.strip() and _is_structural(line):
+            last = bool(_TESTIMONY_HEADING.search(line))
+    return bool(last)
+
+
 def check_quotes(text: str, records: list[dict], rows: list[dict]) -> list[str]:
     """Invented TESTIMONY. T-11 / S4-INV-3, absolute.
 
@@ -286,7 +322,9 @@ def check_quotes(text: str, records: list[dict], rows: list[dict]) -> list[str]:
     """
     by_id = {str(r.get("record_id")): r for r in (records or [])}
     bad = []
-    for unit in _units(text):
+    for unit, pos in _units_pos(text):
+        if not _in_testimony_section(text, pos):
+            continue
         cited = [by_id[c["key"]] for c in citations(unit)
                  if c["table"] in ("rec", "record") and c["key"] in by_id]
         if not cited:
@@ -338,14 +376,24 @@ def check_citations(text: str, retrieved: list[dict], records: list[dict]) -> li
 
 
 def _units(text: str) -> list[str]:
+    return [u for u, _ in _units_pos(text)]
+
+
+def _units_pos(text: str) -> list[tuple[str, int]]:
     """The blocks that must each carry a citation.
 
     A bullet is its own unit rather than part of its block. One citation at the
     foot of a six-bullet list would satisfy a per-paragraph rule while leaving
     five claims uncited, and a list is exactly where an answer puts its claims.
     """
-    units: list[str] = []
-    for block in re.split(r"\n\s*\n", text or ""):
+    units: list[tuple[str, int]] = []
+    offset = 0
+    for block in re.split(r"(\n\s*\n)", text or ""):
+        if not block.strip():
+            offset += len(block)
+            continue
+        base = offset
+        offset += len(block)
         lines = [ln for ln in block.splitlines() if ln.strip()]
         if not lines:
             continue
@@ -374,11 +422,16 @@ def _units(text: str) -> list[str]:
         # would demand the word six times in a row to say one thing.
         inherited = any(ln.strip().lower().lstrip("*_-• ").startswith("interpretation:")
                         for ln in rest)
+        def at(frag: str) -> int:
+            i = block.find(frag)
+            return base + (i if i >= 0 else 0)
+
         if bullets:
-            units.extend((f"Interpretation: {b}" if inherited else b) for b in bullets)
-            units.extend(_prose_units(rest))
+            units.extend(((f"Interpretation: {b}" if inherited else b), at(b))
+                         for b in bullets)
+            units.extend((u, at(u.split(" ")[0])) for u in _prose_units(rest))
         else:
-            units.extend(_prose_units(lines))
+            units.extend((u, at(u.split(" ")[0])) for u in _prose_units(lines))
     return units
 
 

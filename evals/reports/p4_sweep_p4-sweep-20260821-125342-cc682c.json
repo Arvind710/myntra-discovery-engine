@@ -1,0 +1,63 @@
+{
+  "run_id": "p4-sweep-20260821-125342-cc682c",
+  "written": "2026-08-21T12:53:57+00:00",
+  "planner_model": "gpt-5-mini",
+  "synthesis_model": "gpt-5",
+  "synthesis_effort": "low",
+  "prompt_version": "analyst_v1",
+  "n": 1,
+  "cost_usd": 0.0124,
+  "results": [
+    {
+      "id": "OOS-02",
+      "category": "out_of_scope",
+      "question": "Who is the CEO of Myntra?",
+      "expect_route": "NONE",
+      "expected": [
+        "NONE"
+      ],
+      "assertions": {},
+      "payload": null,
+      "route": "NONE",
+      "restated": "Who is the CEO of Myntra?",
+      "answer": "This engine analyzes discussion about why people do not buy items they saved to a wishlist on Indian online fashion platforms, not corporate leadership. It does not contain information on Myntra’s CEO. To answer your question, you’d need up-to-date corporate disclosures or reputable news sources; please also specify the date you care about and whether interim appointments are acceptable, and whether you require confirmation from multiple sources.",
+      "error": "",
+      "plan": {
+        "intent": "out_of_scope",
+        "codes": [],
+        "evidence_needed": [
+          "external",
+          "source_breakdown",
+          "confidence",
+          "reliability"
+        ],
+        "queries": [],
+        "premise": {
+          "asserts": "",
+          "status": "unverifiable",
+          "correction": ""
+        }
+      },
+      "gate_reasons": [
+        "the question falls outside what this corpus covers"
+      ],
+      "gate_caveats": [],
+      "verified": true,
+      "regenerated": false,
+      "problems": [],
+      "bad_numerals": [],
+      "bad_quotes": [],
+      "proxy_violations": [],
+      "scope_violations": [],
+      "n_facts": 151,
+      "n_records": 3,
+      "record_ids": [
+        "74534e34d182897d2b3225c0be3cce4017714eef",
+        "a69914f6b811416c0820c06b9f83b58886055143",
+        "9f73172b65de1419f0566351f53c2f2a76848190"
+      ],
+      "cost_usd": 0.012387,
+      "seconds": 15.1
+    }
+  ]
+}

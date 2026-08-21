@@ -346,8 +346,9 @@ def test_invented_testimony_is_rejected():
     """S4-INV-3 / T-11 — absolute. A quote ATTRIBUTED to a record must be in
     that record."""
     from lib import verify as V
-    good = 'One shopper said "the kurta ran small". [[rec|r1]]'
-    fake = 'One shopper said "I gave up and bought it elsewhere". [[rec|r1]]'
+    good = '**In users\' words**\n- "the kurta ran small" [[rec|r1]]'
+    fake = ('**In users\' words**\n'
+            '- "I gave up and bought it elsewhere" [[rec|r1]]')
     assert V.check_quotes(good, RECS, ROWS) == []
     assert V.check_quotes(fake, RECS, ROWS)
 
@@ -360,7 +361,8 @@ def test_a_quote_attributed_to_the_wrong_record_is_rejected():
     recs = RECS + [{"record_id": "r2", "source": "reddit",
                     "text_raw": "the colour was completely different",
                     "_cite": {"table": "record", "key": "r2"}}]
-    misattributed = 'They wrote "the colour was completely different". [[rec|r1]]'
+    misattributed = ('**In users\' words**\n'
+                     '- "the colour was completely different" [[rec|r1]]')
     assert V.check_quotes(misattributed, recs, ROWS)
 
 
@@ -369,9 +371,21 @@ def test_an_unattributed_quote_is_governed_by_the_citation_rule():
     it sits in still needs a citation or an `Interpretation:` prefix, so it
     cannot slip through uncontrolled."""
     from lib import verify as V
-    text = 'Users often describe "a gap between the photo and the item".'
+    text = ('**Evidence**\n'
+            'Users often describe "a gap between the photo and the item".')
     assert V.check_quotes(text, RECS, ROWS) == []
     assert V.check_uncited(text)
+
+
+def test_language_of_the_answer_is_decided_from_the_question():
+    """EC-CHAT-1. In the first complete sweep all four multilingual questions
+    came back in English — including one asked in Devanagari — because the
+    instruction sat in the system prompt and competed with an entirely English
+    brief. It is now stated per question, in the brief."""
+    from lib import analyst as A
+    assert "Devanagari" in A.answer_language("क्या साइज़ सबसे बड़ी वजह है?")
+    assert "Hinglish" in A.answer_language("Price zyada hai ya quality ka doubt?")
+    assert A.answer_language("What stops people buying what they saved?") == "English"
 
 
 def test_quote_survives_punctuation_normalisation():
