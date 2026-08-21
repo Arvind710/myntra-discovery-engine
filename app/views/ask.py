@@ -174,16 +174,74 @@ if status != "ok":
 
 # EC-OPS-4 / S4-OPS-4: a missing key degrades to a message, never a stack trace.
 # The rest of the app is read-only and must stay fully usable without one.
-api_key = st.secrets.get("OPENAI_API_KEY", "") if hasattr(st, "secrets") else ""
-if not api_key:
+#
+# WHY THIS IS TOLERANT AND WHY IT DIAGNOSES ITSELF
+# ------------------------------------------------
+# The first attempt read exactly one spelling, `OPENAI_API_KEY` at the top
+# level, and said only "not set here" when it missed. The key WAS added to the
+# deployment and the page still said that, which left nothing to act on: a
+# reader cannot tell a key entered under a section from a key not entered at
+# all from a container that has not restarted. Those have different fixes.
+#
+# So it accepts the spellings a person actually types — mirroring the alias
+# handling `pipeline/common/env.py` already does for `.env` — and when it still
+# finds nothing it reports WHAT IT CAN SEE. Names only, never values: enough to
+# tell the three cases apart, and nothing that would matter if read by a
+# stranger on a public URL.
+def _find_api_key() -> tuple[str, str]:
+    """(key, where-it-came-from)."""
     import os
-    api_key = os.environ.get("OPENAI_API_KEY", "")
+    names = ("OPENAI_API_KEY", "OPENAI_KEY", "openai_api_key", "api_key")
+    try:
+        sec = st.secrets
+        for n in names:
+            v = sec.get(n)
+            if isinstance(v, str) and v.strip():
+                return (v.strip(), f"secrets[{n}]")
+        # a nested section, e.g.  [openai]\n api_key = "sk-..."
+        for section in ("openai", "OPENAI"):
+            block = sec.get(section)
+            if hasattr(block, "get"):
+                for n in names:
+                    v = block.get(n)
+                    if isinstance(v, str) and v.strip():
+                        return (v.strip(), f"secrets[{section}][{n}]")
+    except Exception:                                          # noqa: BLE001
+        pass
+    v = os.environ.get("OPENAI_API_KEY", "")
+    return ((v.strip(), "environment") if v.strip() else ("", ""))
+
+
+def _secrets_seen() -> str:
+    """What the deployment can actually see. Names only, never values."""
+    try:
+        keys = list(st.secrets.keys())
+    except Exception as exc:                                   # noqa: BLE001
+        return f"No secrets are readable at all ({type(exc).__name__})."
+    if not keys:
+        return "Secrets are readable but completely empty."
+    hits = [k for k in keys if "openai" in str(k).lower() or "api" in str(k).lower()]
+    return (f"The deployment can see {len(keys)} secret entr"
+            f"{'y' if len(keys) == 1 else 'ies'}: {', '.join(map(str, keys))}."
+            + (f" Nothing among them looks like an OpenAI key."
+               if not hits else
+               f" `{hits[0]}` looks close — if the key sits under a section "
+               f"heading like `[openai]`, move it to the top level."))
+
+
+api_key, key_source = _find_api_key()
 if not api_key:
     st.warning(
         "**The analyst is not configured on this deployment.** It needs an "
-        "OpenAI key, which is not set here. Everything else — the Data Bank, "
-        "the Analysis and the Insights — reads from the frozen artifacts and "
-        "works normally.")
+        "OpenAI key. Everything else — the Data Bank, the Analysis and the "
+        "Insights — reads from the frozen artifacts and works normally.")
+    st.caption(
+        f"Diagnostics: {_secrets_seen()} "
+        "The key must be a top-level line in **Manage app → Settings → "
+        "Secrets**, exactly `OPENAI_API_KEY = \"sk-...\"`, with no section "
+        "heading above it. If it is already there, the container is still "
+        "running the old process — use **Manage app → Reboot app**, which is "
+        "the usual cause when the secret looks right.")
     st.stop()
 
 with st.expander("How this answers — and when it refuses", expanded=False):
