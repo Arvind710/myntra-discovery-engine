@@ -1079,14 +1079,14 @@ def gate(plan: dict, got: Retrieved, question: str = "") -> Verdict:
     if disowned and not got.facts:
         return Verdict("NONE", [], list(plan.get("evidence_needed") or []),
                        ["the question falls outside what this corpus covers"])
-    # The planner's doubt alone does not settle it, and a registered missing cut
-    # alone only downgrades to PARTIAL. Both together are two independent
-    # signals agreeing, and that is a refusal: "which brand has the highest
-    # return rate?" has no brand dimension AND was disowned, yet came back as a
-    # half-answer about barriers nobody asked about.
-    if disowned and missing_cuts(f"{question} {plan.get('restated', '')}"):
-        return Verdict("NONE", [], list(plan.get("evidence_needed") or []),
-                       missing_cuts(f"{question} {plan.get('restated', '')}"))
+    # NO RULE HERE COMBINING "the planner disowned it" WITH "a cut is missing".
+    # That was tried, to catch "which brand has the highest return rate?", and it
+    # refused four questions that are the whole point of the PARTIAL route:
+    # "what do Bangalore shoppers think about pricing?" has no geography AND was
+    # disowned, and the answer is still most of an answer. A missing cut is a
+    # reason to name a gap, not to withhold what the corpus does hold. The
+    # brand-rate case belongs to `hard_out_of_scope`, which catches it by asking
+    # what the question wants — a rate — rather than by counting doubts.
     if intent == "methodological":
         # Routed to a static description of the pipeline, not to retrieval
         # (EC-CHAT-6). It is FULL because the answer is fully supported — by the

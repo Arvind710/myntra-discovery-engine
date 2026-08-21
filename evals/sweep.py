@@ -75,7 +75,30 @@ def expected_routes(spec) -> list[str]:
     return [s.upper()]
 
 
-def run(questions: list[dict], *, dry_run: bool = False) -> dict:
+def out_partial(run_id: str, results: list[dict], A) -> dict:
+    return {
+        "run_id": run_id,
+        "written": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "planner_model": A.PLANNER_MODEL, "synthesis_model": A.SYNTHESIS_MODEL,
+        "synthesis_effort": A.SYNTHESIS_EFFORT,
+        "prompt_version": A.PROMPT_VERSION,
+        "n": len(results),
+        "cost_usd": round(sum(r.get("cost_usd", 0) for r in results), 4),
+        "results": results,
+    }
+
+
+def _write(out: dict) -> Path:
+    REPORTS.mkdir(parents=True, exist_ok=True)
+    path = REPORTS / f"p4_sweep_{out['run_id']}.json"
+    payload = json.dumps(out, indent=2, ensure_ascii=False)
+    path.write_text(payload)
+    (REPORTS / "p4_sweep_latest.json").write_text(payload)
+    return path
+
+
+def run(questions: list[dict], *, dry_run: bool = False,
+        budget: float | None = None, resume: str | None = None) -> dict:
     envm.load()
     from openai import OpenAI
     from lib import db as appdb
@@ -87,13 +110,37 @@ def run(questions: list[dict], *, dry_run: bool = False) -> dict:
     payloads = load_payloads()
     write_con = dbm.connect()
 
-    results = []
+    # WHY THIS WRITES AFTER EVERY QUESTION.
+    # The artefact used to be written once, at the end. When the credit balance
+    # ran out on question 30 of 64, twenty-nine completed answers — real money,
+    # already spent — went with it. A long paid run must never hold its only
+    # copy in memory.
+    results: list[dict] = []
+    done: dict[str, dict] = {}
+    if resume:
+        prev = REPORTS / f"p4_sweep_{resume}.json"
+        if prev.exists():
+            for r in json.loads(prev.read_text())["results"]:
+                if not r.get("error"):
+                    done[r["id"]] = r
+            print(f"resuming: {len(done)} answers carried forward from {resume}")
+
+    spent = 0.0
     with rmod.Run(write_con, "p4-sweep", model=A.SYNTHESIS_MODEL,
                   prompt_version=A.PROMPT_VERSION,
                   params={"n": len(questions), "planner": A.PLANNER_MODEL}) as run_row:
         run_id = run_row.run_id
         for i, q in enumerate(questions, 1):
             t0 = time.time()
+            if q["id"] in done:
+                results.append(done[q["id"]])
+                print(f"[{i}/{len(questions)}] {q['id']:8} carried forward", flush=True)
+                continue
+            if budget is not None and spent >= budget:
+                print(f"\nSTOPPING at {i - 1}/{len(questions)} — ${spent:.2f} spent "
+                      f"reaches the ${budget:.2f} budget. Everything answered so far "
+                      f"is saved; re-run with --resume to finish.", flush=True)
+                break
             # Follow-up questions carry their prior turn. The restatement is
             # what the planner resolves against, and for the fixture we use the
             # prior question as its own restatement — good enough to prove the
@@ -153,28 +200,22 @@ def run(questions: list[dict], *, dry_run: bool = False) -> dict:
                 "cost_usd": round(a.cost_usd, 6),
                 "seconds": round(time.time() - t0, 1),
             })
+            spent += a.cost_usd
+            _write(out_partial(run_id, results, A))     # crash-safe, every question
             ok = "ok " if a.route in expected_routes(q["expect_route"]) else "ROUTE"
             vf = "" if (rep and rep.ok) else f"  [{len(rep.problems()) if rep else '?'} problems]"
             print(f"[{i}/{len(questions)}] {q['id']:8} {ok} {a.route:8} "
                   f"${a.cost_usd:.4f} {time.time() - t0:.0f}s{vf}", flush=True)
             if a.error:
-                print(f"           ERROR: {a.error}")
+                print(f"           ERROR: {a.error}", flush=True)
+                if "insufficient_quota" in a.error or "credit" in a.error.lower():
+                    print("\nSTOPPING — the API reports no credit remaining. "
+                          "Everything answered so far is saved; add credit and "
+                          "re-run with --resume.", flush=True)
+                    break
 
-    out = {
-        "run_id": run_id,
-        "written": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "planner_model": A.PLANNER_MODEL, "synthesis_model": A.SYNTHESIS_MODEL,
-        "synthesis_effort": A.SYNTHESIS_EFFORT,
-        "prompt_version": A.PROMPT_VERSION,
-        "n": len(results),
-        "cost_usd": round(sum(r.get("cost_usd", 0) for r in results), 4),
-        "results": results,
-    }
-    REPORTS.mkdir(parents=True, exist_ok=True)
-    path = REPORTS / f"p4_sweep_{run_id}.json"
-    path.write_text(json.dumps(out, indent=2, ensure_ascii=False))
-    (REPORTS / "p4_sweep_latest.json").write_text(json.dumps(out, indent=2,
-                                                            ensure_ascii=False))
+    out = out_partial(run_id, results, A)
+    path = _write(out)
     print(f"\nwrote {path.relative_to(ROOT)}  —  ${out['cost_usd']:.4f} over {out['n']} questions")
     return out
 
@@ -186,6 +227,11 @@ def main() -> int:
     ap.add_argument("--limit", type=int)
     ap.add_argument("--dry-run", action="store_true",
                     help="plan and retrieve only — no synthesis call, no cost")
+    ap.add_argument("--budget", type=float, default=None,
+                    help="stop cleanly before spending more than this, in USD")
+    ap.add_argument("--resume", metavar="RUN_ID",
+                    help="carry forward the answers already in a previous run's "
+                         "artefact and only ask what is missing")
     a = ap.parse_args()
 
     qs = load_questions()
@@ -198,7 +244,7 @@ def main() -> int:
     if not qs:
         print("no questions matched")
         return 1
-    run(qs, dry_run=a.dry_run)
+    run(qs, dry_run=a.dry_run, budget=a.budget, resume=a.resume)
     return 0
 
 
