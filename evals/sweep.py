@@ -98,7 +98,8 @@ def _write(out: dict) -> Path:
 
 
 def run(questions: list[dict], *, dry_run: bool = False,
-        budget: float | None = None, resume: str | None = None) -> dict:
+        budget: float | None = None, resume: str | None = None,
+        redo: set[str] | None = None) -> dict:
     envm.load()
     from openai import OpenAI
     from lib import db as appdb
@@ -121,7 +122,7 @@ def run(questions: list[dict], *, dry_run: bool = False,
         prev = REPORTS / f"p4_sweep_{resume}.json"
         if prev.exists():
             for r in json.loads(prev.read_text())["results"]:
-                if not r.get("error"):
+                if not r.get("error") and r["id"] not in (redo or set()):
                     done[r["id"]] = r
             print(f"resuming: {len(done)} answers carried forward from {resume}")
 
@@ -232,6 +233,9 @@ def main() -> int:
     ap.add_argument("--resume", metavar="RUN_ID",
                     help="carry forward the answers already in a previous run's "
                          "artefact and only ask what is missing")
+    ap.add_argument("--redo", nargs="*", default=None, metavar="ID",
+                    help="with --resume: re-ask these ids even though the "
+                         "previous run answered them")
     a = ap.parse_args()
 
     qs = load_questions()
@@ -244,7 +248,8 @@ def main() -> int:
     if not qs:
         print("no questions matched")
         return 1
-    run(qs, dry_run=a.dry_run, budget=a.budget, resume=a.resume)
+    run(qs, dry_run=a.dry_run, budget=a.budget, resume=a.resume,
+        redo=set(a.redo or []))
     return 0
 
 

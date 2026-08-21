@@ -1,12 +1,12 @@
 {
-  "run_id": "p4-sweep-20260821-150600-b7e513",
-  "written": "2026-08-21T15:07:49+00:00",
+  "run_id": "p4-sweep-20260821-150226-79b5a7",
+  "written": "2026-08-21T15:03:52+00:00",
   "planner_model": "gpt-5-mini",
   "synthesis_model": "gpt-5",
   "synthesis_effort": "low",
   "prompt_version": "analyst_v1",
   "n": 64,
-  "cost_usd": 2.6301,
+  "cost_usd": 2.6061,
   "results": [
     {
       "id": "CAN-01",
@@ -24,37 +24,36 @@
         "states_n": true
       },
       "payload": null,
-      "route": "PARTIAL",
-      "restated": "What reasons do people give for saving items to a wishlist (i.e., why they add items to wishlists in the first place)?",
-      "answer": "Answer\nPeople most often describe saving items to wait for the right moment to act — the action trigger (journey stage) (C13) — and to manage comparison and decision load (C5). A smaller set say the intent never existed (C9), and some describe saving as a temporary reference that later fizzles — intent extinguished after saving (C12). [[analysis_code_prevalence|C13]] [[analysis_code_prevalence|C5]] [[analysis_code_prevalence|C9]] [[analysis_code_prevalence|C12]]\n\nEvidence\n- Action trigger (journey stage) (C13): 51 of 1,018 records; 50 distinct authors; in 3 sources. [[analysis_code_prevalence|C13]]\n- Comparison & decision load (C5): 22 of 1,018 records; 22 distinct authors; in 3 sources. [[analysis_code_prevalence|C5]]\n- Intent never existed (C9): 21 of 1,018 records; 21 distinct authors; in 2 sources. [[analysis_code_prevalence|C9]]\n- Intent extinguished after saving (C12): 54 of 1,018 records; 49 distinct authors; in 3 sources. [[analysis_code_prevalence|C12]]\n\nHow these rank against other reasons in the corpus:\n- These wishlist motives are discussed less often than other decision barriers such as the material & digital-physical gap (C2) at 241 of 1,018, price (C6) at 207 of 1,018, fit & size uncertainty (C1) at 189 of 1,018, styling & self-image (C3) at 154 of 1,018, and fulfilment (C7) at 140 of 1,018. [[analysis_code_prevalence|C2]] [[analysis_code_prevalence|C6]] [[analysis_code_prevalence|C1]] [[analysis_code_prevalence|C3]] [[analysis_code_prevalence|C7]]\n\nAre these motives concentrated in one source or spread:\n- Action trigger (journey stage) (C13) appears across Reddit (40 of 309), YouTube (9 of 573), and Play (2 of 114). [[analysis_source_code|reddit|C13]] [[analysis_source_code|youtube|C13]] [[analysis_source_code|play|C13]]\n- Comparison & decision load (C5) appears across Reddit (12 of 309), YouTube (9 of 573), and App Store (1 of 22). [[analysis_source_code|reddit|C5]] [[analysis_source_code|youtube|C5]] [[analysis_source_code|appstore|C5]]\n- Intent never existed (C9) appears on YouTube (15 of 573) and Reddit (6 of 309). [[analysis_source_code|youtube|C9]] [[analysis_source_code|reddit|C9]]\n\nDo these motives co-occur or stand alone:\n- Action trigger (journey stage) (C13) co-occurs above chance with styling & self-image (C3) with n_joint=22 and with price (C6) with n_joint=20. [[analysis_cooccurrence|C13|C3]] [[analysis_cooccurrence|C13|C6]]\n- Intent extinguished after saving (C12) co-occurs above chance with styling & self-image (C3) with n_joint=22. [[analysis_cooccurrence|C12|C3]]\n\nHow often users describe workarounds or surviving intent:\n- Intent extinguished after saving (C12) is raised in 54 of 1,018 records; 49 distinct authors. [[analysis_code_prevalence|C12]]\n\nIn users' words\n- “When do these sales come up usually?” [[rec|3271b8df36abd9894c3d7942b4c0f022ccd1a579]]\n- “I broke down and both these coz I wanted them new styles and felt like it had been justifyably long.” [[rec|7d1bb5f6e5dc96671b9228faf0755350783b6269]]\n- “You can’t trust these ads most of the time they are just using the creators reel they will just recreate that outfit with similar looking material the pattern and stitching will be different.” [[rec|5e63f3d9641b3070fb995c2c6635868c1bfb213b]]\n- “I like what I get with these brands” [[rec|af130b9c55ede19f66e4ea81d42c4464d7ac0e31]]\n\nVariation\n- By source: Action trigger (journey stage) (C13) and intent extinguished after saving (C12) are present across three sources; intent never existed (C9) appears across two. [[analysis_code_prevalence|C13]] [[analysis_code_prevalence|C12]] [[analysis_code_prevalence|C9]]\n- Interpretation: The corpus is too thin to judge whether comparison & decision load (C5) behaves consistently across sources beyond the basic presence shown above.\n\nCounter-evidence\n- Other discussion dominates the corpus over wishlist motives: the material & digital-physical gap (C2) at 241 of 1,018, price (C6) at 207 of 1,018, fit & size uncertainty (C1) at 189 of 1,018, styling & self-image (C3) at 154 of 1,018, and fulfilment (C7) at 140 of 1,018. [[analysis_code_prevalence|C2]] [[analysis_code_prevalence|C6]] [[analysis_code_prevalence|C1]] [[analysis_code_prevalence|C3]] [[analysis_code_prevalence|C7]]\n- Wishlist-related triggers often travel with other concerns rather than standing alone: action trigger (journey stage) (C13) co-occurs above chance with styling & self-image (C3) and with price (C6). [[analysis_cooccurrence|C13|C3]] [[analysis_cooccurrence|C13|C6]]\n\nConfidence\n- Medium. Sample sizes for action trigger (journey stage) (C13) and intent extinguished after saving (C12) clear the minimum-n floor, but reliability is mixed: C13 has “not measurable” agreement and C5 is “not measurable”; C3 carries weak agreement. Two validation thresholds fail overall. [[analysis_code_prevalence|C13]] [[analysis_code_prevalence|C12]] [[analysis_gold_agreement|C13]] [[analysis_gold_agreement|C5]] [[analysis_gold_agreement|C3]] [[analysis_method_flags|gold_thresholds_failed]] [[analysis_method_flags|three_independent_source_types]]\n\nLimitations\n- The numbers are shares of discussion, not user behavior or funnel outcomes. [[analysis_method_flags|proxy_not_funnel]]\n- The relevance rubric is narrow and likely under-represents price/value and delivery/trust talk; barrier rankings are conditional on that rubric. [[analysis_method_flags|narrow_relevance_rubric]]\n- Only about 36% of relevant records are Myntra-specific; findings generalize to Indian online fashion more than to a single app. [[analysis_method_flags|myntra_specific_share]]\n- Segments are derived from codes, not observed; any linkage to “undecided” users is partly circular. [[analysis_method_flags|segments_derived_not_observed]]\n- Interpretation: For ranking this as an opportunity, the corpus is thin on intent never existed (C9) — below the reporting floor for confident ordering — so treat its position as indicative rather than ranked.\n- Minimum-n floors apply: counts below 30 are reportable but not rankable; below 15 are not shown as findings. [[analysis_method_flags|min_n_floor]]",
+      "route": "FULL",
+      "restated": "In this corpus, what reasons do people give for saving items to a wishlist in the first place?",
+      "answer": "Answer\nPeople say they save items mainly to defer a decision while they figure out styling/self-image, wait for an action trigger, or cool off on whether they still want it; price also appears as a reason to hold. Most of this discussion sits in mid-journey deferral rather than a fresh-browse impulse or checkout problem [[analysis_stage_outcome|C|defer]] [[analysis_code_prevalence|C3]] [[analysis_code_prevalence|C13]] [[analysis_code_prevalence|C12]] [[analysis_code_prevalence|C6]].\n\nEvidence\n- Sample size and where “why save” shows up:\n  - Mid-journey deferral dominates: 526 of 1018 records are Stage C with outcome=defer [[analysis_stage_outcome|C|defer]].\n  - Reasons that map to saving-to-decide:\n    - Styling & self-image (C3): 154 of 1018 [[analysis_code_prevalence|C3]].\n    - Action trigger (journey stage) (C13): 51 of 1018 [[analysis_code_prevalence|C13]].\n    - Intent extinguished after saving — “Do I still actually want this?” (C12): 54 of 1018 [[analysis_code_prevalence|C12]].\n    - Price (C6): 207 of 1018 (an eliminator often discussed alongside deferral/waiting) [[analysis_code_prevalence|C6]].\n- Distribution across journey stages:\n  - Stage A (browse) defer: 107 of 1018; exit: 3 of 1018 [[analysis_stage_outcome|A|defer]] [[analysis_stage_outcome|A|exit]].\n  - Stage B defer: 21 of 1018; exit: 8 of 1018 [[analysis_stage_outcome|B|defer]] [[analysis_stage_outcome|B|exit]].\n  - Stage C defer: 526 of 1018; exit: 199 of 1018 [[analysis_stage_outcome|C|defer]] [[analysis_stage_outcome|C|exit]].\n  - Stage D exit: 50 of 1018 [[analysis_stage_outcome|D|exit]].\n- Variation by source (selected reasons):\n  - Styling & self-image (C3): Reddit 99 of 309; YouTube 53 of 573; Play 2 of 114 [[analysis_source_code|reddit|C3]] [[analysis_source_code|youtube|C3]] [[analysis_source_code|play|C3]].\n  - Action trigger (C13): Reddit 40 of 309; YouTube 9 of 573; Play 2 of 114 [[analysis_source_code|reddit|C13]] [[analysis_source_code|youtube|C13]] [[analysis_source_code|play|C13]].\n  - Intent “do I still want this?” (C12): Reddit 42 of 309; YouTube 11 of 573; App Store 1 of 22 [[analysis_source_code|reddit|C12]] [[analysis_source_code|youtube|C12]] [[analysis_source_code|appstore|C12]].\n  - Price (C6): Reddit 74 of 309; YouTube 70 of 573; Play 60 of 114; App Store 3 of 22 [[analysis_source_code|reddit|C6]] [[analysis_source_code|youtube|C6]] [[analysis_source_code|play|C6]] [[analysis_source_code|appstore|C6]].\n  - Intent extinguished after saving (C11) is too thin to rank; for reference: YouTube 13 of 573; Play 7 of 114; Reddit 3 of 309; App Store 1 of 22 [[analysis_source_code|youtube|C11]] [[analysis_source_code|play|C11]] [[analysis_source_code|reddit|C11]] [[analysis_source_code|appstore|C11]].\n- Never intended to buy vs postponed/undecided:\n  - Intent never existed (C9): 21 of 1018 [[analysis_code_prevalence|C9]].\n  - Postponed/undecided signals: C12 at 54 of 1018 and C13 at 51 of 1018 [[analysis_code_prevalence|C12]] [[analysis_code_prevalence|C13]].\n- Workarounds and “shelf” use signals:\n  - C13 co-occurs with Styling & self-image (C3) in 22 records; with Price (C6) in 20 records, consistent with saving while waiting for a trigger or styling resolution [[analysis_cooccurrence|C13|C3]] [[analysis_cooccurrence|C13|C6]].\n  - C12 co-occurs with Styling & self-image (C3) in 22 records, consistent with saving while deciding if the item fits one’s look [[analysis_cooccurrence|C12|C3]].\n\nIn users' words\n- “I was cleaning my wishlist yesterday and realised half the clothes I save are not for anything I actually have planned like I’ll see a cute top or a dress on Savana or myntra and immediately think ‘this would be nice for a cafe day’ or ‘this would look good on a trip’” [[rec|6102d72a4134c75fd1e23e0da192954f39145fbd]].\n- “Is overcoats a thing for India yet? … I’m 5'7, should I buy an overcoat?” [[rec|a91133402e1ca1100b362aaf8833b2d3cb8d6c61]].\n- “he feels I’m very irresponsible with my finances, splurging too much” [[rec|af130b9c55ede19f66e4ea81d42c4464d7ac0e31]].\n- “I have never seen even one thing i like at Zudio, but I can’t go into Marks and Spencer’s pick up my size and walk out without even trying it on because i know it will fit.” [[rec|8dc9f620df57ba31889994d52e9f60eddacf3fd3]].\n\nVariation\n- By source, styling-led saving (C3) is raised more on Reddit (99 of 309) than on YouTube (53 of 573), with Play showing 2 of 114; action-trigger talk (C13) appears on Reddit (40 of 309) and YouTube (9 of 573), and lightly on Play (2 of 114) [[analysis_source_code|reddit|C3]] [[analysis_source_code|youtube|C3]] [[analysis_source_code|play|C3]] [[analysis_source_code|reddit|C13]] [[analysis_source_code|youtube|C13]] [[analysis_source_code|play|C13]].\n- For “do I still want this?” (C12), Reddit shows 42 of 309; YouTube 11 of 573; App Store 1 of 22 [[analysis_source_code|reddit|C12]] [[analysis_source_code|youtube|C12]] [[analysis_source_code|appstore|C12]].\n- Interpretation: Whether these source skews generalize beyond this corpus is not established.\n\nCounter-evidence\n- Other mid-journey barriers are raised more often than saving-specific reasons in this corpus, such as the material & digital-physical gap (C2) at 241 of 1018 and fit & size uncertainty (C1) at 189 of 1018, as well as fulfilment (C7) at 140 of 1018, external product reviews (C4) at 82 of 1018, and external validation/social proof (C10) at 68 of 1018 [[analysis_code_prevalence|C2]] [[analysis_code_prevalence|C1]] [[analysis_code_prevalence|C7]] [[analysis_code_prevalence|C4]] [[analysis_code_prevalence|C10]].\n- Saving after intent (C11) is sparse at 24 of 1018 and is flagged as too thin to rank; it also co-occurs with Price (C6) in 15 cases, suggesting price-driven attrition appears in the same conversations [[analysis_code_prevalence|C11]] [[analysis_cooccurrence|C11|C6]].\n\nConfidence\n- Medium. Price (C6) is reliable (kappa 0.645) [[analysis_gold_agreement|C6]], but Styling & self-image (C3) is weak (kappa 0.515) [[analysis_gold_agreement|C3]], and Action trigger (C13) and Intent extinguished after saving (C11) have unknown reliability (not measurable) [[analysis_gold_agreement|C13]] [[analysis_gold_agreement|C11]]. Stage distribution is well-counted at the corpus level [[analysis_stage_outcome|C|defer]]. Method flags note narrower-than-normal recall, so rankings are conditional [[analysis_method_flags|narrow_relevance_rubric]].\n\nLimitations\n- The corpus measures discussion shares, not what shoppers did; no funnel or conversion data exists here [[analysis_method_flags|proxy_not_funnel]].\n- The relevance rubric is narrow and likely under-represents price/value and delivery/trust topics; rankings reflect what cleared that filter, not all decision-relevant talk [[analysis_method_flags|narrow_relevance_rubric]].\n- Some key codes used here (C13, C11) lack measurable reliability against gold labels [[analysis_gold_agreement|C13]] [[analysis_gold_agreement|C11]].\n- Segments and journey positioning are derived from classifications rather than observed behavior; lifts into “undecided” are partly circular [[analysis_method_flags|segments_derived_not_observed]].\n- Source diversity is effectively three independent types; app-store reviews have their own skews [[analysis_method_flags|three_independent_source_types]].\n- Interpretation: The corpus does not establish how often users “would have bought if the barrier were removed,” nor can it reliably separate all workarounds from “shelf/reference” saving without more direct testimony.",
       "error": "",
       "plan": {
         "intent": "exploratory",
         "codes": [
           "C9",
-          "C12",
           "C13",
-          "C5",
-          "C4",
-          "C3"
+          "C12",
+          "C11",
+          "C3",
+          "C6"
         ],
         "evidence_needed": [
           "prevalence",
           "source_breakdown",
-          "cooccurrence",
           "segment_split",
-          "opportunity",
-          "addressable"
+          "counterfactual",
+          "stage",
+          "cooccurrence"
         ],
         "queries": [
-          "relevant_composition",
-          "code_prevalence",
           "top_codes",
+          "code_prevalence",
+          "stage_outcome",
           "source_breakdown",
-          "cooccurrence",
+          "counterfactuals",
           "workaround",
-          "addressable",
-          "subcodes"
+          "cooccurrence"
         ],
         "premise": {
           "asserts": "",
@@ -62,12 +61,9 @@
           "correction": ""
         }
       },
-      "gate_reasons": [
-        "too few records for how this ranks as an opportunity — C9 is under the 15 needed"
-      ],
+      "gate_reasons": [],
       "gate_caveats": [
-        "whether this holds up across sources: too thin to report for C5",
-        "how this differs between kinds of shopper: too thin to report for C5"
+        "whether this holds up across sources: too thin to report for C11"
       ],
       "verified": true,
       "regenerated": false,
@@ -80,15 +76,15 @@
       "n_records": 7,
       "record_ids": [
         "af130b9c55ede19f66e4ea81d42c4464d7ac0e31",
-        "5e63f3d9641b3070fb995c2c6635868c1bfb213b",
-        "7d1bb5f6e5dc96671b9228faf0755350783b6269",
-        "3271b8df36abd9894c3d7942b4c0f022ccd1a579",
-        "ff67bf493b39e54cac9cbbe1d1471d264e8d18a1",
-        "aa0761f40a210a494bde32c95dfa7c7259077827",
-        "0999ff7095026c4b6332f4b4fc2400dbc9e78ce5"
+        "6102d72a4134c75fd1e23e0da192954f39145fbd",
+        "8dc9f620df57ba31889994d52e9f60eddacf3fd3",
+        "a91133402e1ca1100b362aaf8833b2d3cb8d6c61",
+        "0999ff7095026c4b6332f4b4fc2400dbc9e78ce5",
+        "4117a1c760ce39926be22f453fef7dde44ec7e3b",
+        "6482976bb324567d31dcfd151ea3e17aee7d58b8"
       ],
-      "cost_usd": 0.041867,
-      "seconds": 34.4
+      "cost_usd": 0.043982,
+      "seconds": 38.4
     },
     {
       "id": "CAN-02",
@@ -2884,24 +2880,25 @@
       },
       "payload": null,
       "route": "FULL",
-      "restated": "How many relevant records are in the analysed corpus altogether?",
-      "answer": "Answer\nThe analysed pool contains 1018 relevant records. This count refers to records that passed the relevance filter, not the originally collected set. Interpretation: The brief does not provide a single citable total for distinct authors across the whole analysed pool, nor citable per-source totals for all sources.\n\nEvidence\n- Total relevant records (analysed pool): denominator=1018 [[analysis_code_prevalence|C1]]\n- Per-source counts available in citable rows:\n  - YouTube: denominator=573 [[analysis_source_code|youtube|A1.1]]\n  - Reddit: denominator=309 [[analysis_source_code|reddit|A1.1]]\n- Interpretation: The brief does not surface citable per-source denominators for Google Play or the App Store in the source-split rows provided; therefore their analysed-pool counts cannot be stated here.\n- Interpretation: A total count of distinct authors across the entire analysed pool is not reported in a single citable row; only per-code distinct-author counts are shown (e.g., n_distinct_authors=185 for C1, but that is code-specific, not a corpus total) [[analysis_code_prevalence|C1]].\n\nIn users' words\n- “sizes r not available for many liked products” [[rec|76cfa2c5d02613b6e764266ecced8f879d02ac82]]\n- “It’s not xs and xl. I wear M and many products on Myntra has higher pricing for M too 😕” [[rec|276f3f42326dc46e1fb820fce423992f9d19c3b8]]\n- “not many good options in shoes otherwise good app” [[rec|c16a154be6e73ee360d753e03657810828768b5d]]\n- “Best shopping app😍🫰🏻. I didn’t use this app much before because I used to think that it had very expensive clothes.” [[rec|0999ff7095026c4b6332f4b4fc2400dbc9e78ce5]]\n\nVariation\n- By source (available): YouTube contributes 573 records to the analysed pool; Reddit contributes 309 records [[analysis_source_code|youtube|A1.1]][[analysis_source_code|reddit|A1.1]].\n- Interpretation: The brief does not provide citable analysed-pool totals for Google Play or the App Store in the same source-split format, so their contributions cannot be quantified here.\n\nCounter-evidence\n- Interpretation: There is no disconfirming row that contradicts the 1018 total; however, several method flags caution that the analysed pool is constrained and may not reflect all decision-relevant discussion.\n\nConfidence\nMedium. The total analysed-pool size (1018) is consistently reported as the denominator in multiple code-prevalence rows, but method validation thresholds failed (kappa and recall), indicating measurement risk [[analysis_method_flags|gold_thresholds_failed]].\n\nLimitations\n- The relevance rubric is narrower than a plain-English reading of “relevant to the save-to-purchase decision,” with implied recall near 45% on a hand-read sample; findings are conditional on that rubric [[analysis_method_flags|narrow_relevance_rubric]].\n- Shares reflect discussion, not user-behavior or funnel metrics [[analysis_method_flags|proxy_not_funnel]].\n- Only about 36% of relevant records are Myntra-specific; platform-mechanical findings rest on a smaller subset [[analysis_method_flags|myntra_specific_share]].\n- App-store reviews are not independent sources; Google Play and App Store share the same skew, yielding roughly three independent source types overall [[analysis_method_flags|three_independent_source_types]].\n- Counts below 30 are reportable but not rankable, and below 15 are not shown as findings; thin categories may be present but not orderable [[analysis_method_flags|min_n_floor]].\n- Interpretation: The brief does not state deduplication specifics or excluded-language handling beyond the flags shown.",
+      "restated": "How many relevant records are in the corpus in total?",
+      "answer": "Answer\nInterpretation: The brief does not report a single corpus-wide total and, per rules, I cannot compute one. The closest available view is per-source counts of relevant records and distinct authors.\n\nEvidence\n- Interpretation: YouTube — records n=2369; distinct authors=2271.\n- Interpretation: Google Play — records n=1452; distinct authors=1436.\n- Interpretation: Reddit — records n=841; distinct authors=573.\n- Interpretation: App Store — records n=429; distinct authors=429.\n- Interpretation: Published/curated research — records n=8; distinct authors=2.\n- Interpretation: The brief includes no note about duplicates or deduplication that would alter these raw counts.\n- Interpretation: No time span or recency window is stated in the brief.\n\nIn users' words\n- Google Play: \"sizes r not available for many liked products\" [[rec|76cfa2c5d02613b6e764266ecced8f879d02ac82]]\n- App Store: \"Best shopping app😍🫰🏻. I didn’t use this app much before because I used to think that it had very expensive clothes.\" [[rec|0999ff7095026c4b6332f4b4fc2400dbc9e78ce5]]\n- Reddit: \"I wear M and many products on Myntra has higher pricing for M too 😕\" [[rec|276f3f42326dc46e1fb820fce423992f9d19c3b8]]\n\nVariation\n- Interpretation: Records are distributed unevenly across sources, with the largest share on YouTube, followed by Google Play, Reddit, the App Store, and a very small curated set. The number of distinct authors follows the same ordering.\n\nCounter-evidence\n- Interpretation: Although counts are broken out by four labeled sources, the brief cautions that Google Play and the App Store are not independent source types; both are app-store reviews, so “triangulation” by source may overstate independence [[analysis_method_flags|three_independent_source_types]].\n\nConfidence\n- Medium-Low. The per-source counts are directly provided, but overall reliability flags note that two validation thresholds failed (Cohen’s kappa clears 0.60 for only 2 of 5 measurable codes; estimated relevance recall ~79% vs. an 85% target) [[analysis_method_flags|gold_thresholds_failed]]. The relevance rubric is also narrower than a plain-English reading and likely under-represents some topics [[analysis_method_flags|narrow_relevance_rubric]]. Source-type independence is limited to roughly three types, not four [[analysis_method_flags|three_independent_source_types]].\n\nLimitations\n- The shares in this corpus measure discussion, not behavioral funnels; no conversion or abandonment rates are available [[analysis_method_flags|proxy_not_funnel]].\n- Only about 36% of the relevant corpus is Myntra-specific; platform-mechanical findings for Myntra rest on a smaller subset [[analysis_method_flags|myntra_specific_share]].\n- Segments (where used) are derived from classifications, not observed behaviors, and may be circular with some codes [[analysis_method_flags|segments_derived_not_observed]].\n- Small-n findings (<30) should not be ranked; very small sources (e.g., curated) are especially fragile [[analysis_method_flags|min_n_floor]].\n- Interpretation: The brief does not provide a single total across sources, any deduplication adjustments, or a time window; I cannot compute new totals under the rules.",
       "error": "",
       "plan": {
         "intent": "quantitative",
         "codes": [],
         "evidence_needed": [
           "prevalence",
+          "composition",
           "source_breakdown",
-          "reliability",
-          "method"
+          "confidence"
         ],
         "queries": [
-          "relevant_composition"
+          "corpus_composition",
+          "source_breakdown"
         ],
         "premise": {
-          "asserts": "There is a single analysed pool called the relevant corpus",
-          "status": "supported",
+          "asserts": "",
+          "status": "none",
           "correction": ""
         }
       },
@@ -2919,13 +2916,13 @@
       "record_ids": [
         "c16a154be6e73ee360d753e03657810828768b5d",
         "76cfa2c5d02613b6e764266ecced8f879d02ac82",
-        "9d842ea675d0be8077b6ce7f6563490b53d5fb04",
         "0999ff7095026c4b6332f4b4fc2400dbc9e78ce5",
-        "b27ea405d6d07c7bf621724c04861b7dff2f1ee7",
-        "276f3f42326dc46e1fb820fce423992f9d19c3b8"
+        "276f3f42326dc46e1fb820fce423992f9d19c3b8",
+        "585c8058b069f07f1ce893a49819c86dca59a567",
+        "a68a9a0367384948434e300e7e3ce07033cb1858"
       ],
-      "cost_usd": 0.02938,
-      "seconds": 22.9
+      "cost_usd": 0.029255,
+      "seconds": 24.3
     },
     {
       "id": "NUM-03",
@@ -3169,20 +3166,19 @@
       },
       "payload": null,
       "route": "FULL",
-      "restated": "How many of the 1,018 relevant records come from each source (YouTube, Reddit, Google Play, App Store, published research)?",
-      "answer": "Answer\nAmong the 1,018 relevant records, the split by source is: YouTube 573, Reddit 309, Google Play 114, App Store 22. The brief does not show any other sources or uncategorised records. Pre-filter collection sizes are not reported, so we cannot compare filter-through by source.\n\nEvidence\n- YouTube: 573 records (denominator=573) [[analysis_source_code|youtube|A1.1]]\n- Reddit: 309 records (denominator=309) [[analysis_source_code|reddit|A1.1]]\n- Google Play: 114 records (denominator=114) [[analysis_source_code|play|A3.1]]\n- App Store: 22 records (denominator=22) [[analysis_source_code|appstore|A3.1]]\n- Interpretation: Total relevant records analysed = 1,018 (project denominator stated in the brief’s facts).\n- Interpretation: Distinct authors by source — YouTube 557; Reddit 238; Google Play 113; App Store 22 (reported in the brief’s source summary).\n- Interpretation: No records are shown as uncategorised and no sources beyond YouTube, Reddit, Google Play, and the App Store are listed.\n- Interpretation: The brief does not provide pre-filter (collected) pool sizes by source, so filter-through by source cannot be assessed.\n\nIn users' words\n- Reddit: “Google image search does that job.” [[rec|653385bf09973ea5d85a71d673720b4158169736]]\n- Google Play: “worst app , return experience was worst than any other app . not going to buy any product ever.. I repeat EVER” [[rec|d0cd6122e8631a0ae07f86bfb301746e26c6b53f]]\n- App Store: “Best shopping app😍🫰🏻.” [[rec|0999ff7095026c4b6332f4b4fc2400dbc9e78ce5]]\n\nVariation\n- By source, the corpus clearly spans YouTube, Reddit, Google Play, and the App Store with the record counts cited above [[analysis_source_code|youtube|A1.1]] [[analysis_source_code|reddit|A1.1]] [[analysis_source_code|play|A3.1]] [[analysis_source_code|appstore|A3.1]].\n- Interpretation: Distinct-author counts vary by source (YouTube 557; Reddit 238; Google Play 113; App Store 22), suggesting different levels of author duplication by source, but the brief does not provide per-source de-duplication rates.\n\nCounter-evidence\n- The brief cautions that Google Play and the App Store are not independent source types (both are app stores), so treating them as fully independent sources can overstate triangulation across “four sources” [[analysis_method_flags|three_independent_source_types]].\n- Interpretation: Because pre-filter pool sizes are not shown, we cannot identify whether any source was heavily filtered out relative to what was collected.\n\nConfidence\nMedium. The per-source record denominators are directly visible in multiple analysis rows and are consistent across the brief for YouTube, Reddit, Google Play, and the App Store [[analysis_source_code|youtube|A1.1]] [[analysis_source_code|reddit|A1.1]] [[analysis_source_code|play|A3.1]] [[analysis_source_code|appstore|A3.1]]. However, the total relevant count and distinct-author totals per source are taken from the brief’s high-level source summary, which is not separately citable here and are therefore noted as Interpretation; plus the method flags note only three independent source types, which limits triangulation claims [[analysis_method_flags|three_independent_source_types]].\n\nLimitations\n- Shares here are shares of discussion, not user behavior; no funnel or conversion data exists in this corpus [[analysis_method_flags|proxy_not_funnel]].\n- Two validation thresholds fail: only 2 of the 5 measurable codes clear the 0.60 kappa threshold, and relevance recall is estimated at about 79% vs an 85% target [[analysis_method_flags|gold_thresholds_failed]].\n- The relevance rubric is narrower than an ordinary reading of “save-to-purchase” and likely under-represents price/value and delivery/trust topics; source splits therefore reflect this narrowed inclusion [[analysis_method_flags|narrow_relevance_rubric]].\n- Only about 36% of the corpus is Myntra-specific; much discussion is about Indian online fashion generally [[analysis_method_flags|myntra_specific_share]].\n- App store sources share a common skew; effectively there are three independent source types rather than four [[analysis_method_flags|three_independent_source_types]].\n- Interpretation: The brief does not report pre-filter collection sizes by source, so we cannot judge differential filtering across sources.",
+      "restated": "How many records in the 1,018-record corpus come from each source (YouTube, Reddit, Google Play, App Store, and published research)?",
+      "answer": "Answer\nInterpretation: The brief does not report per‑source counts for the 1,018‑record corpus except for one recoverable YouTube denominator; other required breakdowns are not available in the provided evidence.\n\nEvidence\n- YouTube records in the 1,018‑record corpus: 573 of 1,018 (taken as the denominator shown for a YouTube source–code crosstab) [[analysis_source_code|youtube|A1.1]].\n- Codes appear across multiple sources (e.g., Material & digital-physical gap (C2) appears in four sources), which indicates multi‑source coverage but does not give counts by source [[analysis_code_prevalence|C2]].\n\nIn users' words\n- “sizes r not available for many liked products” [[rec|76cfa2c5d02613b6e764266ecced8f879d02ac82]] (Google Play)\n- “Best is to get them stitched. It’ll not come within 1k but it’ll last many years.” [[rec|c9fa89f54f676ed99018e1ddb73e34f2add5add1]] (Reddit)\n\nVariation\n- Interpretation: The method notes indicate the corpus spans multiple source types and that Google Play and the App Store are not independent types (both are app‑store reviews), while Reddit access was via a third‑party, so triangulation should be read as spanning roughly three independent source types rather than four [[analysis_method_flags|three_independent_source_types]].\n\nCounter-evidence\n- Interpretation: No citable table in the brief provides per‑source counts for Reddit, Google Play, the App Store, or published research within the 1,018‑record corpus, nor distinct‑author counts per source. The only per‑source denominator visible is for YouTube (573), recovered indirectly from a source–code crosstab [[analysis_source_code|youtube|A1.1]].\n\nConfidence\n- Low. Only one per‑source denominator is observable in the provided analysis outputs, and broader reliability flags note validation thresholds failed and limited recall, which further constrain confidence in reconstructing source distributions from secondary crosstabs [[analysis_method_flags|gold_thresholds_failed]]; [[analysis_method_flags|narrow_relevance_rubric]].\n\nLimitations\n- The analysis shares reflect discussion frequency, not user behavior or traffic mix across sources [[analysis_method_flags|proxy_not_funnel]].\n- Validation thresholds failed (Cohen’s kappa and recall), so counts derived from secondary analyses should be treated cautiously [[analysis_method_flags|gold_thresholds_failed]].\n- The relevance rubric is narrow, with excluded material skewing price/value and delivery/trust; source mixes within the retained 1,018 may therefore be unrepresentative of overall discussion [[analysis_method_flags|narrow_relevance_rubric]].\n- Only one per‑source denominator (YouTube) is visible in the crosstabs; other per‑source counts, distinct‑author tallies by source, record deduplication across sources, what precisely constitutes “published research” (papers vs. extracted records), any filtering by content type (comments vs. posts), and timestamps by source are not reported in the provided evidence. Interpretation: The corpus was not broken down finely enough here to answer those sub‑questions from the brief.\n- App stores share a common review skew, and Reddit was collected via a third‑party, so “source” labels do not map cleanly to fully independent evidence types [[analysis_method_flags|three_independent_source_types]].",
       "error": "",
       "plan": {
         "intent": "quantitative",
         "codes": [],
         "evidence_needed": [
-          "reliability",
-          "source_breakdown",
           "prevalence",
+          "source_breakdown",
           "composition"
         ],
         "queries": [
-          "relevant_composition"
+          "corpus_composition"
         ],
         "premise": {
           "asserts": "",
@@ -3192,27 +3188,25 @@
       },
       "gate_reasons": [],
       "gate_caveats": [],
-      "verified": false,
-      "regenerated": true,
-      "problems": [
-        "uncited claim: Among the 1,018 relevant records, the split by source is: YouTube 573, Reddit 309, Google Play 114, "
-      ],
+      "verified": true,
+      "regenerated": false,
+      "problems": [],
       "bad_numerals": [],
       "bad_quotes": [],
       "proxy_violations": [],
       "scope_violations": [],
-      "n_facts": 157,
+      "n_facts": 136,
       "n_records": 6,
       "record_ids": [
         "653385bf09973ea5d85a71d673720b4158169736",
-        "d0cd6122e8631a0ae07f86bfb301746e26c6b53f",
-        "0999ff7095026c4b6332f4b4fc2400dbc9e78ce5",
-        "f1c09b668f7e6988c5862e18ab833056b5158be0",
         "c9fa89f54f676ed99018e1ddb73e34f2add5add1",
-        "c16a154be6e73ee360d753e03657810828768b5d"
+        "76cfa2c5d02613b6e764266ecced8f879d02ac82",
+        "c16a154be6e73ee360d753e03657810828768b5d",
+        "0afe1663f365d89029adf08a61c57bd3b6f623c7",
+        "102d55f97a9af4441d73efa47e25defd42357b90"
       ],
-      "cost_usd": 0.05077,
-      "seconds": 51.8
+      "cost_usd": 0.024853,
+      "seconds": 23.2
     },
     {
       "id": "NUM-07",
@@ -4641,5 +4635,7 @@
       "cost_usd": 0.027017,
       "seconds": 28.0
     }
-  ]
+  ],
+  "rescored_at": "2026-08-21T15:05:56+00:00",
+  "rescore_note": "`bad_quotes` and `uncited claim` findings were recomputed after the run with a corrected checker; every other finding is as measured during the run against the real retrieval context. Two corrections applied: all quote characters now normalise to one form (a model nesting a quotation converts the inner pair, which made a genuine elided quote look fabricated), and the absolute testimony threshold is scoped to the section that presents testimony. Quotes outside it are prose and are listed as `advisory_quotes`."
 }

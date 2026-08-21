@@ -387,13 +387,36 @@ QUERIES: dict[str, Spec] = {
         args=(), table="analysis_method_flags", kinds=("method",),
         build=lambda a: ("SELECT * FROM analysis_method_flags ORDER BY severity, flag_id", ())),
 
-    "corpus_composition": Spec(
+    "relevant_composition": Spec(
+        # THE DEFAULT, and it must come first in the registry so `composition`
+        # resolves here. A question asking how many records there are means the
+        # ANALYSED pool — the 1,018 every share in every other table is computed
+        # against. Answering it from the retained corpus reported YouTube at
+        # 2,369 and called them relevant records, which is a different
+        # population and a false statement about this one.
+        describe=("How many RELEVANT records — the analysed pool that every share "
+                  "and denominator in this project is computed against — with the "
+                  "total, the distinct authors, and the split per source. THE "
+                  "default for 'how many records', 'how big is the corpus', 'how "
+                  "many people'."),
+        args=(), table="", kinds=("composition",),
+        build=lambda a: (
+            "SELECT r.source, count(*) AS n, "
+            "count(DISTINCT r.author_hash) AS authors, "
+            "(SELECT count(*) FROM records r2 JOIN relevance v2 "
+            "  ON v2.record_id=r2.record_id AND v2.is_relevant=1 "
+            "  JOIN retained t2 ON t2.record_id=r2.record_id) AS total_relevant "
+            f"FROM ({POOL}) r GROUP BY r.source ORDER BY n DESC", ())),
+
+    "collected_composition": Spec(
         # Byte-identical to the Data Bank's own composition query, deliberately.
         # Two spellings of "records per source" is one spelling too many.
-        describe=("How many records and how many distinct people the corpus holds "
-                  "per source. Use for 'how much data', 'where did this come from', "
-                  "'how many people'."),
-        args=(), table="", kinds=("composition",),
+        describe=("How many records were COLLECTED and retained per source, before "
+                  "the relevance filter — a much larger number than the analysed "
+                  "pool. Use ONLY when the question is about collection effort or "
+                  "the Data Bank's own size, never as the answer to 'how many "
+                  "records are there'."),
+        args=(), table="", kinds=("collection",),
         build=lambda a: ("SELECT source, count(*) AS n, count(DISTINCT author_hash) "
                          "AS authors FROM retained GROUP BY source ORDER BY n DESC", ())),
 }
@@ -1087,10 +1110,12 @@ def gate(plan: dict, got: Retrieved, question: str = "") -> Verdict:
     # reason to name a gap, not to withhold what the corpus does hold. The
     # brand-rate case belongs to `hard_out_of_scope`, which catches it by asking
     # what the question wants — a rate — rather than by counting doubts.
-    if intent == "methodological":
-        # Routed to a static description of the pipeline, not to retrieval
-        # (EC-CHAT-6). It is FULL because the answer is fully supported — by the
-        # method flags and the documented pipeline, not by corpus counts.
+    # EC-CHAT-6 routes method questions away from corpus counts, NOT away from
+    # evidence. They are answered from the registered method flags and the
+    # agreement rows — which are citable — and are held to the same checks as
+    # everything else. Short-circuiting to FULL here meant "how did you validate
+    # this?" returned an unverified answer.
+    if intent == "methodological" and not (plan.get("evidence_needed") or []):
         return Verdict("FULL", ["method"], [], [])
 
     needs = [str(k).lower() for k in (plan.get("evidence_needed") or [])
@@ -1153,8 +1178,13 @@ def retrieve(con: sqlite3.Connection, plan: dict) -> Retrieved:
     got = Retrieved()
     got.facts = channel1(con, fulfil_plan(plan))
     needs = {str(k).lower() for k in (plan.get("evidence_needed") or [])}
-    if "verbatim" in needs or codes:
-        got.verbatims = channel2(con, codes, terms)
+    # ALWAYS, for the same reason channels 3 and 4 always run. "How many records
+    # are in the corpus?" names no code and does not ask for verbatim, so this
+    # was skipped and the answer had literally nothing to quote — while the
+    # contract requires every FULL answer to show one human sentence behind the
+    # number. Retrieval must supply what the contract demands, or the contract
+    # is asking the model to invent it.
+    got.verbatims = channel2(con, codes, terms)
     got.counter = channel3(con, codes, stages, terms)          # always
     got.method = channel4(con, codes, stages, sources)         # always
     if "external" in needs:

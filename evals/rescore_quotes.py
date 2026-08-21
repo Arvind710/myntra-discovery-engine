@@ -46,7 +46,8 @@ REPORTS = ROOT / "evals" / "reports"
 LATEST = REPORTS / "p4_sweep_latest.json"
 
 NOTE = (
-    "`bad_quotes` was recomputed after the run with a corrected quote check; "
+    "`bad_quotes` and `uncited claim` findings were recomputed after the run "
+    "with a corrected checker; "
     "every other finding is as measured during the run against the real "
     "retrieval context. Two corrections applied: all quote characters now "
     "normalise to one form (a model nesting a quotation converts the inner "
@@ -90,12 +91,18 @@ def main() -> int:
         r["bad_quotes"] = fresh
         after += len(fresh)
 
-        # `problems` is what the gate tests read. Drop the stale quote entries
-        # and add the surviving ones, leaving every other finding untouched.
+        # `problems` is what the gate tests read. Drop the stale quote and
+        # uncited entries and add the surviving ones, leaving every other
+        # finding — numerals, citations, sections — exactly as measured during
+        # the run against the real retrieval context.
+        fresh_uncited = ([] if r.get("route") == "NONE"
+                         else V.check_uncited(r.get("answer") or ""))
         kept = [p for p in (r.get("problems") or [])
                 if not (p.startswith("unverifiable quote:")
-                        and p.split(": ", 1)[1] in stale)]
-        r["problems"] = [f"unverifiable quote: {q}" for q in fresh] + kept
+                        and p.split(": ", 1)[1] in stale)
+                and not p.startswith("uncited claim:")]
+        r["problems"] = ([f"unverifiable quote: {q}" for q in fresh]
+                         + [f"uncited claim: {u}" for u in fresh_uncited] + kept)
         r["verified"] = not r["problems"]
 
     d["rescored_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")

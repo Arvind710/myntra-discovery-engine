@@ -397,24 +397,32 @@ def _units_pos(text: str) -> list[tuple[str, int]]:
         lines = [ln for ln in block.splitlines() if ln.strip()]
         if not lines:
             continue
-        bullets = [ln for ln in lines if re.match(r"\s*(?:[-*•]|\d+\.)\s+", ln)]
-        rest = [ln for ln in lines if ln not in bullets]
+        # A bullet owns the lines beneath it until the next bullet. A quotation
+        # running over three lines put its citation on the third, and splitting
+        # per line reported the first as an uncited claim — the citation was
+        # right there, in the same bullet.
+        bullets, rest, cur = [], [], None
+        for ln in lines:
+            if re.match(r"\s*(?:[-*•]|\d+\.)\s+", ln):
+                cur = ln
+                bullets.append(cur)
+            elif cur is not None and not _HEADING.match(ln):
+                bullets[-1] = bullets[-1] + " " + ln.strip()
+            else:
+                cur = None
+                rest.append(ln)
         # A bullet with more-indented bullets beneath it is a LABEL for them,
         # not a claim of its own — the numbers and their citations live in the
         # leaves. Flattening the list threw that structure away and demanded a
         # citation on "Mentions and distinct authors", which asserts nothing.
         parents = set()
-        for i, ln in enumerate(lines):
-            if ln not in bullets:
-                continue
+        for i, ln in enumerate(bullets):
             indent = len(ln) - len(ln.lstrip())
-            for nxt in lines[i + 1:]:
-                nxt_indent = len(nxt) - len(nxt.lstrip())
-                if nxt_indent <= indent:
+            for nxt in bullets[i + 1:]:
+                if len(nxt) - len(nxt.lstrip()) <= indent:
                     break
-                if nxt in bullets:
-                    parents.add(ln)
-                    break
+                parents.add(ln)
+                break
         bullets = [ln for ln in bullets if ln not in parents]
         # A block introduced by `Interpretation:` is inference throughout —
         # the marker is on the introducing line and the bullets under it are
@@ -484,6 +492,12 @@ def _is_structural(unit: str) -> bool:
         return True
     if len(bare.split()) <= 3:
         return True
+    # A question asserts nothing, so there is nothing to cite. The model uses
+    # short rhetorical questions as sub-headings — "Are saves purchase intent or
+    # reference-only?" — and the answer to it, with its citation, is the text
+    # underneath.
+    if bare.endswith("?") and len(bare.split()) <= 12:
+        return True
     # A label asserts nothing, so there is nothing to cite. The model writes
     # sub-headings as bare lines — "Concentration by source (examples)",
     # "Journey stage and outcome" — and demanding a citation on those was the
@@ -493,8 +507,11 @@ def _is_structural(unit: str) -> bool:
     # A label has no number, no sentence-ending punctuation, and no verb of
     # assertion. Requiring all three keeps a real uncited claim caught: "Fit is
     # the biggest barrier" has a verb and is still flagged.
-    if (len(bare.split()) <= 8
-            and not re.search(r"\d", bare)
+    # Code ids contain digits — "what exactly within C1, C2, C3" is a label, not
+    # a numeric claim — so they come out before the digit test.
+    bare_nc = re.sub(r"\b(?:Z-?99|[A-D]\d+(?:\.\d+)?)\b", "", bare, flags=re.I)
+    if (len(bare.split()) <= 10
+            and not re.search(r"\d", bare_nc)
             and not bare.rstrip().endswith((".", "!", "?"))
             and not _ASSERTS.search(bare)):
         return True
