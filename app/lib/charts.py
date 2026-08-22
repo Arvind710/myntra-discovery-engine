@@ -104,3 +104,73 @@ def journey(stage_rows, *, height: int = 200):
         uniformtext=dict(mode="hide", minsize=10),
     )
     return fig
+
+
+def contribution(df: pd.DataFrame, label_col: str, components: dict[str, str],
+                 *, title: str, height: int = 420) -> go.Figure:
+    """The opportunity score taken apart, one stacked bar per barrier.
+
+    WHY A STACK AND NOT A TOTAL
+    ---------------------------
+    A single bar per barrier says which one won and nothing about why. The
+    score is a mean of six stored components, so each component contributes a
+    knowable slice of the total -- and the interesting reading is almost always
+    in the slices. Price loses on one narrow slice (it cannot be fixed without
+    a discount) despite the widest prevalence slice in the corpus; a total bar
+    hides exactly that, which is the one thing a reader needs to argue with.
+
+    `components` maps column name -> the plain label shown in the legend, in
+    stacking order. Each column is divided by the component count, so the bar
+    length IS the equal-weight score rather than merely proportional to it.
+    """
+    d = df.copy()
+    k = len(components)
+    fig = go.Figure()
+    for i, (col, label) in enumerate(components.items()):
+        fig.add_trace(go.Bar(
+            y=d[label_col], x=d[col] / k, orientation="h", name=label,
+            marker_color=PALETTE[i % len(PALETTE)],
+            hovertemplate=f"<b>{label}</b><br>component %{{customdata:.2f}} of 1.0"
+                          f"<br>adds %{{x:.3f}} to the score<extra></extra>",
+            customdata=d[col],
+        ))
+    fig.update_layout(
+        barmode="stack", title=title, height=height,
+        margin=dict(l=10, r=10, t=50, b=70),
+        plot_bgcolor="rgba(0,0,0,0)",
+        # Below the plot, never above it: a horizontal legend at y>1 collides
+        # with the title on a narrow window and the two render on top of each
+        # other, which is how this chart first shipped.
+        legend=dict(orientation="h", yanchor="top", y=-0.18, x=0, font=dict(size=11),
+                    traceorder="normal"),
+        # No axis title: it sits exactly where the legend has to go, and the
+        # caption under the chart already says that bar length is the score.
+        xaxis=dict(range=[0, 1]),
+    )
+    return fig
+
+
+def attrition(labels: list[str], values: list[int], *, title: str,
+              height: int = 260) -> go.Figure:
+    """Records surviving each cut, one colour, longest at the top.
+
+    Deliberately NOT `bar()`: that helper colours each bar differently because
+    its bars are usually different categories. These four are the SAME quantity
+    measured at four points, and four colours would say otherwise. It is also
+    deliberately not a funnel shape — this is attrition of RECORDS under stated
+    rules, which is a real filter, but the app elsewhere insists that nothing
+    here is a user funnel, and a tapering polygon is the one shape that would
+    undo that everywhere it appeared.
+    """
+    fig = go.Figure(go.Bar(
+        x=values[::-1], y=labels[::-1], orientation="h",
+        marker_color=PALETTE[0],
+        text=[f"{v:,}" for v in values[::-1]], textposition="outside",
+        hovertemplate="%{y}<br>%{x:,} records<extra></extra>",
+    ))
+    fig.update_layout(
+        title=title, height=height, margin=dict(l=10, r=60, t=50, b=10),
+        plot_bgcolor="rgba(0,0,0,0)", showlegend=False,
+        xaxis=dict(visible=False, range=[0, max(values) * 1.15]),
+    )
+    return fig
