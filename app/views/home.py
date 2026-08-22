@@ -166,9 +166,26 @@ for t, n, why in steps:
 st.caption(f"These are **records, not people**: the {denom:,} analysed records were "
            f"written by {int(funnel.authors):,} distinct authors, and that second number is "
            "carried alongside every count in this app — 200 records from 12 people is a much "
-           "weaker claim than 200 from 180. The gap between the first and third bars is the "
+           "weaker claim than 200 from 180. The gap between the second and third bars is the "
            "filter doing its job: most public conversation about a shopping app is about "
            "delivery and refunds, not about deciding.")
+
+# The single most misread thing on the page, so it is stated rather than left
+# to be inferred from a denominator: the funnel and the stage split do NOT
+# share a population. Only the records that survived the relevance rule were
+# ever sent to the classifier, so every number in sections 4 to 7 sits inside
+# the last bar above and none of them can speak for the other 7,440.
+st.info(
+    f"**Everything after this point lives inside the last bar.** Only the "
+    f"**{denom:,}** records that survived the relevance rule were sent to the classifier, "
+    f"so only they carry a step and a barrier. The "
+    f"**{int(funnel.scored) - int(funnel.relevant):,}** records the rule rejected were read "
+    "and reasoned about one by one — the reason is stored against each of them and browsable "
+    "on **Data Bank** — but they were never assigned a step, and nothing in sections 4 to 7 "
+    "speaks for them.\n\n"
+    "So the shape of the argument from here is: **these "
+    f"{denom:,} save-to-buy records → which of the four steps they sit in → who the people "
+    "in that step are → what to fix for them.**", icon="🎯")
 
 with st.expander("The two checks that could have invalidated everything downstream"):
     z = prev[prev["code"] == "Z-99"]
@@ -199,9 +216,11 @@ with st.expander("The two checks that could have invalidated everything downstre
 # ============================================ 4. which step is it about
 st.header("4 · Which of the four steps the conversation is actually about")
 st.caption(
-    "This is the first real narrowing decision, and it is the one most likely to be an "
-    "artefact. Every relevant record was classified against the frozen list; the width "
-    "below is how much of the conversation each step carries.")
+    f"This is the first real narrowing decision, and it is the one most likely to be an "
+    f"artefact. Each of the **{denom:,}** save-to-buy records was classified against the "
+    "frozen list, and the width below is how much of *that* conversation each step carries. "
+    "A record can raise barriers at more than one step, which is why the segments below "
+    "add to more than the bar does.")
 
 rows = [{"n": stage_n.get(s, 0), "title": S.stage_title(s), "colour": S.STAGE_COLOUR[s]}
         for s in S.STAGE_ORDER]

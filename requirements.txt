@@ -2,6 +2,15 @@
 # Keep minimal: cold-start time is the practical payoff of the
 # no-runtime-vectors decision (architecture.md §10, AR-5).
 # Heavy pipeline deps live in requirements-pipeline.txt and MUST NOT appear here.
+#
+# TOUCH THIS FILE WHENEVER A NEW FUNCTION IS ADDED TO app/lib/.
+# Streamlit Cloud pulls new code and RERUNS the entry script without restarting
+# the Python process, so a module already in sys.modules — app/lib/charts.py,
+# app/lib/story.py — keeps its old definitions. A view calling a helper added in
+# the same push then dies with AttributeError on the deployed app while working
+# perfectly in a freshly started local one. Editing a requirements file is what
+# forces a real container restart. This cost one broken deploy on 2026-08-22.
+# rebuild-token: 2026-08-22-b
 streamlit>=1.40
 pandas>=2.2
 plotly>=5.24
