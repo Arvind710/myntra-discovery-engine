@@ -289,12 +289,16 @@ price = opp[opp["code"] == "C6"]
 if not price.empty:
     pr = price.iloc[0]
     st.info(
+        # Each ** must close before the following *italic* opens, or Markdown
+        # swallows the pair and prints the asterisks. Numbers bold, component
+        # names italic, never overlapping.
         f"**Price ranks 8th here against 2nd on size alone, and that is the constraint "
-        f"doing its job.** It scores **{float(pr['prevalence']):.2f} on how often it "
-        f"comes up** — near the top — but only **{float(pr['solvable_without_money']):.2f} "
-        f"on *fixable without a discount*, because the assignment forbids monetary "
-        f"remedies, and **{float(pr['segment_fit']):.2f} on *how specific to the target "
-        f"group*, because the people it stops are Waiters rather than Stuck Deciders. "
+        f"doing its job.** It scores **{float(pr['prevalence']):.2f}** on *how often it "
+        f"comes up* — near the top — but only "
+        f"**{float(pr['solvable_without_money']):.2f}** on *fixable without a discount*, "
+        f"because the assignment forbids monetary remedies, and "
+        f"**{float(pr['segment_fit']):.2f}** on *how specific to the target group*, "
+        f"because the people it stops are Waiters rather than Stuck Deciders. "
         f"Two low slices on a six-part score are enough to move it down six places. "
         f"That is a statement about what this project is allowed to build, not a claim "
         f"that price does not matter — it has to be resolved into transparency, "

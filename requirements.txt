@@ -10,7 +10,7 @@
 # the same push then dies with AttributeError on the deployed app while working
 # perfectly in a freshly started local one. Editing a requirements file is what
 # forces a real container restart. This cost one broken deploy on 2026-08-22.
-# rebuild-token: 2026-08-23-c
+# rebuild-token: 2026-08-23-d
 streamlit>=1.40
 pandas>=2.2
 plotly>=5.24
