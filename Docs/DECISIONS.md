@@ -1154,6 +1154,70 @@ Also: raw HTML must go through `st.html()`, never
 `st.markdown(unsafe_allow_html=True)` — Streamlit 1.61 strips nested markup and
 the element renders as an empty box, silently.
 
+And a third, found on 2026-08-23: **`st.html()` also strips `<svg>` entirely.**
+The wrapper div survives, the diagram inside it does not, and there is no error
+— the page renders a blank gap where the drawing should be. Anything vector has
+to be a Plotly figure (`shapes` + `annotations`), which has the side benefit of
+inheriting the viewer's light/dark theme. Plotly is stricter about colour than
+CSS: it rejects 8-digit hex (`#E69F0022`) and bare-dot alpha (`rgba(…,.28)`), so
+tints must be written as full `rgba(r,g,b,0.14)`, and `<b>` markup is safer than
+`font.weight`, which is not on every version.
+
+## Analysis became one visual argument, not four tabs (2026-08-23)
+
+Arvind, on the page as it stood: *"make it readable to a person who doesn't know
+anything about the project, show every bit of mathematical analysis visually and
+the process behind the what-led-to-whats. No one is going to read that much info
+as they don't have time — show them our analysis."*
+
+The page was not wrong, it was **shaped for someone who already believed it**.
+Four tabs meant the test defending the conclusion sat behind a click most readers
+never make; the argument existed but the page never asserted one.
+
+### The shape it has now
+
+One vertical chain of five numbered steps, each with a headline conclusion, one
+visual, and a one-sentence verdict on a coloured rule. A strip at the very top
+states all five conclusions, so sixty seconds is enough to get the finding and
+know what was done to earn it. Every tab is gone. Everything a sceptic needs is
+under one heading at the bottom, *"If you want to attack this"*.
+
+### Maths that was prose, now drawn
+
+- **The inversion test.** Each quiet step is a bar of the multiplier it would
+  need to overtake the leader, against a shaded band of what silence can
+  plausibly explain, and the arithmetic is written on the bar itself:
+  *"6.6× — we saw 110, it would need 724"*. The 3× line is still drawn, per
+  S3-MET-3.
+- **Segment derivation** was three numbered sentences asking a reader to hold a
+  branching structure in their head. It is now the decision tree it always was:
+  three questions as column headers, six groups as leaves, every branch carrying
+  its count.
+- **Coder agreement** was one sentence saying agreement cleared its threshold for
+  2 of 5. It is now a κ bar per barrier, colour-coded by verdict, so C10 at κ 0.10
+  reads as *"human disagreed — a lead, not a finding"* at a glance.
+- **Co-occurrence lift** is a bar against chance rather than a printed ratio.
+
+### Three defects the rewrite exposed
+
+- **"Barriers with evidence" counted `Z-99`** and read *32 of 34* on a page that
+  says 33 everywhere else. The residual bucket is not a barrier. Pre-existing.
+- **Co-occurrence was unfiltered** under a heading that says *inside Deciding on
+  the item*, so the strongest pair in the corpus — two Coming-back barriers —
+  printed there as if it belonged. Now restricted to pairs whose both codes sit
+  in the chosen step.
+- **The 14 per-barrier expanders were a wall of clicks.** Six cards carrying the
+  mechanism line and the reliability chip say more and are read without clicking.
+
+### One boundary tightened
+
+Analysis no longer stars Stuck Deciders as *the target*. It shows the six groups
+and their sizes, and says the choice is argued on Insights, where size is one of
+four tests. Analysis chooses the STEP; Insights chooses the BARRIER and the
+GROUP. Starring the winner here was importing a downstream conclusion.
+
+---
+
 ### Left undone, deliberately
 
 - The opportunity bar chart on Insights still paints one colour per bar for a
