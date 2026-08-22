@@ -272,7 +272,11 @@ else:
         hovertemplate="<b>%{y}</b><br>%{x:.1f}× under-reporting required<extra></extra>"))
     # The plausible-silence region, shaded rather than described. Everything
     # inside it is a stage whose ranking silence could genuinely explain.
-    fig.add_vrect(x0=0, x1=3.0, fillcolor=BAD, opacity=0.09, line_width=0)
+    # layer="below" is load-bearing: Plotly draws shapes ABOVE traces by
+    # default, so without it the band tints the left third of every bar and
+    # they read as two-tone for no reason.
+    fig.add_vrect(x0=0, x1=3.0, fillcolor=BAD, opacity=0.09, line_width=0,
+                  layer="below")
     # S3-MET-3: the fragility line is DRAWN, not captioned. A threshold that
     # lives only in prose is the number a reader skips.
     fig.add_vline(x=3.0, line_dash="dash", line_color=BAD, line_width=2,
