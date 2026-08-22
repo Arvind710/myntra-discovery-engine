@@ -1272,6 +1272,60 @@ code ids against the plain-name-leads rule. Resolved by naming the barrier
 
 ---
 
+## Data Bank finished the set (2026-08-23)
+
+Three tabs — "Read the records", "What is in the corpus", "What was set aside".
+The material a reader needs in order to trust every other page (the relevance
+rule, and the human check that found its weakness) sat inside an expander inside
+a tab.
+
+Now five steps: **what was read → only 1,018 of 12,002 bear on the question →
+the rule that decided → what was set aside → where the collection is weakest**,
+then the browse tool as a closing "read any of it yourself".
+
+### The numbers that never reconciled
+
+The page showed *"Collected 12,002 = Kept 5,099 + Set aside 6,903"* directly
+beside a funnel whose second bar was 8,639 *"survived cleaning"* — leaving a
+careful reader to work out how more records could survive cleaning than were
+kept. They are two different cuts and the page never said so.
+
+**A waterfall replaces the funnel**, computed stage by stage from counted values
+so it has to balance: 12,002 − 3,355 cleaning − 8 curated research items − 7,440
+not about saving or buying − 181 in five low-yield subreddits = 1,018. The drops
+are the argument; the old chart showed only the survivors and left the reader to
+subtract. 5,099 is now presented for what it is — the *browsable* corpus, a
+different question from relevance — and the two are reconciled in one line.
+
+### Maths that was prose, now drawn
+
+- **S1-HUM-1 is a 30-square dot matrix**, read from
+  `data/artifacts/s1_hum_1_sample.json` rather than hardcoded: 9 green squares
+  under "records the rule KEPT", 10 green and 11 red under "records the rule
+  DROPPED". *Every disagreement is on one side* is the whole finding, and it is
+  visible without reading a word. It was a paragraph.
+- **Collection yield is two stat cards**: 27.4% for search-targeted collection
+  against 7.2% for untargeted store listings, which are still 37% of what was
+  read. That number was a caption inside an expander; it is the sharpest
+  criticism of this project's own method and now leads a step.
+- **Exclusions carry their plain-language names**, and the page states that the
+  reasons sum to 9,213 against 6,903 distinct records because one record can
+  carry several marks — cheaper than letting a reader add them up and conclude
+  the page is broken.
+- `analysis_method_flags` filtered to `scope = 'corpus'` closes the page, so the
+  corpus-level caveats come from the pipeline rather than from prose.
+
+### Two defects the rewrite exposed
+
+- **`curated` was counted as a public source**, so the page said "5 sources" two
+  lines above prose saying four. Those 8 records are hand-picked secondary
+  research, never scored for relevance — now named as such, and they appear in
+  the waterfall as their own drop rather than as an unexplained 8.
+- **`note()` renders raw HTML, and `S.explain()` returns Markdown**, so the
+  authors caption printed its own asterisks. Markdown goes to `st.caption`.
+
+---
+
 ### Left undone, deliberately
 
 - The opportunity bar chart on Insights still paints one colour per bar for a
