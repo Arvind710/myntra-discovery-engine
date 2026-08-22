@@ -1,6 +1,6 @@
 # Decisions & Status — Myntra AI Discovery Engine
 
-**Last updated:** 2026-08-20 (end of the P3 session)
+**Last updated:** 2026-08-23 (app restructure; P4 closed, P5 next)
 **Deadline:** 2026-09-04
 **Purpose:** the decisions log and current position. The *rationale* for choices that are stated as facts elsewhere in `Docs/`.
 
@@ -1052,6 +1052,121 @@ regression I had introduced that had silently dropped it back to 89.1%. It
 cannot test a prompt change — so it decides whether a re-sweep is worth buying,
 it does not replace one.
 
+
+## The app was restructured around the narrowing chain (2026-08-22 → 23)
+
+No pipeline ran and no model was called: this session was entirely presentation.
+Commits `a6ffac2` → `c772d08`, all live and verified on the deployed app.
+
+### What Arvind asked for, in three corrections
+
+1. *"Home section should be about describing the process undertaken by this
+   engine not the final answer itself."* Home had been leading with the top three
+   barriers — the finding, which Analysis and Insights already carry.
+2. *"Why have you chosen only save-to-buy? There are many other reasons why
+   people might wishlist."*
+3. *"All that should be a part of the sections. Home should guide the person
+   who's checking the app for the first time in minimum words possible — about
+   what it is, what the process, what each section is about."*
+
+And the statement of purpose the whole structure now serves:
+
+> It is supposed to help me determine where the highest potential opportunities
+> lie. Break down wishlisting behaviour into user journeys, decide which one to
+> pick, then narrow down that step, find most promising user segments.
+
+### The structure that came out of it
+
+**Home is the map**: the goal, the five moves (Read → Break it down → Pick the
+step → Segment → Rank), one line on where it landed, and what each section
+answers. 115 lines, ~1,400px, down from ~500 lines and 8,268px in the
+intermediate version. **Rule for anything added later: if it is evidence, it
+belongs in a section.**
+
+The evidence sits with the decision it defends:
+
+| Page | Decides | Defence it carries |
+|---|---|---|
+| Data Bank | what was read | the collection funnel; the relevance rule in full |
+| Analysis | which **step** | the inversion threshold (6.6× — a quiet stage cannot explain it) |
+| Insights | which **barrier**, which **segment** | weight perturbation (99.6% of 1,000 draws); the five-way segment comparison |
+
+The stage-inversion chart moved **off** Insights for this reason;
+`test_phase3_insights` was repointed at `analysis.py` with the rationale recorded
+in the test. S3-MET-3 is unchanged — the 3× line is still drawn.
+
+### "Save-to-buy" was a wrong description of the corpus, and mine
+
+Wording introduced earlier in the same session labelled the corpus *"records that
+bear on the save-to-buy decision"*. That describes a filter the engine does not
+apply, and it makes the finding read as circular. `prompts/relevance_v1.md`
+admits **"wishlist / saved-items behaviour of any kind"** and states outright that
+*"collecting/browsing without purchase intent — this IS relevant, it explains
+non-purchase"*. That is precisely what lets the engine **size** saving-for-
+reference at 126 and never-had-intent at 21, rather than assuming them away.
+
+Checked before correcting: of the 7,440 rejected records, the 621 whose stored
+reason mentions a wishlist are all of the form *"not about … wishlist …"* — the
+reason naming what the record lacks. The filter is **not** silently dropping
+non-buying wishlist talk. The rule, what it keeps and what it drops, is now on
+Data Bank in full, together with the limitation that runs the same way: all 11 of
+the human reviewer's 30-record disagreements fell on records the filter had
+**rejected**, none on the 9 it accepted.
+
+### Two claims now on the app that were nowhere before
+
+Both were already true in the tables, sitting pages apart:
+
+- **The chosen segment does not win every criterion.** Lapsed Intenders are
+  sharper — most distinctive barrier at 11.4× the corpus rate against 2.2× for
+  Stuck Deciders. They lose on being 78 people with **one** rankable barrier
+  cell: the engine can say who they are and not what to build for them. Stuck
+  Deciders win on the combination, not on any single column.
+- **The top-ranked barrier is robust to the weights and not to the labelling.**
+  C2 holds first place in 99.6% of perturbed weightings and agrees with the human
+  coder at **κ 0.43 — weak**. Rank survives; boundary does not.
+
+### There is no ~5,000-record intermediate stage
+
+Asked to show a stage distribution over "around 5,000 kept" records. Checked every
+step: 12,002 collected → **8,639** scored → 1,199 relevant → **1,018** analysed
+(930 distinct authors). Nearest figures to 5,000 are Reddit's 4,750 *collected*
+and the removed pre-filter's 4,023 passes. **Only the 1,018 are classified** — the
+7,440 rejected records carry a stored reason each but no stage and no barrier, so
+a stage split over the wider pool needs a new classification run. Data Bank now
+states this rather than leaving it to be inferred from a denominator.
+
+### Two Streamlit traps, both found only on the deployed app
+
+- **Cloud does not reload `app/lib/`.** It pulls code and reruns the entry script
+  without restarting the process, so a helper added to a lib module in the same
+  push does not exist there — `AttributeError` on the live app, clean on a
+  freshly started local one. `requirements.txt` now carries a `rebuild-token`
+  line and the reason; touching it forces a real container restart. Bump it on
+  every push, and confirm the deployed page changed before calling it done.
+- **No `st.dataframe` inside a tab that is not the open one.** The data grid
+  measures column widths at layout time; in a hidden tab that measurement is
+  zero, every column collapses to a sliver, and it stays collapsed until the
+  viewer resizes the window. Use a static markdown table. Found by clicking the
+  tab on the live app — the local render looked perfect.
+
+Also: raw HTML must go through `st.html()`, never
+`st.markdown(unsafe_allow_html=True)` — Streamlit 1.61 strips nested markup and
+the element renders as an empty box, silently.
+
+### Left undone, deliberately
+
+- The opportunity bar chart on Insights still paints one colour per bar for a
+  single measure, which reads as categories. Pre-existing; flagged, not changed.
+- Source-mix bias (price at 53% on Play against 20% corpus-wide) is still only on
+  Analysis; arguably belongs beside the funnel on Data Bank.
+- A stage distribution over the wider pool, and a rule-based breakdown of the
+  7,440 rejection reasons — both offered, neither authorised. The first costs a
+  classification run; the second is free but was not asked for.
+- Journey stages S1–S14 and resolution channels R1–R8 from framework v2 remain
+  unbuilt, so no page claims them.
+
+---
 
 ## Explicitly rejected
 
