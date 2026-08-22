@@ -133,10 +133,10 @@ st.caption("A record can raise barriers at more than one step, so these counts d
 st.header("3 · What the engine read, and what it threw away")
 st.caption(
     "Public conversation is the only data this project has — there is no access to "
-    "Myntra's analytics. So the first question is not *what does it say* but *how much "
-    "of it is even about the save-to-buy decision.* Four sources were collected and cut "
-    "down on stated rules, and every rejected record is logged with its reason and stays "
-    "browsable on the **Data Bank** page.")
+    "Myntra's analytics. So the first question is not *what does it say* but *how much of "
+    "it is about saving and buying at all.* Four sources were collected and cut down on "
+    "stated rules, and every rejected record is logged with its reason and stays browsable "
+    "on the **Data Bank** page.")
 
 funnel = db.query("""
     SELECT (SELECT count(*) FROM records)                                AS collected,
@@ -152,8 +152,9 @@ steps = [("Collected from four public sources", int(funnel.collected),
           "YouTube comments, Reddit threads, Play Store and App Store reviews"),
          ("Survived cleaning and de-duplication", int(funnel.scored),
           "boilerplate, duplicates and empty text removed"),
-         ("Bear on the save-to-buy decision", int(funnel.relevant),
-          "a deliberately narrow rule — post-purchase and refund complaints are out"),
+         ("Bear on saving or buying a fashion item", int(funnel.relevant),
+          "wishlist behaviour of ANY kind, including saving with no intention of "
+          "buying — see the rule below"),
          ("Analysed", denom,
           "after dropping five subreddits that produced almost no relevant records")]
 st.plotly_chart(
@@ -184,8 +185,63 @@ st.info(
     "on **Data Bank** — but they were never assigned a step, and nothing in sections 4 to 7 "
     "speaks for them.\n\n"
     "So the shape of the argument from here is: **these "
-    f"{denom:,} save-to-buy records → which of the four steps they sit in → who the people "
+    f"{denom:,} records → which of the four steps they sit in → who the people "
     "in that step are → what to fix for them.**", icon="🎯")
+
+# "Why only people who meant to buy?" is the first question a reader asks of a
+# funnel this narrow, and the answer is that it is NOT that narrow — the rule
+# admits saving with no purchase intent on purpose, because a wishlist that was
+# never a shopping list is one of the answers, not a record to discard. The
+# engine can only report how much of that there is if it kept those records in
+# the first place. Stating this here rather than leaving it to section 6, where
+# the two non-buying groups get sized and set aside.
+with st.expander("“Why only people who meant to buy?” — the rule, in full"):
+    st.markdown(
+        "**It is not restricted to people who meant to buy.** The relevance rule admits "
+        "**wishlist and saved-item behaviour of any kind**, and says so explicitly, "
+        "including *collecting or browsing with no purchase intent at all*. Saving for "
+        "inspiration, saving as a taste archive, saving something you never intended to "
+        "buy — those are kept, because **“they never meant to buy it” is one of the "
+        "answers to the research question**, and an engine that filtered those records "
+        "out would have quietly assumed its own conclusion and then reported it back.\n\n"
+        "That is exactly what makes the numbers in section 6 possible: **saving for "
+        "reference is measured at 126 records and intent that never existed at 21** — "
+        "roughly one saved item in eight is not a conversion problem at all. Neither "
+        "figure could exist if the filter had kept only shoppers with intent.")
+    a, b = st.columns(2)
+    a.markdown(
+        "**Kept**\n\n"
+        "- wishlist and saved-item behaviour of any kind\n"
+        "- collecting or browsing with **no** purchase intent\n"
+        "- fit, size, fabric, colour and styling doubt\n"
+        "- wanting other buyers' photos or reviews first\n"
+        "- price doubt, waiting for a sale, timing\n"
+        "- needing someone else's approval\n"
+        "- leaving the platform to check something\n"
+        "- cart and checkout abandonment\n"
+        "- a past bad experience *cited as present hesitation*")
+    b.markdown(
+        "**Dropped**\n\n"
+        "- delivery delays, couriers, order status\n"
+        "- refunds, cancellations, customer service\n"
+        "- app crashes, login and payment-gateway bugs\n"
+        "- post-purchase praise with nothing decision-bearing\n"
+        "  (*“lovely kurta, five stars”*)\n"
+        "- promotional and spam content\n"
+        "- **any non-fashion category** — saving laptops, fridges or\n"
+        "  groceries is out, however closely it mirrors the pattern")
+    st.caption(
+        "The category rule is the aggressive one, and it is deliberate: this project is "
+        "about *fashion-specific* uncertainty — fit, fabric, sizing, whether it suits you "
+        "— which has no equivalent for a fridge. It is also the reason the ranking is "
+        "conditional on the rule rather than true of wishlists in general.")
+    st.warning(
+        "**The rule's known weakness runs in exactly this direction.** A human reviewer "
+        "re-judged 30 randomly drawn records and disagreed on 11 — and **every single one "
+        "was a record the filter had rejected.** All 9 it accepted were confirmed. So what "
+        "is in this corpus belongs here, and the open question is what the rule threw away. "
+        "It is recorded as a limitation rather than repaired, because repairing it means "
+        "re-running the analysis.", icon="⚠️")
 
 with st.expander("The two checks that could have invalidated everything downstream"):
     z = prev[prev["code"] == "Z-99"]
@@ -217,7 +273,7 @@ with st.expander("The two checks that could have invalidated everything downstre
 st.header("4 · Which of the four steps the conversation is actually about")
 st.caption(
     f"This is the first real narrowing decision, and it is the one most likely to be an "
-    f"artefact. Each of the **{denom:,}** save-to-buy records was classified against the "
+    f"artefact. Each of the **{denom:,}** records was classified against the "
     "frozen list, and the width below is how much of *that* conversation each step carries. "
     "A record can raise barriers at more than one step, which is why the segments below "
     "add to more than the bar does.")
