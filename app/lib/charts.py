@@ -107,7 +107,8 @@ def journey(stage_rows, *, height: int = 200):
 
 
 def contribution(df: pd.DataFrame, label_col: str, components: dict[str, str],
-                 *, title: str, height: int = 420) -> go.Figure:
+                 *, title: str, height: int = 420,
+                 weights: dict[str, float] | None = None) -> go.Figure:
     """The opportunity score taken apart, one stacked bar per barrier.
 
     WHY A STACK AND NOT A TOTAL
@@ -120,16 +121,22 @@ def contribution(df: pd.DataFrame, label_col: str, components: dict[str, str],
     hides exactly that, which is the one thing a reader needs to argue with.
 
     `components` maps column name -> the plain label shown in the legend, in
-    stacking order. Each column is divided by the component count, so the bar
-    length IS the equal-weight score rather than merely proportional to it.
+    stacking order. Each column is scaled by its share of the total weight, so
+    the bar length IS the score rather than merely proportional to it.
+
+    `weights` re-scales the slices live. Passing the reader's slider settings
+    makes one chart do the work of two: the ORDER answers "what wins" and the
+    SLICES answer "why", and both move together when a weight is changed. With
+    no weights the components are equally weighted, which is the baseline.
     """
     d = df.copy()
-    k = len(components)
+    w = weights or {c: 1.0 for c in components}
+    total = sum(w.get(c, 0.0) for c in components) or 1.0
     fig = go.Figure()
     for i, (col, label) in enumerate(components.items()):
         fig.add_trace(go.Bar(
-            y=d[label_col], x=d[col] / k, orientation="h", name=label,
-            marker_color=PALETTE[i % len(PALETTE)],
+            y=d[label_col], x=d[col] * w.get(col, 0.0) / total, orientation="h",
+            name=label, marker_color=PALETTE[i % len(PALETTE)],
             hovertemplate=f"<b>{label}</b><br>component %{{customdata:.2f}} of 1.0"
                           f"<br>adds %{{x:.3f}} to the score<extra></extra>",
             customdata=d[col],

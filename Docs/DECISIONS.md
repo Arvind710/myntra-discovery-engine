@@ -1218,6 +1218,60 @@ GROUP. Starring the winner here was importing a downstream conclusion.
 
 ---
 
+## Insights got the same treatment (2026-08-23)
+
+Six tabs — "What to solve first", "How sure are we?", "Who to build for", "What
+would prove us wrong", "What we learned", "Take it to interviews" — which is a
+faithful list of contents and not an argument. The recommendation sat in tab one
+and everything making it credible sat in tabs a reader never opened.
+
+Now five numbered steps: **who this is about (892 of 1,018) → what to solve
+first → does it survive a thousand reweightings → who to build for → what would
+prove us wrong**, with the conclusions as a strip at the top, the interview
+artefacts as a closing handoff, and the caveats under *"If you want to attack
+this"*.
+
+### Maths that was prose or a table, now drawn
+
+- **The addressable subtraction** was four metric tiles. It is one bar to scale:
+  892 winnable, 126 not a conversion problem. Four numbers cannot show a
+  subtraction.
+- **Weight robustness** was a six-column dataframe. It is a rank-band chart —
+  each barrier's 5th-to-95th-percentile band across 1,000 reweightings, with the
+  mean as a dot. Most bands are a bare dot, which is the strongest form this
+  evidence takes and was previously the least visible thing on the page.
+- **The five-way segment comparison** was an eight-column markdown table. It is
+  four small multiples on one shared row order, so "wins on the combination"
+  is readable in one pass: top or joint-top on three tests, last on the fourth.
+- **`charts.contribution` now takes the live weights**, so one chart shows what
+  wins *and* why, and both move when a slider moves. It used to be pinned at
+  equal weights beside a second chart that showed the live order.
+- **`analysis_method_flags` is rendered for the first time.** The caveats were
+  hand-written prose on three pages; they are now read from the table the
+  pipeline writes, so they cannot drift from what the analysis did.
+
+### Four defects the rewrite exposed
+
+- **The four segment charts each sorted by their own field** under a single
+  shared column of row labels. A reader tracing Stuck Deciders across the row
+  read its size off chart one and Lapsed Intenders' 11.4x off chart three. This
+  is the worst kind of chart bug: it is legible, confident, and wrong.
+- **"Price scores near zero on solvability" was false** — it scores 0.50. It
+  drops on the *combination* of 0.50 solvability and 0.00 segment fit. The
+  callout now reads both numbers off the stored components, so the chart
+  directly above it cannot contradict it.
+- **"The only barrier that is both large and fixable" was overclaiming** — C1 is
+  also large and also scores 1.00 on solvability. C2 wins on all six, not on two.
+- **`p05_rank`/`p95_rank` were labelled "best rank" and "worst rank"**, which
+  overstates a 5th-to-95th-percentile band as an absolute range. Now stated as
+  "the band it stayed inside on 90% of the draws".
+
+Method flags print verbatim so they cannot drift, which means they carry raw
+code ids against the plain-name-leads rule. Resolved by naming the barrier
+*before* the statement rather than by rewriting the statement.
+
+---
+
 ### Left undone, deliberately
 
 - The opportunity bar chart on Insights still paints one colour per bar for a
