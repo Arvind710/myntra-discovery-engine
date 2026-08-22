@@ -138,6 +138,41 @@ with tab_opp:
                "of comments cannot settle which problem is bigger. They are listed below "
                "with their counts.")
 
+    # A total bar says which barrier won and nothing about why. The score is a
+    # mean of six stored components, so it can be taken apart -- and the useful
+    # reading is almost always in the slices. This is what makes the price case
+    # legible instead of surprising.
+    st.markdown("#### What each score is made of")
+    st.caption("Bar length is the score at **equal weights**; each colour is one "
+               "component's contribution to it. Move the sliders above to change the "
+               "ranking; this chart stays at equal weights so it reads as the baseline.")
+    dec = ranked.head(8).copy()
+    dec["display"] = dec["code"].map(S.chart_label)
+    st.plotly_chart(
+        charts.contribution(dec.iloc[::-1], "display",
+                            {c: COMPONENT_LABEL[c] for c in COMPONENTS},
+                            title="", height=430),
+        width="stretch")
+
+    # Robust to the WEIGHTS and robust to the LABELLING are different claims,
+    # and the winner is only one of them. Both facts were already in the app,
+    # three tabs apart; putting them together is the difference between a
+    # report and a claim.
+    if len(ranked):
+        top_code = str(ranked.iloc[0]["code"])
+        lead_k = db.query("SELECT kappa, verdict FROM analysis_gold_agreement "
+                          "WHERE code = ? AND measurable = 1", (top_code,))
+        if not lead_k.empty and str(lead_k.iloc[0]["verdict"]) != "reliable":
+            st.warning(
+                f"**Robust to the weights is not the same as robust to the labelling.** "
+                f"“{S.voice(top_code)}” agrees with the human coder at "
+                f"κ {float(lead_k.iloc[0]['kappa']):.2f} — *{lead_k.iloc[0]['verdict']}*, "
+                "short of the 0.60 bar — on the hand-labelled records where agreement "
+                "could be measured at all. Its **rank** survives a thousand reweightings; "
+                "its **boundary** against neighbouring doubts does not yet survive a "
+                "second reader. That is the first thing the interviews are for.",
+                icon="⚖️")
+
     show["what the shopper is thinking"] = show["code"].map(S.voice)
     tbl = show[["live_rank", "what the shopper is thinking", "n", "live_score"] + COMPONENTS]
     tbl.columns = (["#", "what the shopper is thinking", "records", "score"]
@@ -196,38 +231,11 @@ with tab_sens:
                    "same number never moved at all, however the weights were set — which "
                    "is the strongest form this evidence can take.")
 
-    st.divider()
-    st.subheader("What if Stage A is under-reported?")
-    inv = db.query("SELECT * FROM analysis_stage_inversion ORDER BY n DESC")
-    if inv.empty:
-        st.info("Inversion threshold not computed.")
-    else:
-        st.caption(
-            "Forgetting produces no complaint, so the corpus under-detects Stage A by "
-            "construction and a low Stage A count is **not** evidence that Stage A is "
-            "small. Rather than accept the ranking or discard it, this is the "
-            "multiplier by which each stage would have to be under-reported to overtake "
-            "the leader. Roughly 2–3× is plausible for a silent barrier; beyond that "
-            "the ranking is safe.")
-        d = inv.copy()
-        d["label"] = "Stage " + d["stage"]
-        d["factor"] = d["inversion_factor"].fillna(0.0)
-        lead = d.loc[d["inversion_factor"].isna(), "stage"]
-        fig = charts.bar(d[d["inversion_factor"].notna()].sort_values("factor"),
-                         "label", "factor", orientation="h", height=280,
-                         title="Under-reporting needed to overtake stage "
-                               f"{lead.iloc[0] if len(lead) else '?'} (×)")
-        fig.add_vline(x=3.0, line_dash="dash", line_color="#D55E00",
-                      annotation_text="3× — plausible for a silent barrier",
-                      annotation_position="top")
-        st.plotly_chart(fig, width="stretch")
-        for _, r in inv[inv["inversion_factor"].notna()].iterrows():
-            msg = (f"**Stage {r['stage']}** (n={int(r['n'])}) would need "
-                   f"**{float(r['inversion_factor']):.1f}×** under-reporting to overtake "
-                   f"stage {r['leader']} (n={int(r['leader_n'])}).")
-            (st.warning if int(r["fragile"]) else st.write)(
-                msg + ("  **That is plausible — treat the stage ranking as fragile.**"
-                       if int(r["fragile"]) else ""))
+    st.caption(
+        "This tab is about the weights behind the *barrier* ranking. The matching test "
+        "for the *stage* choice — how far the quiet stages would have to be "
+        "under-reported to overtake the leader — is on **Analysis**, next to the stage "
+        "chart it defends.")
 
 # ------------------------------------------------------------------- segments
 with tab_seg:
@@ -266,15 +274,64 @@ with tab_seg:
                     icon="🔁")
 
         st.divider()
-        st.markdown("**All segments, and the basis each was judged on**")
+        st.markdown("**All five groups, compared on the four things that decided it**")
+        st.caption(
+            "Size alone would be a lazy answer. A group is worth targeting only if it is "
+            "also **reachable without a discount** — the assignment forbids monetary "
+            "remedies — **distinctive**, so a fix aimed at it is not merely a fix for "
+            "everyone, and **evidenced well enough that the engine can say what "
+            "specifically stops it.** That last one is the quiet disqualifier.")
+
+        # Parsed out of the rationale the pipeline wrote rather than recomputed
+        # here, so this table cannot disagree with the synthesis step about its
+        # own recommendation.
         r = rec.copy()
-        r["segment"] = r["segment_id"].astype(int).astype(str) + " · " + r["segment_name"]
-        st.dataframe(r[["segment", "n", "share", "basis", "rankable_cells",
-                        "solvable_n", "score", "recommended"]],
-                     width="stretch", hide_index=True)
-        st.caption("`rankable_cells` is how many segment × code cells reach n ≥ 30. "
-                   "`basis` records which matrix actually carried the judgement — a "
-                   "directional read must never be quoted later as a ranked one.")
+        r["group"] = r["segment_id"].astype(int).map(
+            lambda i: ("⭐ " if i == F.TARGET_SEGMENT else "") + str(
+                rec.set_index("segment_id").loc[i, "segment_name"]))
+        r["how big"] = r["n"].astype(int)
+        r["% of winnable"] = r["share"].map(lambda v: f"{float(v):.1%}")
+        r["fixable without a discount"] = r["rationale"].str.extract(
+            r"(\d+)% of its coded barriers are solvable")[0].map(
+            lambda v: f"{v}%" if pd.notna(v) else "—")
+        r["sharpest barrier vs everyone"] = r["rationale"].str.extract(
+            r"at ([\d.]+)x the corpus rate")[0].map(
+            lambda v: f"{float(v):.1f}×" if pd.notna(v) else "—")
+        r["barriers we can rank"] = r["rankable_cells"].astype(int)
+        r["judged on"] = r["basis"]
+        r["score"] = r["score"].map(lambda v: f"{float(v):.2f}")
+
+        # Rendered as a static markdown table, NOT st.dataframe. Streamlit's
+        # data grid measures its column widths when the element is laid out,
+        # and inside a tab that is not the open one that measurement is zero:
+        # every column collapses to a sliver and stays collapsed until the
+        # viewer resizes the window, which no viewer does. A plain table has no
+        # measurement step and cannot fail that way. Verified against a live
+        # click-through of this tab, not just a local render.
+        cols = ["group", "how big", "% of winnable", "fixable without a discount",
+                "sharpest barrier vs everyone", "barriers we can rank", "judged on",
+                "score"]
+        md = ["| " + " | ".join(cols) + " |",
+              "|" + "|".join(["---"] * len(cols)) + "|"]
+        for _, row in r.iterrows():
+            md.append("| " + " | ".join(str(row[c]) for c in cols) + " |")
+        st.markdown("\n".join(md))
+        st.caption("`judged on` records which matrix actually carried the judgement — a "
+                   "directional read must never be quoted later as a ranked one. "
+                   "`barriers we can rank` is how many segment × barrier cells reach the "
+                   "30-record floor.")
+
+        st.warning(
+            "**The chosen group does not win every column, and the honest reading "
+            "matters.** Lapsed Intenders are far *sharper* — their most distinctive "
+            "barrier runs at 11.4× the corpus rate against 2.2× for Stuck Deciders — so "
+            "on distinctiveness alone they would lead. They lose because they are 78 "
+            "people with **one** rankable barrier cell: the engine can say who they are "
+            "and not what to build for them. Stuck Deciders win on the *combination* — "
+            "the largest winnable group, wholly addressable without a discount, and the "
+            "only one evidenced deeply enough to act on. A sharper group that cannot be "
+            "acted on is a research lead, not a target, and it is carried into the "
+            "interview guide as one.", icon="⚖️")
         st.caption("Segment ① Collectors is absent: it was removed from the addressable "
                    "group before this table was computed — they are not a conversion problem.")
 

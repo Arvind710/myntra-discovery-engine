@@ -336,8 +336,14 @@ def test_s3_met_3_stage_inversion_is_computed_for_stage_a(corpus):
 @pytest.mark.needs_corpus
 def test_the_stage_inversion_threshold_is_rendered_on_the_chart_itself(corpus):
     """S3-MET-3 says 'displayed on the chart', and a number that lives only in a
-    caption is the one a reader skips. The 3x fragility line must be drawn."""
-    src = (ROOT / "app" / "views" / "insights.py").read_text()
+    caption is the one a reader skips. The 3x fragility line must be drawn.
+
+    The chart moved from Insights to Analysis on 2026-08-22: Analysis is where
+    the STAGE is chosen, Insights is where the BARRIER is chosen, and a test
+    that defends a decision should sit with the decision. The requirement is
+    unchanged -- the line is still drawn, on the page that needs it.
+    """
+    src = (ROOT / "app" / "views" / "analysis.py").read_text()
     assert "add_vline" in src and "3.0" in src, \
         "the fragility threshold is not drawn on the inversion chart"
 

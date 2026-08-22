@@ -49,6 +49,102 @@ st.caption(
 st.caption(f"Written by **{int(totals.authors):,} different people**. "
            + S.explain("authors"))
 
+# ------------------------------------------------------------------ funnel
+# Moved here from Home: the cuts are a fact about the corpus, and this is the
+# page that owns the corpus. Home now only points at it.
+st.divider()
+st.subheader("From 12,002 records to the ones the analysis runs on")
+st.caption(
+    "Public conversation is the only data this project has — there is no access to "
+    "Myntra's analytics — so the first question is not *what does it say* but *how much "
+    "of it is about saving and buying at all.* Each cut below is a stated rule, applied "
+    "in order.")
+
+funnel = db.query("""
+    SELECT (SELECT count(*) FROM records)                                AS collected,
+           (SELECT count(*) FROM relevance)                              AS scored,
+           (SELECT count(*) FROM relevance WHERE is_relevant = 1)        AS relevant,
+           (SELECT count(DISTINCT c.record_id) FROM classifications c
+             WHERE c.record_id NOT IN (SELECT record_id FROM exclusions)) AS analysed
+""").iloc[0]
+
+cuts = [("Collected from four public sources", int(funnel.collected),
+         "YouTube comments, Reddit threads, Play Store and App Store reviews"),
+        ("Survived cleaning and de-duplication", int(funnel.scored),
+         "boilerplate, duplicates and empty text removed"),
+        ("Bear on saving or buying a fashion item", int(funnel.relevant),
+         "wishlist behaviour of ANY kind, including saving with no intention of buying"),
+        ("Analysed", int(funnel.analysed),
+         "after dropping five subreddits that produced almost no relevant records")]
+st.plotly_chart(
+    charts.attrition([t for t, _, _ in cuts], [n for _, n, _ in cuts],
+                     title="Records surviving each cut"),
+    width="stretch")
+for t, n, why in cuts:
+    st.html(f"<div style='font-size:.95rem;margin:.15rem 0'><b>{n:,}</b> — {t}  ·  "
+            f"<span style='color:#8a8a8a;font-size:.85rem'>{why}</span></div>")
+
+st.info(
+    f"**Only the last bar is classified.** The **{int(funnel.analysed):,}** analysed "
+    f"records are the only ones that carry a journey step and a barrier. The "
+    f"**{int(funnel.scored) - int(funnel.relevant):,}** records the relevance rule "
+    "rejected were judged one by one and their reason stored — browse them in the last "
+    "tab — but nothing on **Analysis** or **Insights** speaks for them.", icon="🎯")
+
+# "Why only people who meant to buy?" is the first question a reader asks of a
+# filter this narrow, and the answer is that it is not that narrow: the rule
+# admits saving with no purchase intent on purpose, because a wishlist that was
+# never a shopping list is one of the ANSWERS, not a record to discard.
+with st.expander("“Why only people who meant to buy?” — the relevance rule, in full"):
+    st.markdown(
+        "**It is not restricted to people who meant to buy.** The rule admits **wishlist "
+        "and saved-item behaviour of any kind**, and says so explicitly, including "
+        "*collecting or browsing with no purchase intent at all*. Saving for inspiration, "
+        "saving as a taste archive, saving something you never intended to buy — all "
+        "kept, because **“they never meant to buy it” is one of the answers to the "
+        "research question**, and an engine that filtered those records out would have "
+        "quietly assumed its own conclusion and then reported it back.\n\n"
+        "That is what makes the exclusions on **Insights** possible: saving for reference "
+        "is *measured* at 126 records and intent that never existed at 21 — roughly one "
+        "saved item in eight is not a conversion problem at all. Neither number could "
+        "exist if the filter had kept only shoppers with intent.")
+    kc, dc = st.columns(2)
+    kc.markdown(
+        "**Kept**\n\n"
+        "- wishlist and saved-item behaviour of any kind\n"
+        "- collecting or browsing with **no** purchase intent\n"
+        "- fit, size, fabric, colour and styling doubt\n"
+        "- wanting other buyers' photos or reviews first\n"
+        "- price doubt, waiting for a sale, timing\n"
+        "- needing someone else's approval\n"
+        "- leaving the platform to check something\n"
+        "- cart and checkout abandonment\n"
+        "- a past bad experience *cited as present hesitation*")
+    dc.markdown(
+        "**Dropped**\n\n"
+        "- delivery delays, couriers, order status\n"
+        "- refunds, cancellations, customer service\n"
+        "- app crashes, login and payment-gateway bugs\n"
+        "- post-purchase praise with nothing decision-bearing\n"
+        "  (*“lovely kurta, five stars”*)\n"
+        "- promotional and spam content\n"
+        "- **any non-fashion category** — saving laptops, fridges or\n"
+        "  groceries is out, however closely it mirrors the pattern")
+    st.caption(
+        "The category rule is the aggressive one, and it is deliberate: this project is "
+        "about *fashion-specific* uncertainty — fit, fabric, sizing, whether it suits you "
+        "— which has no equivalent for a fridge. It is also why the ranking is "
+        "conditional on this rule rather than true of wishlists in general.")
+    st.warning(
+        "**The rule's known weakness runs in exactly that direction.** A human reviewer "
+        "re-judged 30 randomly drawn records and disagreed on 11 — and **every one was a "
+        "record the filter had rejected.** All 9 it accepted were confirmed. So what is in "
+        "this corpus belongs here, and the open question is what the rule threw away. "
+        "Recorded as a limitation rather than repaired, because repairing it means "
+        "re-running the analysis.", icon="⚠️")
+
+st.divider()
+
 tab_browse, tab_comp, tab_excl = st.tabs(
     ["Read the records", "What is in the corpus", "What was set aside"])
 

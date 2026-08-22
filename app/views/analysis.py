@@ -67,11 +67,54 @@ for col, s in zip(cols, S.STAGE_ORDER):
         if spec.get("note"):
             st.caption(f"⚠️ {' '.join(spec['note'].split())}")
 
-st.info(
-    "**Two of these four stages are quiet for a reason, not because they are small.** "
+# The decision of WHICH step to work on is made here, so the test that
+# defends it belongs here too rather than on Insights, where it used to sit
+# under weight sensitivity. Insights decides which BARRIER; this page decides
+# which STEP, and each should carry its own defence.
+lead = max(S.STAGE_ORDER, key=lambda x: stage_n.get(x, 0))
+st.markdown(f"#### Step 3 carries most of it — but a loud step is not a big one")
+st.caption(
+    "Two of these four stages are quiet **by construction**, not because they are small. "
     "Forgetting a wishlist produces no complaint, and nobody posts about a list being "
-    "hard to scroll — they just search for the item again. The Insights page puts a "
-    "number on how far off that could throw the ranking.", icon="🔇")
+    "hard to scroll — they just search for the item again. So picking the busiest stage "
+    "on volume alone would be the single easiest way to get this project wrong.\n\n"
+    "Rather than accept the ranking or discard it, the engine asks how *wrong* the counts "
+    "would have to be for the answer to change: **the multiplier by which each quiet "
+    "stage would have to be under-reported to overtake the leader.** Roughly 2–3× is "
+    "plausible for a silent barrier; beyond that the choice is safe.")
+
+inv = db.query("SELECT * FROM analysis_stage_inversion ORDER BY n DESC")
+if inv.empty:
+    st.info("Inversion threshold not computed.")
+else:
+    d = inv.copy()
+    d["label"] = d["stage"].map(S.stage_title)
+    d["factor"] = d["inversion_factor"].fillna(0.0)
+    leader = d.loc[d["inversion_factor"].isna(), "stage"]
+    fig = charts.bar(d[d["inversion_factor"].notna()].sort_values("factor"),
+                     "label", "factor", orientation="h", height=280,
+                     title="Under-reporting needed to overtake "
+                           f"{S.stage_title(leader.iloc[0]) if len(leader) else '?'} (×)")
+    # S3-MET-3: the fragility line is DRAWN, not described. A threshold that
+    # lives only in a caption is the number a reader skips.
+    fig.add_vline(x=3.0, line_dash="dash", line_color="#D55E00",
+                  annotation_text="3× — plausible for a silent barrier",
+                  annotation_position="top")
+    st.plotly_chart(fig, width="stretch")
+
+    ranked_inv = inv[inv["inversion_factor"].notna()].sort_values("inversion_factor")
+    if not ranked_inv.empty:
+        tightest = ranked_inv.iloc[0]
+        (st.warning if int(tightest["fragile"]) else st.success)(
+            f"The tightest is **{S.stage_title(str(tightest['stage']))}** at "
+            f"**{float(tightest['inversion_factor']):.1f}×**"
+            + (", which silence could plausibly explain — treat the stage choice as "
+               "fragile and let the interviews settle it."
+               if int(tightest["fragile"]) else
+               ", comfortably past what silence can explain. **Deciding on the item is "
+               "where the engine goes to work**, and that choice survives the objection "
+               "that this corpus cannot hear the quiet stages."),
+            icon="⚖️" if int(tightest["fragile"]) else "✅")
 
 st.divider()
 
@@ -81,6 +124,39 @@ tab_stuck, tab_who, tab_pairs, tab_how = st.tabs(
 
 # ------------------------------------------------------- where people stick
 with tab_stuck:
+    with st.expander("The full barrier list, by step — frozen before any record was read"):
+        st.caption(
+            "All 33 barriers were committed to the repository with a version string and a "
+            "date **before a single record was read**. That is the defence against finding "
+            "what you expected to find: the engine cannot invent a category mid-analysis "
+            "to fit a result it likes. Barriers that turned out to have no evidence are "
+            "still shown, greyed — a barrier nobody mentions is a result, and a barrier "
+            "never *checked* would be a hole.")
+
+        def _barrier_html(code: str, n: int) -> str:
+            grey = "" if n else ";color:#6f6f6f"
+            foot = f"{n} records · {S.tag(code)}" if n else f"no evidence · {S.tag(code)}"
+            return (f"<div style='font-size:.83rem;line-height:1.3;margin-bottom:.42rem"
+                    f"{grey}'>“{S.voice(code)}”<br><span style='color:#8a8a8a;"
+                    f"font-size:.75rem'>{foot}</span></div>")
+
+        # Stage C is given a double-width column split into two lists: it holds 14
+        # of the 33, and four equal columns leave three stubs beside one long one,
+        # a shape that says "one big category" rather than "everything happens here".
+        for col, stg in zip(st.columns([1, 1, 2, 1]), S.STAGE_ORDER):
+            with col:
+                st.html(f"<div style='border-top:4px solid {S.STAGE_COLOUR[stg]};"
+                        f"padding-top:.45rem;font-weight:700'>{S.stage_title(stg)}</div>")
+                st.caption(f"{stage_n.get(stg, 0):,} records")
+                rows_s = prev[prev["stage"] == stg].sort_values("n", ascending=False)
+                items = [_barrier_html(r["code"], int(r["n"])) for _, r in rows_s.iterrows()]
+                if len(items) > 8:
+                    half = (len(items) + 1) // 2
+                    for sub, chunk in zip(st.columns(2), (items[:half], items[half:])):
+                        sub.html("".join(chunk))
+                else:
+                    st.html("".join(items))
+
     st.caption("Each bar is a barrier in the words people actually used. The code in "
                "brackets is the framework id, for cross-referencing — you do not need "
                "it to read the chart.")
